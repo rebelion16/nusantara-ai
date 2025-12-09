@@ -438,8 +438,8 @@ export const Layout: React.FC<LayoutProps> = ({
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className={`p-2 rounded-lg ${hasApiKey
-                    ? 'text-gray-500 dark:text-gray-400'
-                    : 'text-red-500 bg-red-50 animate-pulse'
+                  ? 'text-gray-500 dark:text-gray-400'
+                  : 'text-red-500 bg-red-50 animate-pulse'
                   }`}
               >
                 {hasApiKey ? <Key size={24} /> : <AlertTriangle size={24} />}
@@ -456,8 +456,8 @@ export const Layout: React.FC<LayoutProps> = ({
                 <button
                   onClick={() => setIsSettingsOpen(true)}
                   className={`p-2 rounded-full transition-colors ${hasApiKey
-                      ? 'hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400'
-                      : 'bg-red-100 text-red-600 hover:bg-red-200 shadow-sm'
+                    ? 'hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400'
+                    : 'bg-red-100 text-red-600 hover:bg-red-200 shadow-sm'
                     }`}
                   title={
                     hasApiKey
@@ -513,8 +513,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
                 <div
                   className={`space-y-1 transition-all duration-300 overflow-hidden ${expandedCats[category]
-                      ? 'max-h-[500px] opacity-100'
-                      : 'max-h-0 opacity-0'
+                    ? 'max-h-[500px] opacity-100'
+                    : 'max-h-0 opacity-0'
                     }`}
                 >
                   {modules.map((mod) => (
@@ -586,8 +586,8 @@ const NavButton: React.FC<{
   <button
     onClick={onClick}
     className={`w-full text-left px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 ${active
-        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium shadow-sm ring-1 ring-primary-100 dark:ring-primary-900'
-        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium shadow-sm ring-1 ring-primary-100 dark:ring-primary-900'
+      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
       }`}
   >
     <span className="text-lg flex items-center justify-center w-6">{icon}</span>
