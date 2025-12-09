@@ -158,7 +158,7 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-              Google AI Studio Key / Cloud Key
+              Google AI Cloud Key
             </label>
             <div className="relative">
               <input
@@ -192,12 +192,12 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
           <div className="flex gap-2">
             <a
-              href="https://aistudio.google.com/app/apikey"
+              href="https://console.cloud.google.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 py-2 px-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
             >
-              <ExternalLink size={14} /> Dapatkan Key Gratis
+              <ExternalLink size={14} /> Dapatkan API Key Disini
             </a>
             {isSaved && (
               <button
@@ -241,9 +241,14 @@ const Footer: React.FC<{ theme: Theme; toggleTheme: () => void }> = ({
           <div>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
               Dibuat dengan <span className="text-red-500 animate-pulse">❤️</span> oleh{' '}
-              <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-indigo-500">
+              <a
+                href="https://t.me/rebelion_16"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-indigo-500 hover:opacity-80 transition-opacity"
+              >
                 Rebelion_16
-              </span>
+              </a>
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium tracking-wide">
               "Tetap Kreatif, Tetap Rebel."
@@ -283,7 +288,7 @@ const Footer: React.FC<{ theme: Theme; toggleTheme: () => void }> = ({
             </a>
             <span className="text-gray-300 dark:text-gray-700">•</span>
             <a
-              href="#"
+              href="https://www.instagram.com/lukmandian17/"
               className="hover:text-primary-500 hover:underline transition-all"
             >
               Kontak
