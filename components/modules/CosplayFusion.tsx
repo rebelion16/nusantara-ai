@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GeneratorModule } from '../GeneratorModule';
-import { generateCharacterDescription, generateStoryFromImage } from '../../services/geminiService';
+import { generateStoryFromImage, refineCharacterDescription } from '../../services/geminiService';
 import { ModuleId } from '../../types';
 import { BookOpen, Film, Loader2 } from 'lucide-react';
 
@@ -11,13 +11,157 @@ interface CosplayFusionProps {
 }
 
 const GENDERS = ['Laki-laki (1 Org)', 'Perempuan (1 Org)', 'Couple (Laki+Pr)', 'Couple (Laki+Laki)', 'Couple (Pr+Pr)'];
-const MODES = ['Karakter Anime', 'Video Game', 'Super Hero', 'Film / Movie', 'Tokoh Sejarah', 'Profesi Unik', 'Custom'];
+const MODES = ['Karakter Anime', 'Video Game', 'Super Hero', 'Film / Movie', 'Tema Bebas / Genre (OC)', 'Tokoh Sejarah', 'Profesi Unik', 'Custom'];
 
 // Helper type for character definition
 type CharDef = { label: string, gender: 'Male' | 'Female' };
 
 // Sample Data Structure for Series and Characters
 const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
+  'Tema Bebas / Genre (OC)': [
+    {
+      name: 'Cyberpunk / Sci-Fi',
+      chars: [
+        { label: 'Cyberpunk Street Samurai', gender: 'Male' },
+        { label: 'Futuristic Netrunner (Hacker)', gender: 'Male' },
+        { label: 'Cyborg Mercenary', gender: 'Male' },
+        { label: 'Space Bounty Hunter', gender: 'Male' },
+        { label: 'Cyberpunk Assassin', gender: 'Female' },
+        { label: 'Futuristic Netrunner (Hacker)', gender: 'Female' },
+        { label: 'Android / Gynoid', gender: 'Female' },
+        { label: 'Neon City Resident', gender: 'Female' }
+      ]
+    },
+    {
+      name: 'Steampunk / Retro Future',
+      chars: [
+        { label: 'Steampunk Inventor', gender: 'Male' },
+        { label: 'Airship Captain', gender: 'Male' },
+        { label: 'Victorian Gentleman with Gears', gender: 'Male' },
+        { label: 'Steampunk Mechanic', gender: 'Female' },
+        { label: 'Victorian Adventurer', gender: 'Female' },
+        { label: 'Clockwork Doll', gender: 'Female' }
+      ]
+    },
+    {
+        name: 'Fantasy / Medieval',
+        chars: [
+            { label: 'Royal Knight (Armor)', gender: 'Male' },
+            { label: 'Elven Ranger (Archer)', gender: 'Male' },
+            { label: 'Grand Wizard', gender: 'Male' },
+            { label: 'Medieval King', gender: 'Male' },
+            { label: 'Elven Princess', gender: 'Female' },
+            { label: 'High Priestess / Mage', gender: 'Female' },
+            { label: 'Shieldmaiden (Warrior)', gender: 'Female' },
+            { label: 'Medieval Queen', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Dark Fantasy',
+        chars: [
+            { label: 'Vampire Lord', gender: 'Male' },
+            { label: 'Dark Necromancer', gender: 'Male' },
+            { label: 'Fallen Angel', gender: 'Male' },
+            { label: 'Vampire Queen', gender: 'Female' },
+            { label: 'Gothic Witch', gender: 'Female' },
+            { label: 'Dark Elf Sorceress', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Horror / Thriller',
+        chars: [
+            { label: 'Zombie Survivor', gender: 'Male' },
+            { label: 'Creepy Clown', gender: 'Male' },
+            { label: 'Ghost / Spirit', gender: 'Male' },
+            { label: 'Possessed Doll', gender: 'Female' },
+            { label: 'Ghost / Banshee', gender: 'Female' },
+            { label: 'Vampire Hunter', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Noir / Detective',
+        chars: [
+            { label: 'Hardboiled Detective', gender: 'Male' },
+            { label: 'Mafia Godfather', gender: 'Male' },
+            { label: '1940s Mobster', gender: 'Male' },
+            { label: 'Femme Fatale (Red Dress)', gender: 'Female' },
+            { label: 'Lady Detective', gender: 'Female' },
+            { label: 'Jazz Club Singer', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Casual / Slice of Life',
+        chars: [
+            { label: 'Coffee Shop Barista', gender: 'Male' },
+            { label: 'University Student', gender: 'Male' },
+            { label: 'Office Worker (Suit)', gender: 'Male' },
+            { label: 'Streetwear Model', gender: 'Male' },
+            { label: 'Casual Date Outfit', gender: 'Female' },
+            { label: 'School Girl (Seifuku)', gender: 'Female' },
+            { label: 'Summer Dress', gender: 'Female' },
+            { label: 'Librarian / Glasses', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Profesi / Seragam',
+        chars: [
+            { label: 'Police Officer (SWAT)', gender: 'Male' },
+            { label: 'Doctor / Surgeon', gender: 'Male' },
+            { label: 'Pilot', gender: 'Male' },
+            { label: 'Chef / Koki', gender: 'Male' },
+            { label: 'Firefighter', gender: 'Male' },
+            { label: 'Nurse / Perawat', gender: 'Female' },
+            { label: 'Police Woman', gender: 'Female' },
+            { label: 'Flight Attendant (Pramugari)', gender: 'Female' },
+            { label: 'Doctor', gender: 'Female' },
+            { label: 'Military / Soldier', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Post-Apocalyptic',
+        chars: [
+            { label: 'Wasteland Survivor', gender: 'Male' },
+            { label: 'Gas Mask Raider', gender: 'Male' },
+            { label: 'Nomad Scavenger', gender: 'Male' },
+            { label: 'Wasteland Warrior', gender: 'Female' },
+            { label: 'Survivalist', gender: 'Female' },
+            { label: 'Desert Raider', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Cybernetic / Robotik',
+        chars: [
+            { label: 'Full Cyborg Soldier', gender: 'Male' },
+            { label: 'Mecha Pilot Suit', gender: 'Male' },
+            { label: 'Android Butler', gender: 'Male' },
+            { label: 'Battle Angel (Cyborg)', gender: 'Female' },
+            { label: 'Mechanical Doll', gender: 'Female' },
+            { label: 'Futuristic AI Avatar', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Superhero',
+        chars: [
+            { label: 'Masked Vigilante', gender: 'Male' },
+            { label: 'Super Soldier', gender: 'Male' },
+            { label: 'Speedster Hero', gender: 'Male' },
+            { label: 'Wonder Heroine', gender: 'Female' },
+            { label: 'Magical Girl', gender: 'Female' },
+            { label: 'Mutant Hero', gender: 'Female' }
+        ]
+    },
+    {
+        name: 'Supervillain',
+        chars: [
+            { label: 'Evil Mastermind (Suit)', gender: 'Male' },
+            { label: 'Chaos Bringer', gender: 'Male' },
+            { label: 'Mad Scientist', gender: 'Male' },
+            { label: 'Evil Queen / Empress', gender: 'Female' },
+            { label: 'Cat Burglar', gender: 'Female' },
+            { label: 'Dark Sorceress', gender: 'Female' }
+        ]
+    }
+  ],
   'Karakter Anime': [
     { 
       name: 'Naruto', 
@@ -527,7 +671,31 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
   ]
 };
 
-const LOCATIONS = ['✨ Auto (AI)', 'Studio Foto', 'Hutan Fantasi', 'Kota Cyberpunk', 'Medan Perang', 'Kastil Kerajaan', 'Ruang Angkasa', 'Kuil Jepang', 'Pantai', 'Sekolah Anime', '✎ Custom'];
+const LOCATIONS = [
+  '✨ Auto (AI)', 
+  'Studio Foto', 
+  'Hutan Tropis (Rainforest)',
+  'Hutan Fantasi', 
+  'Sungai Jernih (River)',
+  'Perbukitan Hijau (Hills)',
+  'Bangunan Angker / Tua',
+  'Kota Cyberpunk', 
+  'Laboratorium Sci-Fi',
+  'Medan Perang', 
+  'Kastil Kerajaan', 
+  'Penjara Bawah Tanah (Dungeon)',
+  'Ruang Angkasa', 
+  'Kuil Jepang', 
+  'Pantai / Laut', 
+  'Dalam Air (Underwater)',
+  'Gurun Pasir',
+  'Pegunungan Salju',
+  'Sekolah Anime', 
+  'Taman Bunga',
+  'Rooftop Gedung',
+  'Perpustakaan Kuno',
+  '✎ Custom'
+];
 
 // Updated Times (Consistent with other modules)
 const TIMES = [
@@ -608,21 +776,46 @@ const VISUAL_EFFECT_OPTIONS = [
   { value: "auto", label: "✨ Auto (AI)" },
   { value: "none", label: "Tidak Ada Efek" },
   { value: "bokeh", label: "Bokeh (Background Blur)" },
-  { value: "neon_glow", label: "Neon Glow" },
+  { value: "neon_glow", label: "Neon Glow (Cyberpunk)" },
   { value: "holographic", label: "Holographic Light" },
-  { value: "sparkle", label: "Particle Sparkle" },
+  { value: "sparkle", label: "Particle Sparkle / Magical" },
   { value: "subtle_aura", label: "Subtle Aura" },
-  { value: "glitch", label: "Glitch Effect" },
-  { value: "motion_blur", label: "Motion Blur" },
-  { value: "film_grain", label: "Film Grain" },
-  { value: "rain", label: "Rainy Atmosphere" },
-  { value: "fog", label: "Foggy Environment" },
+  { value: "glitch", label: "Glitch Effect (Digital Error)" },
+  { value: "motion_blur", label: "Motion Blur (Speed)" },
+  { value: "film_grain", label: "Film Grain (Vintage)" },
+  { value: "rain", label: "Hujan Dramatis (Rainy)" },
+  { value: "fog", label: "Kabut Misterius (Foggy)" },
   { value: "cinematic", label: "Cinematic Lighting" },
-  { value: "bioluminescent", label: "Bioluminescent Glow" },
+  { value: "bioluminescent", label: "Bioluminescent Glow (Avatar)" },
   { value: "chromatic", label: "Chromatic Aberration" },
-  { value: "fire", label: "Fire / Sparks" },
+  { value: "fire", label: "Api & Bunga Api (Fire/Sparks)" },
   { value: "hdr", label: "HDR High Contrast" },
-  { value: "surreal_liquid", label: "Surealisme: Realitas Cair" }
+  { value: "surreal_liquid", label: "Surealisme: Realitas Cair" },
+  { value: "fractal_dimension", label: "Dimensi Fraktal (Pecahan Realitas)" },
+  { value: "pixel_glitch", label: "Pixel Sort / Data Moshing" },
+  { value: "double_exposure", label: "Double Exposure (Menyatu dengan Alam)" },
+  { value: "underwater", label: "Underwater Distortion (Bawah Air)" },
+  { value: "sakura_petals", label: "Hujan Kelopak Sakura" },
+  { value: "matrix_code", label: "Matrix Digital Rain" },
+  { value: "ink_splash", label: "Tinta Hitam (Sumi-e Style)" },
+  { value: "thermal_vision", label: "Thermal Vision (Panas Tubuh)" },
+  { value: "xray_skeleton", label: "X-Ray / Transparan" },
+  { value: "paper_cutout", label: "Paper Cutout (Dunia Kertas)" },
+  { value: "glass_shatter", label: "Efek Kaca Pecah (Shattered Reality)" },
+  { value: "comic_halftone", label: "Komik Halftone Dots" },
+  { value: "vaporwave_grid", label: "Vaporwave Grid (Retro 80s)" },
+  { value: "sketch_outline", label: "Garis Sketsa Kasar (Rough Sketch)" },
+  { value: "gold_leaf", label: "Aksen Emas (Kintsugi)" },
+  { value: "cosmic_nebula", label: "Aura Nebula Kosmik" },
+  { value: "shadow_tendrils", label: "Tentakel Bayangan (Dark Energy)" },
+  { value: "lightning_storm", label: "Badai Petir (Electric Aura)" },
+  { value: "frozen_ice", label: "Beku / Kristal Es" },
+  { value: "cyborg_wireframe", label: "Wireframe 3D (Blueprint)" },
+  { value: "dali_melting", label: "Jam Meleleh (Surealisme Dali)" },
+  { value: "impossible_geometry", label: "Geometri Mustahil (Escher Style)" },
+  { value: "spirit_flame", label: "Api Roh (Blue Flame)" },
+  { value: "poltergeist", label: "Poltergeist / Noise TV Lama" },
+  { value: "kaleidoscope", label: "Prisma Kaleidoskop" }
 ];
 
 const MAKEUP_STYLES = [
@@ -675,11 +868,12 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
   
   const [accessories, setAccessories] = useState('');
   
-  const [promptLoading, setPromptLoading] = useState(false);
-
   // Story State
   const [generatedStory, setGeneratedStory] = useState('');
   const [isStoryLoading, setIsStoryLoading] = useState(false);
+
+  // Auto Prompt for GeneratorModule
+  const [autoPrompt, setAutoPrompt] = useState('');
 
   // Update Series List when Mode changes
   useEffect(() => {
@@ -712,23 +906,23 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
     }
   }, [selectedSeries, seriesList, gender]);
 
-  const handleGenerateCharPrompt = async () => {
-    const char = mode === 'Custom' || !SERIES_DATA[mode] ? customChar : selectedChar;
-    const series = mode === 'Custom' || !SERIES_DATA[mode] ? customSeries : selectedSeries;
-    
-    if (!char) return;
-    
-    setPromptLoading(true);
-    try {
-      const desc = await generateCharacterDescription(char, series);
-      return desc; 
-    } catch (e) {
-      console.error(e);
-      return "";
-    } finally {
-      setPromptLoading(false);
+  // Update Auto Prompt when Character Selection Changes
+  useEffect(() => {
+    if (mode === 'Custom' || !SERIES_DATA[mode]) {
+        if (customChar && customSeries) {
+            let genderText = 'Seorang cosplayer';
+            if (gender.includes('Laki-laki')) genderText = 'Seorang pria';
+            else if (gender.includes('Perempuan')) genderText = 'Seorang wanita';
+            else if (gender.includes('Couple')) genderText = 'Sepasang cosplayer';
+            
+            setAutoPrompt(`${genderText} sedang cosplay menjadi ${customChar} from ${customSeries}. High quality detailed cosplay costume.`);
+        }
+    } else {
+        if (selectedChar && selectedSeries) {
+            setAutoPrompt(`${selectedChar} from ${selectedSeries}. High quality detailed cosplay costume.`);
+        }
     }
-  };
+  }, [selectedChar, selectedSeries, customChar, customSeries, mode, gender]);
 
   // Helper function to find label from value in the new structure
   const getPoseLabel = (val: string) => {
@@ -784,9 +978,9 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
   };
 
   // Prompt Construction
-  const getPrompt = () => {
-    const characterName = mode === 'Custom' || !SERIES_DATA[mode] ? customChar : selectedChar;
-    const seriesName = mode === 'Custom' || !SERIES_DATA[mode] ? customSeries : selectedSeries;
+  const getPromptPrefix = () => {
+    // Note: Character Name and Series are now handled in the visible prompt ("externalPrompt")
+    // This prefix focuses on quality, environment, and system instructions.
     
     const locationVal = location === '✎ Custom' ? customLocation : location;
     
@@ -801,23 +995,34 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
     const makeupPrompt = getDetailedMakeupPrompt(makeup);
 
     const details = [
-      locationVal !== '✨ Auto (AI)' && locationVal ? `Lokasi: ${locationVal}` : '',
-      time !== '✨ Auto (AI)' ? `Waktu: ${time}` : '',
-      angle !== '✨ Auto (AI)' ? `Angle: ${angle}` : '',
-      lighting !== '✨ Auto (AI)' ? `Pencahayaan: ${lighting}` : '',
+      locationVal !== '✨ Auto (AI)' && locationVal ? `Location: ${locationVal}` : '',
+      time !== '✨ Auto (AI)' ? `Time: ${time}` : '',
+      angle !== '✨ Auto (AI)' ? `Camera Angle: ${angle}` : '',
+      lighting !== '✨ Auto (AI)' ? `Lighting: ${lighting}` : '',
       poseVal ? `Pose: ${poseVal}` : '',
-      visualEffect !== 'auto' ? `Efek Visual: ${visualEffectLabel}` : '',
-      accessories ? `Aksesoris/Senjata: ${accessories}` : ''
+      visualEffect !== 'auto' ? `Visual Effect: ${visualEffectLabel}` : '',
+      accessories ? `Accessories/Weapon: ${accessories}` : ''
     ].filter(Boolean).join(', ');
 
-    return `Fotografi Cosplay Profesional (${gender}). 
-    Karakter: ${characterName} dari seri ${seriesName}.
-    Detail Kostum Akurat. Kualitas 8k, Tekstur Realistis.
+    return `
+    [SYSTEM: COSPLAY PHOTOGRAPHY]
+    Quality: 8k, Photorealistic, Ultra-Detailed, Cinematic Lighting.
+    Context: Professional Cosplay Photography.
     
-    [PROFESSIONAL MAKEUP INSTRUCTION]:
-    ${makeupPrompt ? `Apply specific makeup style: ${makeupPrompt}` : 'Ensure makeup is character-accurate and high definition.'}
+    [ENVIRONMENT & STYLE]
+    ${details}
     
-    ${details}.`;
+    [QUALITY CHECK]
+    Texture: Real fabric, skin pores, hair strands.
+    Lighting: Physically accurate.
+    
+    [MAKEUP INSTRUCTION]
+    ${makeupPrompt ? makeupPrompt : 'Character accurate professional makeup.'}
+    
+    [INSTRUCTION]
+    Combine the user's character description with the uploaded face. 
+    Ensure the costume is accurate to the character source material.
+    `;
   };
 
   const handleGenerateStory = async (imageUrl: string) => {
@@ -911,7 +1116,7 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
        {(SERIES_DATA[mode]) ? (
          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-               <label className="text-[10px] font-semibold text-gray-500 uppercase">{mode === 'Video Game' ? 'Game' : 'Anime / Series'}</label>
+               <label className="text-[10px] font-semibold text-gray-500 uppercase">{mode === 'Video Game' ? 'Game' : (mode === 'Tema Bebas / Genre (OC)' ? 'Genre / Tema' : 'Anime / Series')}</label>
                <select 
                  value={selectedSeries}
                  onChange={(e) => setSelectedSeries(e.target.value)}
@@ -1087,10 +1292,9 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
       moduleId="cosplay-fusion"
       title="Cosplay Fusion"
       description="Berubah menjadi karakter apa pun. Unggah foto Anda dan sebutkan nama karakternya."
-      promptPrefix={getPrompt()}
-      customPromptLabel="Prompt (Auto/Edit)"
+      promptPrefix={getPromptPrefix()}
+      customPromptLabel="Prompt Karakter (Otomatis/Edit)"
       
-      // Configuration for 3 Upload Slots matching the screenshot
       requireImage={true}
       mainImageLabel="Wajah Utama (Wajib)"
       
@@ -1103,11 +1307,14 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
       extraControls={extraControls}
       batchModeAvailable={true}
       
-      // Pass the generator function
-      customPromptGenerator={handleGenerateCharPrompt}
-
-      // New Custom Actions
       renderCustomResultActions={renderCustomResultActions}
+      
+      // NEW PROP: Passes the constructed prompt to the GeneratorModule input box
+      externalPrompt={autoPrompt}
+      
+      // NEW PROP: Custom large refine button
+      customRefineLabel="Berikan Deskripsi Detail"
+      customRefineHandler={refineCharacterDescription}
     />
   );
 };
