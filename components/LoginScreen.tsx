@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Loader2, ShieldCheck, Sparkles } from 'lucide-react';
-import { authService } from '../services/authService';
+import React, { useState } from "react";
+import { Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { authService, UserProfile } from "../services/authService";
 
 interface LoginScreenProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (user: UserProfile) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
@@ -12,8 +12,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await authService.loginWithGoogle();
-      setTimeout(onLoginSuccess, 500); // Animation buffer
+      // Ambil user dari mock Google login
+      const user = await authService.loginWithGoogle();
+
+      // Kirim user ke parent (App) agar state langsung ter-update
+      onLoginSuccess(user);
+      // Tidak perlu setIsLoading(false) karena setelah login,
+      // komponen ini akan di-unmount dan diganti Layout.
     } catch (error) {
       console.error("Login failed", error);
       setIsLoading(false);
@@ -32,7 +37,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       <div className="relative z-10 w-full max-w-md p-8 animate-fade-in-up">
         {/* Glass Card */}
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-
           {/* Shimmer Effect */}
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
 
@@ -67,7 +71,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 className="w-6 h-6"
               />
             )}
-            {isLoading ? 'Menghubungkan...' : 'Sign in with Google'}
+            {isLoading ? "Menghubungkan..." : "Sign in with Google"}
           </button>
 
           {/* Footer */}
@@ -77,13 +81,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               <span>Secure Access Required</span>
             </div>
           </div>
-
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-8">
           &copy; 2025 Nusantara AI Ecosystem using Google Gemini
         </p>
-
       </div>
     </div>
   );
