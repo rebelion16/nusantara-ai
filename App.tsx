@@ -35,12 +35,7 @@ const App: React.FC = () => {
       case 'prewed-virtual':
         return <PrewedVirtualModule />;
       case 'content-creator':
-        return (
-          <ContentCreatorModule
-            onNavigate={setActiveModuleId}
-            onTransfer={setTransferredImage}
-          />
-        );
+        return <ContentCreatorModule onNavigate={setActiveModuleId} onTransfer={setTransferredImage} />;
       case 'cosplay-fusion':
         return (
           <CosplayFusionModule 

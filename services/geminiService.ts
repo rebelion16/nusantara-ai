@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = () => {
@@ -214,7 +215,44 @@ export const refineUserPrompt = async (userInput: string): Promise<string> => {
   const ai = getClient();
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
-    contents: `Sempurnakan prompt gambar berikut agar lebih deskriptif dan kreatif dalam Bahasa Indonesia. Input: "${userInput}"`
+    contents: `Sempurnakan prompt gambar berikut agar SANGAT MENDETAIL, visual, dan kreatif untuk AI Art Generator (seperti Cosplay/Character Design).
+    
+    ATURAN OUTPUT:
+    1. HANYA kembalikan teks prompt final. 
+    2. JANGAN pakai kalimat pembuka (contoh: "Berikut adalah...", "Tentu...").
+    3. JANGAN berikan opsi (Opsi 1, Opsi 2). Cukup 1 paragraf prompt terbaik.
+    4. Fokus pada deskripsi kostum, pencahayaan, tekstur, dan suasana.
+    
+    Bahasa Indonesia.
+    Input: "${userInput}"`
+  });
+  return response.text?.trim() || userInput;
+};
+
+export const refineCharacterDescription = async (userInput: string): Promise<string> => {
+  const ai = getClient();
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: `Bertindaklah sebagai ahli desain karakter dan kostum cosplay. Tugas Anda adalah memperkaya deskripsi visual karakter berikut menjadi SANGAT MENDETAIL, tetapi DENGAN BATASAN KETAT.
+
+    Input Pengguna: "${userInput}"
+
+    ⚠️ ATURAN MUTLAK (NEGATIVE CONSTRAINTS):
+    1. JANGAN mendeskripsikan LOKASI, BACKGROUND, atau PEMANDANGAN (Abaikan jika ada di input).
+    2. JANGAN mendeskripsikan PENCAHAYAAN (Lighting).
+    3. JANGAN mendeskripsikan SUDUT KAMERA (Angle) atau JENIS LENSA.
+    4. JANGAN mendeskripsikan POSE (Gaya tubuh).
+    5. JANGAN mendeskripsikan EFEK VISUAL (Bokeh, Blur, dll).
+    6. JANGAN berikan kalimat pembuka atau penutup. Langsung ke deskripsi.
+    7. JANGAN berikan opsi (Opsi 1, Opsi 2). Cukup 1 paragraf final.
+
+    ✅ FOKUS HANYA PADA:
+    - Detail fisik karakter (wajah, rambut, mata).
+    - Detail kostum yang sangat spesifik (bahan, tekstur, warna, ornamen, lapisan armor/kain).
+    - Aksesoris yang melekat pada tubuh (senjata, mahkota, perhiasan).
+
+    OUTPUT:
+    Satu paragraf padat deskripsi visual karakter dalam Bahasa Indonesia (atau Inggris jika istilah kostum lebih akurat).`
   });
   return response.text?.trim() || userInput;
 };
@@ -401,7 +439,62 @@ export const generateScript = async (topic: string): Promise<string> => {
   return response.text?.trim() || "";
 };
 
-// --- FOREX & FINANCIAL AI ---
+// --- FOREX & FINANCIAL AI (UPDATED WITH INVESTING.COM TARGETING) ---
+
+// 1. Get Real-Time Prices via Search
+export const getRealTimeForexPrices = async (): Promise<any[]> => {
+    const ai = getClient();
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `Retrieve the current live market price for these pairs: XAU/USD (Gold), EUR/USD, GBP/USD, USD/JPY, BTC/USD.
+            Use Google Search to find the latest data points from reliable financial news sources or brokers (e.g., Bloomberg, Reuters, TradingView).
+            
+            Return ONLY a valid JSON Array with objects containing: 
+            "pair" (string), "price" (number), "change" (number).
+            Example: [{"pair": "XAUUSD", "price": 2345.50, "change": 0.15}]`,
+            config: {
+                tools: [{googleSearch: {}}]
+            }
+        });
+        const text = response.text || "[]";
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.error("Price Fetch Error", e);
+        return [];
+    }
+};
+
+// 2. Get Deep Market Insight from Investing.com
+export const getMarketInsight = async (pair: string): Promise<any> => {
+    const ai = getClient();
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash', // Using flash for quicker search summarization
+            contents: `Search for "${pair} technical analysis summary investing.com" to find the latest signals (Moving Averages and Technical Indicators) from Investing.com.
+            
+            Summarize the findings into a JSON object:
+            {
+                "sentiment": "Strong Buy" | "Buy" | "Neutral" | "Sell" | "Strong Sell",
+                "trend_strength": number (0-100 where 100 is strongest trend),
+                "support": "Key support level price",
+                "resistance": "Key resistance level price",
+                "summary": "Brief explanation of why (e.g. 'MA5, MA10, MA20 indicate Strong Buy...')."
+            }
+            Ensure the data is based on the most recent available analysis (Daily or Hourly timeframe).`,
+            config: {
+                tools: [{googleSearch: {}}]
+            }
+        });
+        const text = response.text || "{}";
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.error("Insight Error", e);
+        return null;
+    }
+};
 
 export const analyzeForexChart = async (base64Image: string): Promise<string> => {
   const ai = getClient();
@@ -430,46 +523,80 @@ export const analyzeForexChart = async (base64Image: string): Promise<string> =>
 export const chatWithAstra = async (history: {role: 'user' | 'model', text: string}[], userMessage: string): Promise<string> => {
   const ai = getClient();
   
+  // Astra uses Google Search to get REAL-TIME data
   const chat = ai.chats.create({
     model: 'gemini-3-pro-preview',
     history: history.map(h => ({ role: h.role, parts: [{ text: h.text }] })),
     config: {
+      tools: [{googleSearch: {}}], // ENABLE REAL-TIME SEARCH
       systemInstruction: `You are "Astra", a world-class AI Forex Trading Assistant powered by RebelFX. 
       Your personality: Professional, sharp, slightly futuristic, risk-averse, and highly analytical (Institutional Trader Persona).
       
-      Capabilities: Technical Analysis (SMC, Price Action), Fundamental Analysis, Risk Management.
+      Capabilities: Technical Analysis, Fundamental Analysis, Risk Management, and REAL-TIME Market Data lookup.
       
       Rules:
       1. Always emphasize Risk Management.
-      2. Never give financial advice as absolute certainty. Use probabilities.
-      3. Use professional forex terminology (Liquidity Sweep, BOS, Order Block, etc.).
-      4. If asked about "Signal", provide a detailed setup with SL/TP and reasoning.
+      2. Use Google Search to find current prices, news, and economic events when asked.
+      3. Never give financial advice as absolute certainty. Use probabilities.
+      4. Use professional forex terminology (Liquidity Sweep, BOS, Order Block, etc.).
       5. Keep answers concise but data-rich.`
     }
   });
 
   const response = await chat.sendMessage({ message: userMessage });
-  return response.text;
+  return response.text || "Connection weak. Please try again.";
 };
 
 export const generateForexSignal = async (pair: string, timeframe: string): Promise<string> => {
   const ai = getClient();
+  
+  // Uses Search to find current context BEFORE generating signal
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
-    contents: `Act as an algorithmic trading bot. Generate a hypothetical but realistic TRADING SIGNAL for ${pair} on the ${timeframe} timeframe based on current general market structure concepts (Simulation).
+    contents: `Act as an algorithmic trading bot. 
+    First, use Google Search to find the CURRENT PRICE, LATEST NEWS, and MARKET SENTIMENT for ${pair}.
+    Based on this REAL-TIME data, generate a high-probability TRADING SIGNAL for ${timeframe}.
     
-    Output Format STRICTLY JSON:
+    Output Format STRICTLY JSON (Do not use markdown code blocks, just raw JSON):
     {
       "pair": "${pair}",
       "action": "BUY/SELL",
-      "entry": "1.xxxx",
-      "stop_loss": "1.xxxx",
-      "take_profit_1": "1.xxxx",
-      "take_profit_2": "1.xxxx",
-      "confidence": "85%",
-      "reasoning": "Brief technical reason (e.g. Bullish Engulfing at Support)"
+      "entry": "Current Price range",
+      "stop_loss": "Logical SL based on ATR/Structure",
+      "take_profit_1": "1:1 R/R",
+      "take_profit_2": "1:2 R/R",
+      "confidence": "Percentage based on confluence",
+      "reasoning": "Brief technical/fundamental reason based on search results"
     }
-    `
+    `,
+    config: {
+        tools: [{googleSearch: {}}] // ENABLE REAL-TIME SEARCH
+    }
   });
   return response.text || "{}";
+};
+
+export const getForexNews = async (): Promise<any[]> => {
+    const ai = getClient();
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `Search for the top 5 most important Forex/Economic news headlines from the last 24 hours. Focus on USD, EUR, GBP, JPY, and Gold (XAU).
+            
+            Output STRICTLY JSON Array:
+            [
+                { "time": "Time (e.g. 2h ago)", "currency": "USD", "event": "Headline", "impact": "High/Medium/Low" }
+            ]`,
+            config: {
+                tools: [{googleSearch: {}}]
+            }
+        });
+        
+        const text = response.text || "[]";
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.error("News Fetch Error", e);
+        return [];
+    }
 };

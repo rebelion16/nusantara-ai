@@ -36,7 +36,8 @@ const WEIGHT_OPTIONS = ['✨ Auto', '40 kg (Skinny)', '45 kg', '50 kg (Slim)', '
 
 const ART_STYLES = [
   'Foto Realistik', 
-  'Photobox / Photobooth', // NEW
+  'Pas Foto (ID Photo)', // NEW
+  'Photobox / Photobooth', 
   'Sinematik', 
   'Seni Digital (Karikatur)', 
   'Lukisan Minyak', 
@@ -46,6 +47,8 @@ const ART_STYLES = [
   'Vintage 90s',
   'Polaroid Style'
 ];
+
+const PAS_FOTO_BG = ['Merah (Red)', 'Biru (Blue)'];
 
 const PHOTOBOX_CONCEPTS = [
   'Studio Polos Putih (Clean White)',
@@ -107,7 +110,39 @@ const TIMES = [
   'Sore (Golden Hour)', 'Senja (Blue Hour)', 'Malam (City Lights)', 'Tengah Malam (Gelap)'
 ];
 
-const LIGHTING_EFFECTS = ['✨ Otomatis', 'Ring Light (Photobooth)', 'Golden Hour', 'Pencahayaan Studio', 'Natural Lembut', 'Bayangan Dramatis', 'Lampu Neon', 'Volumetrik Sinematik', 'Gelap & Murung', 'Rembrandt Lighting', 'Butterfly Lighting'];
+const LIGHTING_EFFECTS = [
+  '✨ Otomatis',
+  'Ring Light (Photobooth)',
+  'Golden Hour (Sore)',
+  'Blue Hour (Senja)',
+  'Pencahayaan Studio (Softbox)',
+  'Natural Window Light',
+  'Bayangan Dramatis (Noir)',
+  'Lampu Neon (Cyberpunk)',
+  'Volumetrik Sinematik (God Rays)',
+  'Rembrandt Lighting (Classic)',
+  'Butterfly Lighting (Glamour)',
+  'Clamshell Lighting (Beauty)',
+  'Split Lighting (High Contrast)',
+  'Rim Light (Backlight Edge)',
+  'Dappled Light (Bayangan Pohon)',
+  'Venetian Blinds (Garis-garis)',
+  'Candlelight (Lilin Hangat)',
+  'Moonlight (Cahaya Bulan)',
+  'Fireplace Glow (Api Unggun)',
+  'Bioluminescent (Avatar Style)',
+  'Ultraviolet / Blacklight',
+  'Prism Refractions (Pelangi)',
+  'Underwater Caustics',
+  'Disco / Club Lights',
+  'Double Exposure (Artistic)',
+  'Infrared (Surreal)',
+  'Strobe Flash (Paparazzi)',
+  'Lens Flare (Overexposed)',
+  'Holographic Reflection',
+  'Silhouette (Backlit)',
+  'Cinematic Teal & Orange'
+];
 
 // Expanded Angle Logic
 const CAMERA_ANGLES = [
@@ -177,6 +212,9 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
   const [photoboxConcept, setPhotoboxConcept] = useState(PHOTOBOX_CONCEPTS[0]);
   const [photoboxColor, setPhotoboxColor] = useState(PHOTOBOX_COLORS[0]);
   const [photoboxPattern, setPhotoboxPattern] = useState(PHOTOBOX_PATTERNS[0]);
+  
+  // Pas Foto Specific
+  const [pasFotoBg, setPasFotoBg] = useState(PAS_FOTO_BG[0]);
 
   const [makeup, setMakeup] = useState(MAKEUP_STYLES[0].value);
   
@@ -191,7 +229,7 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
   const [pose, setPose] = useState(POSES[0]);
   const [bgEffect, setBgEffect] = useState(BG_EFFECTS[0]);
 
-  // Update logic for Photobox Mode
+  // Update logic for Photobox & Pas Foto Mode
   useEffect(() => {
     if (artStyle === 'Photobox / Photobooth') {
         setLocationType('Indoor (Interior)');
@@ -201,6 +239,14 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
         setAngle('Selevel Mata (Eye Level)');
         // Ensure "Group" poses are preferred if multiple subjects
         setPose('Gaya Bebas Photobooth');
+    } else if (artStyle === 'Pas Foto (ID Photo)') {
+        // Enforce specific settings logic visually (though prompt override happens in generation)
+        setLocationType('Indoor (Interior)');
+        setSpecificLocation('Studio');
+        setTimeOfDay('Flash Photography (Studio)');
+        setLighting('Pencahayaan Studio (Softbox)');
+        setAngle('Selevel Mata (Eye Level)');
+        setPose('Berdiri Percaya Diri');
     }
   }, [artStyle]);
 
@@ -290,7 +336,8 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     
     const makeupText = getMakeupDescription(makeup);
 
-    const environmentDetails = [
+    // Default environment for standard modes
+    let environmentDetails = [
       `Gaya Seni: ${artStyle}`,
       locationText ? `Lokasi: ${locationText}` : '',
       (timeOfDay !== '✨ Otomatis' && artStyle !== 'Photobox / Photobooth') ? `Waktu: ${timeOfDay}` : '',
@@ -326,6 +373,28 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     
     Instruksi Tambahan: ${userPrompt}`;
 
+    // --- OVERRIDE FOR PAS FOTO ---
+    if (artStyle === 'Pas Foto (ID Photo)') {
+        const bgColorsMap: any = { 'Merah (Red)': 'SOLID RED BACKGROUND (#DB1514)', 'Biru (Blue)': 'SOLID BLUE BACKGROUND (#0090FF)' };
+        const specificBg = bgColorsMap[pasFotoBg] || 'SOLID RED BACKGROUND';
+        
+        fullPrompt = `
+        [OFFICIAL ID PHOTO - PAS FOTO]
+        Create a formal ID Photo (Pas Foto).
+        BACKGROUND: ${specificBg}. No gradients, no shadows on wall, perfectly flat color.
+        LIGHTING: Professional Studio Lighting, Soft Diffuser (Box Light), Face is evenly lit, no harsh shadows.
+        ANGLE: Eye Level, Straight Frontal View (Looking directly at camera).
+        COMPOSITION: Close Up (Head and Shoulders only).
+        POSE: Formal, upright posture, straight shoulders, neutral or slight polite smile.
+        
+        SUBJECT DETAILS:
+        ${subjectDescriptions}
+        
+        QUALITY: Ultra-Sharp, High Resolution, Crystal Clear Face details.
+        NEGATIVE: tilted head, side view, dramatic lighting, artistic shadows, messy hair, busy background.
+        `;
+    }
+
     if (artStyle === 'Photobox / Photobooth') {
         let conceptDetails = photoboxConcept;
         
@@ -348,7 +417,10 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     if (isBatch) {
         const results: string[] = [];
         for (let i = 0; i < batchCount; i++) {
-            const batchPrompt = `${fullPrompt} \n\n[VARIASI BATCH #${i + 1}: Hasilkan variasi pose dan ekspresi yang berbeda/acak untuk photobox ini.]`;
+            const batchPrompt = artStyle === 'Pas Foto (ID Photo)' 
+                ? fullPrompt // No pose variation for Pas Foto
+                : `${fullPrompt} \n\n[VARIASI BATCH #${i + 1}: Hasilkan variasi pose dan ekspresi yang berbeda/acak untuk photobox ini.]`;
+            
             const result = await generateCreativeImage(batchPrompt, mainImage, aspectRatio, imageSize, initialRefImage, extraFaces, true);
             results.push(result);
         }
@@ -589,6 +661,23 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
             </div>
           )}
 
+          {/* Pas Foto Specific Controls (CONDITIONAL) */}
+          {artStyle === 'Pas Foto (ID Photo)' && (
+             <div className="space-y-1 animate-fade-in">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase text-blue-500">Warna Background</label>
+                <select
+                    value={pasFotoBg}
+                    onChange={(e) => setPasFotoBg(e.target.value)}
+                    className="w-full rounded-lg border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-gray-800 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    {PAS_FOTO_BG.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <p className="text-[9px] text-gray-400 mt-1 italic">
+                   Setting teknis (Waktu, Cahaya, Angle) diatur otomatis untuk standar Pas Foto.
+                </p>
+             </div>
+          )}
+
           {/* Makeup Selection */}
           <div className="space-y-1">
             <label className="text-[10px] font-semibold text-gray-500 uppercase">Makeup / Riasan</label>
@@ -601,110 +690,115 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
             </select>
           </div>
 
-          {/* Location Group */}
-          <div className="space-y-1 col-span-1 md:col-span-2 lg:col-span-3">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Lokasi</label>
-             <div className="flex gap-2">
-                {/* Category Selector */}
-                <select 
-                  value={locationType} 
-                  onChange={(e) => handleLocationTypeChange(e.target.value)}
-                  disabled={artStyle === 'Photobox / Photobooth'}
-                  className="w-1/3 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
-                >
-                  {LOCATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+          {/* Hide these controls if Pas Foto is selected */}
+          {artStyle !== 'Pas Foto (ID Photo)' && (
+            <>
+                {/* Location Group */}
+                <div className="space-y-1 col-span-1 md:col-span-2 lg:col-span-3">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase">Lokasi</label>
+                    <div className="flex gap-2">
+                        {/* Category Selector */}
+                        <select 
+                        value={locationType} 
+                        onChange={(e) => handleLocationTypeChange(e.target.value)}
+                        disabled={artStyle === 'Photobox / Photobooth'}
+                        className="w-1/3 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                        >
+                        {LOCATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
 
-                {/* Specific Logic */}
-                {locationType === '✎ Input Manual' ? (
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: Di pesawat luar angkasa, di toko permen..." 
-                    value={manualLocation}
-                    onChange={(e) => setManualLocation(e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                ) : locationType !== '✨ Otomatis' ? (
-                  <select 
-                    value={specificLocation} 
-                    onChange={(e) => setSpecificLocation(e.target.value)}
+                        {/* Specific Logic */}
+                        {locationType === '✎ Input Manual' ? (
+                        <input 
+                            type="text" 
+                            placeholder="Contoh: Di pesawat luar angkasa, di toko permen..." 
+                            value={manualLocation}
+                            onChange={(e) => setManualLocation(e.target.value)}
+                            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        ) : locationType !== '✨ Otomatis' ? (
+                        <select 
+                            value={specificLocation} 
+                            onChange={(e) => setSpecificLocation(e.target.value)}
+                            disabled={artStyle === 'Photobox / Photobooth'}
+                            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                        >
+                            {locationType === 'Indoor (Interior)' && INDOOR_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                            {locationType === 'Outdoor (Alam)' && OUTDOOR_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                            {locationType === 'Urban (Kota)' && URBAN_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                            {locationType === 'Fantasy/Sci-Fi' && FANTASY_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+                        ) : (
+                        <div className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-sm text-gray-400 italic">
+                            AI akan memilih lokasi terbaik
+                        </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Time */}
+                <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase">Waktu</label>
+                    <select 
+                    value={timeOfDay} 
+                    onChange={(e) => setTimeOfDay(e.target.value)}
                     disabled={artStyle === 'Photobox / Photobooth'}
-                    className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
-                  >
-                     {locationType === 'Indoor (Interior)' && INDOOR_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                     {locationType === 'Outdoor (Alam)' && OUTDOOR_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                     {locationType === 'Urban (Kota)' && URBAN_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                     {locationType === 'Fantasy/Sci-Fi' && FANTASY_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                ) : (
-                   <div className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-sm text-gray-400 italic">
-                      AI akan memilih lokasi terbaik
-                   </div>
-                )}
-             </div>
-          </div>
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                    >
+                    {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                </div>
 
-          {/* Time */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold text-gray-500 uppercase">Waktu</label>
-            <select 
-              value={timeOfDay} 
-              onChange={(e) => setTimeOfDay(e.target.value)}
-              disabled={artStyle === 'Photobox / Photobooth'}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
-            >
-              {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
+                {/* Lighting */}
+                <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase">Pencahayaan</label>
+                    <select 
+                    value={lighting} 
+                    onChange={(e) => setLighting(e.target.value)}
+                    disabled={artStyle === 'Photobox / Photobooth'}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                    >
+                    {LIGHTING_EFFECTS.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                </div>
 
-          {/* Lighting */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold text-gray-500 uppercase">Pencahayaan</label>
-            <select 
-              value={lighting} 
-              onChange={(e) => setLighting(e.target.value)}
-              disabled={artStyle === 'Photobox / Photobooth'}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
-            >
-              {LIGHTING_EFFECTS.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </div>
+                {/* Angle */}
+                <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase">Sudut Kamera</label>
+                    <select 
+                    value={angle} 
+                    onChange={(e) => setAngle(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                    {CAMERA_ANGLES.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                </div>
 
-          {/* Angle */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold text-gray-500 uppercase">Sudut Kamera</label>
-            <select 
-              value={angle} 
-              onChange={(e) => setAngle(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {CAMERA_ANGLES.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
+                {/* Pose */}
+                <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase">Pose Subjek</label>
+                    <select 
+                    value={pose} 
+                    onChange={(e) => setPose(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                    {POSES.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                </div>
 
-          {/* Pose */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold text-gray-500 uppercase">Pose Subjek</label>
-            <select 
-              value={pose} 
-              onChange={(e) => setPose(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {POSES.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-
-          {/* Background Effect */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold text-gray-500 uppercase">Efek Latar Belakang</label>
-            <select 
-              value={bgEffect} 
-              onChange={(e) => setBgEffect(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {BG_EFFECTS.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
+                {/* Background Effect */}
+                <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase">Efek Latar Belakang</label>
+                    <select 
+                    value={bgEffect} 
+                    onChange={(e) => setBgEffect(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                    {BG_EFFECTS.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                </div>
+            </>
+          )}
 
         </div>
       </div>
@@ -732,6 +826,13 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
       
       // Pass the Custom Generator
       customGenerateHandler={handleCustomGenerate}
+
+      // NEW: Pass custom ratio options if Pas Foto is selected
+      customRatioOptions={artStyle === 'Pas Foto (ID Photo)' ? [
+        { value: '2:3', label: '2x3 (Pas Foto)' },
+        { value: '3:4', label: '3x4 (Pas Foto)' },
+        { value: '4:6', label: '4x6 (Pas Foto)' }
+      ] : undefined}
     />
   );
 };

@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, Activity, Zap, MessageSquare, 
   Eye, BarChart2, ShieldCheck, Radio, 
-  Send, Upload, AlertTriangle, CheckCircle, RefreshCw, Sparkles
+  Send, Upload, AlertTriangle, CheckCircle, RefreshCw, Sparkles,
+  ArrowUpRight, ArrowDownRight, Globe
 } from 'lucide-react';
-import { analyzeForexChart, chatWithAstra, generateForexSignal, fileToBase64 } from '../../services/geminiService';
+import { analyzeForexChart, chatWithAstra, generateForexSignal, fileToBase64, getForexNews, getRealTimeForexPrices, getMarketInsight } from '../../services/geminiService';
 
 // --- CONSTANTS ---
 
@@ -19,22 +21,59 @@ const TABS = [
 const PAIRS = ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'BTCUSD', 'NAS100', 'US30'];
 const TIMEFRAMES = ['M5', 'M15', 'H1', 'H4', 'D1'];
 
-// --- MOCK DATA FOR DASHBOARD VISUALS ---
-
-const MOCK_SENTIMENT = [
-  { pair: 'XAUUSD', value: 75, trend: 'Bullish' },
-  { pair: 'EURUSD', value: 40, trend: 'Bearish' },
-  { pair: 'GBPUSD', value: 55, trend: 'Neutral' },
-  { pair: 'USDJPY', value: 80, trend: 'Strong Bullish' },
-];
-
-const MOCK_EVENTS = [
-  { time: '19:30', currency: 'USD', event: 'CPI Data Release', impact: 'High' },
-  { time: '21:00', currency: 'USD', event: 'FOMC Meeting', impact: 'High' },
-  { time: '14:00', currency: 'EUR', event: 'Lagarde Speaks', impact: 'Medium' },
-];
-
 // --- COMPONENTS ---
+
+// Live Ticker Component (Real-Time Fetching)
+const PriceTicker = () => {
+    const [prices, setPrices] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchPrices = async () => {
+        setLoading(true);
+        const data = await getRealTimeForexPrices();
+        if (data && data.length > 0) {
+            setPrices(data);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchPrices();
+        // Auto refresh every 60 seconds to save quota but keep somewhat fresh
+        const interval = setInterval(fetchPrices, 60000); 
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="w-full bg-black/40 border-b border-slate-800 overflow-hidden whitespace-nowrap py-2 flex items-center relative">
+            <button 
+                onClick={fetchPrices} 
+                className="absolute left-0 z-10 bg-slate-900/90 text-cyan-500 p-1.5 h-full hover:bg-slate-800 transition-colors border-r border-slate-700"
+                title="Refresh Prices"
+            >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            </button>
+            <div className="animate-marquee flex gap-8 items-center pl-10">
+                {prices.length > 0 ? (
+                    [...prices, ...prices].map((p, i) => ( // Duplicate for seamless loop
+                        <div key={`${p.pair}-${i}`} className="flex items-center gap-2 text-xs font-mono">
+                            <span className="font-bold text-slate-300">{p.pair}</span>
+                            <span className={p.change >= 0 ? "text-green-400" : "text-red-400"}>
+                                {p.price}
+                            </span>
+                            <span className={`flex items-center ${p.change >= 0 ? "text-green-500" : "text-red-500"}`}>
+                                {p.change >= 0 ? <ArrowUpRight size={12}/> : <ArrowDownRight size={12}/>}
+                                {Math.abs(p.change)}%
+                            </span>
+                        </div>
+                    ))
+                ) : (
+                    <span className="text-xs text-slate-500 font-mono ml-4">Connecting to Global Market Data feed...</span>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const SentimentRadar: React.FC = () => {
   return (
@@ -85,7 +124,7 @@ export const RebelFXModule: React.FC = () => {
   
   // Chat State
   const [messages, setMessages] = useState<{role: 'user' | 'model', text: string}[]>([
-    { role: 'model', text: "Systems online. I am Astra. Ready to analyze the markets. What is your directive?" }
+    { role: 'model', text: "Systems online. I am Astra. Connected to Real-Time Market Data via Google Search. What pair should I analyze?" }
   ]);
   const [inputMsg, setInputMsg] = useState('');
   const [isChatting, setIsChatting] = useState(false);
@@ -103,14 +142,46 @@ export const RebelFXModule: React.FC = () => {
   const [generatedSignal, setGeneratedSignal] = useState<any>(null);
   const [isSignaling, setIsSignaling] = useState(false);
 
+  // News State
+  const [marketNews, setMarketNews] = useState<any[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+
+  // Real-Time Insight State (Dashboard)
+  const [insightData, setInsightData] = useState<any>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+
   // Risk Calc
   const [balance, setBalance] = useState(1000);
   const [riskPercent, setRiskPercent] = useState(1);
   const [stopLossPips, setStopLossPips] = useState(30);
 
+  // Initial Data Fetch
+  useEffect(() => {
+    fetchNews();
+    fetchDashboardInsight();
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const fetchNews = async () => {
+    setNewsLoading(true);
+    const news = await getForexNews();
+    if (news && news.length > 0) {
+        setMarketNews(news);
+    }
+    setNewsLoading(false);
+  };
+
+  const fetchDashboardInsight = async () => {
+    setInsightLoading(true);
+    // Force reset data to show loading
+    setInsightData(null);
+    const data = await getMarketInsight('XAUUSD'); // Default Gold Insight
+    if (data) setInsightData(data);
+    setInsightLoading(false);
+  };
 
   const handleSendMessage = async () => {
     if (!inputMsg.trim()) return;
@@ -148,6 +219,7 @@ export const RebelFXModule: React.FC = () => {
     setGeneratedSignal(null);
     try {
       const jsonStr = await generateForexSignal(selectedPair, selectedTimeframe);
+      // Clean potential JSON markdown wrapping
       const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
       setGeneratedSignal(JSON.parse(cleanJson));
     } catch (e) {
@@ -158,11 +230,20 @@ export const RebelFXModule: React.FC = () => {
   };
 
   const calculateLotSize = () => {
-    // Basic formula: Risk Amount / (SL Pips * Pip Value)
-    // Assuming USD base currency and standard lots approx $10/pip for majors (simplified)
     const riskAmount = balance * (riskPercent / 100);
     const lotSize = riskAmount / (stopLossPips * 10);
     return lotSize.toFixed(2);
+  };
+
+  // Helper for Investing.com Sentiment Color
+  const getSentimentColor = (s: string) => {
+    if (!s) return 'text-slate-400';
+    const lower = s.toLowerCase();
+    if (lower.includes('strong buy')) return 'text-green-400';
+    if (lower.includes('buy') || lower.includes('bull')) return 'text-emerald-400';
+    if (lower.includes('strong sell')) return 'text-red-500';
+    if (lower.includes('sell') || lower.includes('bear')) return 'text-red-400';
+    return 'text-yellow-400';
   };
 
   return (
@@ -177,17 +258,20 @@ export const RebelFXModule: React.FC = () => {
              </div>
              <div>
                <h1 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tracking-wider">DIGITAL REBEL FX</h1>
-               <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">AI Trading Intelligence Unit</p>
+               <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">AI Real-Time Intelligence Unit</p>
              </div>
           </div>
           <div className="flex items-center gap-2">
              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-             <span className="text-xs font-mono text-green-400">SYSTEM ONLINE</span>
+             <span className="text-xs font-mono text-green-400">LIVE FEED</span>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] overflow-hidden">
+      {/* Live Ticker */}
+      <PriceTicker />
+
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] overflow-hidden">
         
         {/* Sidebar Nav */}
         <nav className="w-full lg:w-20 bg-slate-900 border-r border-slate-800 flex lg:flex-col items-center py-4 gap-2 overflow-x-auto lg:overflow-visible no-scrollbar">
@@ -215,66 +299,78 @@ export const RebelFXModule: React.FC = () => {
                     {/* Radar */}
                     <div className="lg:col-span-1 bg-slate-900/50 rounded-3xl p-6 border border-slate-800 backdrop-blur-sm">
                        <SentimentRadar />
-                       <div className="mt-6 space-y-3">
-                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Sentiment</h4>
-                          {MOCK_SENTIMENT.map(s => (
-                             <div key={s.pair} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                                <span className="font-bold text-sm text-slate-200">{s.pair}</span>
-                                <div className="flex items-center gap-3">
-                                   <div className="w-24 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                      <div className={`h-full ${s.trend.includes('Bullish') ? 'bg-green-500' : s.trend.includes('Bearish') ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${s.value}%` }}></div>
-                                   </div>
-                                   <span className={`text-[10px] font-bold ${s.trend.includes('Bullish') ? 'text-green-400' : s.trend.includes('Bearish') ? 'text-red-400' : 'text-yellow-400'}`}>{s.trend}</span>
-                                </div>
-                             </div>
-                          ))}
+                       <div className="mt-6 text-center">
+                          <p className="text-xs text-cyan-500 font-mono animate-pulse">MONITORING GLOBAL MARKETS...</p>
                        </div>
                     </div>
 
                     {/* Stats */}
                     <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                       {/* AI Forecast */}
-                       <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded-3xl p-6 border border-indigo-500/20">
-                          <h3 className="flex items-center gap-2 text-indigo-400 font-bold mb-4">
-                             <Sparkles size={18}/> AI Forecast (24H)
-                          </h3>
-                          <div className="text-4xl font-black text-white mb-1">XAUUSD</div>
-                          <div className="text-sm text-green-400 font-mono mb-6">Probability: UP (78%)</div>
-                          <div className="h-24 flex items-end gap-1">
-                             {[40, 55, 45, 60, 75, 65, 80, 70, 85, 90, 85, 95].map((h, i) => (
-                                <div key={i} className="flex-1 bg-indigo-500/30 rounded-t hover:bg-indigo-400 transition-colors" style={{ height: `${h}%` }}></div>
-                             ))}
+                       {/* AI Forecast (Real-Time Insight) */}
+                       <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded-3xl p-6 border border-indigo-500/20 relative overflow-hidden flex flex-col justify-between">
+                          <div className="absolute top-0 right-0 p-4 opacity-20"><Sparkles size={64}/></div>
+                          
+                          <div>
+                              <div className="flex justify-between items-start">
+                                <h3 className="flex items-center gap-2 text-indigo-400 font-bold mb-4">
+                                    <Sparkles size={18}/> Real-Time Insight
+                                </h3>
+                                <button onClick={fetchDashboardInsight} className="text-indigo-400 hover:text-white transition-colors">
+                                    <RefreshCw size={14} className={insightLoading ? "animate-spin" : ""} />
+                                </button>
+                              </div>
+                              <div className="text-4xl font-black text-white mb-1">XAUUSD</div>
+                              <div className="text-[10px] text-slate-500 font-mono">Source: Investing.com Analysis</div>
                           </div>
+
+                          {insightLoading ? (
+                              <div className="text-sm text-indigo-300 font-mono animate-pulse">Analyzing Investing.com Data...</div>
+                          ) : insightData ? (
+                              <div className="space-y-3 animate-fade-in">
+                                  <div className="flex items-center gap-2">
+                                      <span className="text-xs text-slate-400 uppercase tracking-wide">Sentiment:</span>
+                                      <span className={`text-lg font-bold ${getSentimentColor(insightData.sentiment)}`}>
+                                          {insightData.sentiment}
+                                      </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-xs font-mono text-slate-300">
+                                      <div>Sup: {insightData.support}</div>
+                                      <div>Res: {insightData.resistance}</div>
+                                  </div>
+                                  <div className="text-xs text-slate-400 italic line-clamp-2 border-t border-indigo-500/30 pt-2 mt-2">
+                                      "{insightData.summary}"
+                                  </div>
+                              </div>
+                          ) : (
+                              <div className="text-sm text-slate-500">Tap refresh to analyze market</div>
+                          )}
                        </div>
 
-                       {/* Events */}
-                       <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800">
-                          <h3 className="flex items-center gap-2 text-slate-400 font-bold mb-4">
-                             <Radio size={18}/> Economic Radar
-                          </h3>
-                          <div className="space-y-4">
-                             {MOCK_EVENTS.map((ev, i) => (
-                                <div key={i} className="flex items-start gap-3 relative">
-                                   <div className="text-xs font-mono text-slate-500 mt-0.5">{ev.time}</div>
-                                   <div className="flex-1">
-                                      <div className="text-sm font-bold text-slate-200">{ev.event}</div>
-                                      <div className="text-[10px] text-slate-500">{ev.currency} • Impact: <span className={ev.impact === 'High' ? 'text-red-500' : 'text-yellow-500'}>{ev.impact}</span></div>
-                                   </div>
-                                   {i < MOCK_EVENTS.length - 1 && <div className="absolute left-[18px] top-6 bottom-[-10px] w-px bg-slate-800"></div>}
-                                </div>
-                             ))}
+                       {/* Live Events Feed */}
+                       <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800 flex flex-col h-[300px]">
+                          <div className="flex justify-between items-center mb-4">
+                             <h3 className="flex items-center gap-2 text-slate-400 font-bold">
+                                <Globe size={18}/> Live Economic News
+                             </h3>
+                             <button onClick={fetchNews} className="text-xs text-cyan-500 hover:text-cyan-400"><RefreshCw size={14} className={newsLoading ? "animate-spin" : ""}/></button>
                           </div>
-                       </div>
-
-                       {/* Market Map (Mini Heatmap) */}
-                       <div className="col-span-1 md:col-span-2 bg-slate-900/50 rounded-3xl p-6 border border-slate-800">
-                          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Volatility Heatmap</h3>
-                          <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                             {Array.from({length: 16}).map((_, i) => (
-                                <div key={i} className={`aspect-square rounded flex items-center justify-center text-[10px] font-bold ${Math.random() > 0.5 ? 'bg-green-900/40 text-green-400 border border-green-500/20' : 'bg-red-900/40 text-red-400 border border-red-500/20'}`}>
-                                   {['EUR', 'USD', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF', 'NZD'][i % 8]}
-                                </div>
-                             ))}
+                          
+                          <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                             {newsLoading ? (
+                                 <div className="text-center text-slate-600 mt-10">Fetching live data...</div>
+                             ) : marketNews.length > 0 ? (
+                                 marketNews.map((ev, i) => (
+                                    <div key={i} className="flex items-start gap-3 relative border-b border-slate-800 pb-3 last:border-0">
+                                       <div className="text-[10px] font-mono text-slate-500 mt-0.5 bg-slate-800 px-1 rounded">{ev.time}</div>
+                                       <div className="flex-1">
+                                          <div className="text-xs font-bold text-slate-200">{ev.event}</div>
+                                          <div className="text-[10px] text-slate-500">{ev.currency} • Impact: <span className={ev.impact?.includes('High') ? 'text-red-500' : 'text-yellow-500'}>{ev.impact}</span></div>
+                                       </div>
+                                    </div>
+                                 ))
+                             ) : (
+                                 <div className="text-center text-slate-600 mt-10 text-xs">No recent high impact news found.</div>
+                             )}
                           </div>
                        </div>
                     </div>
@@ -291,7 +387,7 @@ export const RebelFXModule: React.FC = () => {
                           </div>
                           <div>
                              <h3 className="font-bold text-white text-sm">ASTRA AI</h3>
-                             <p className="text-[10px] text-cyan-400 font-mono">ONLINE • ANALYST LEVEL 99</p>
+                             <p className="text-[10px] text-cyan-400 font-mono">LIVE CONNECTED • REAL-TIME SEARCH ENABLED</p>
                           </div>
                        </div>
                        <button onClick={() => setMessages([])} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400"><RefreshCw size={16}/></button>
@@ -315,7 +411,7 @@ export const RebelFXModule: React.FC = () => {
                             value={inputMsg}
                             onChange={(e) => setInputMsg(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                            placeholder="Ask Astra about XAUUSD..."
+                            placeholder="Ask Astra for current prices, news, or analysis..."
                             className="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                           />
                           <button 
@@ -396,7 +492,7 @@ export const RebelFXModule: React.FC = () => {
                     <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl">
                        <div className="flex items-center gap-2 mb-6">
                           <Zap className="text-yellow-400" fill="currentColor"/>
-                          <h2 className="text-xl font-bold text-white">Signal Generator</h2>
+                          <h2 className="text-xl font-bold text-white">Live Signal Generator</h2>
                        </div>
                        
                        <div className="flex gap-4 mb-6">
@@ -420,11 +516,17 @@ export const RebelFXModule: React.FC = () => {
                              className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                           >
                              {isSignaling ? <RefreshCw className="animate-spin"/> : <Zap size={18}/>}
-                             Generate
+                             {isSignaling ? 'Analyzing...' : 'Generate (Real-Time)'}
                           </button>
                        </div>
 
-                       {generatedSignal && (
+                       {isSignaling && (
+                           <div className="text-center py-4 text-cyan-400 text-xs font-mono animate-pulse">
+                               Searching latest market data & news...
+                           </div>
+                       )}
+
+                       {generatedSignal && !isSignaling && (
                           <div className="bg-black/40 rounded-2xl p-6 border border-slate-700 relative overflow-hidden">
                              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-400 to-blue-600"></div>
                              <SignalCard signal={generatedSignal} />
@@ -434,7 +536,7 @@ export const RebelFXModule: React.FC = () => {
                        {!generatedSignal && !isSignaling && (
                           <div className="text-center py-12 text-slate-600 border-2 border-dashed border-slate-800 rounded-2xl">
                              <BarChart2 size={48} className="mx-auto mb-2 opacity-30"/>
-                             <p>Select pair and generate AI signal.</p>
+                             <p>Select pair and generate AI signal based on live data.</p>
                           </div>
                        )}
                     </div>
