@@ -45,127 +45,127 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
       ]
     },
     {
-        name: 'Fantasy / Medieval',
-        chars: [
-            { label: 'Royal Knight (Armor)', gender: 'Male' },
-            { label: 'Elven Ranger (Archer)', gender: 'Male' },
-            { label: 'Grand Wizard', gender: 'Male' },
-            { label: 'Medieval King', gender: 'Male' },
-            { label: 'Elven Princess', gender: 'Female' },
-            { label: 'High Priestess / Mage', gender: 'Female' },
-            { label: 'Shieldmaiden (Warrior)', gender: 'Female' },
-            { label: 'Medieval Queen', gender: 'Female' }
-        ]
+      name: 'Fantasy / Medieval',
+      chars: [
+        { label: 'Royal Knight (Armor)', gender: 'Male' },
+        { label: 'Elven Ranger (Archer)', gender: 'Male' },
+        { label: 'Grand Wizard', gender: 'Male' },
+        { label: 'Medieval King', gender: 'Male' },
+        { label: 'Elven Princess', gender: 'Female' },
+        { label: 'High Priestess / Mage', gender: 'Female' },
+        { label: 'Shieldmaiden (Warrior)', gender: 'Female' },
+        { label: 'Medieval Queen', gender: 'Female' }
+      ]
     },
     {
-        name: 'Dark Fantasy',
-        chars: [
-            { label: 'Vampire Lord', gender: 'Male' },
-            { label: 'Dark Necromancer', gender: 'Male' },
-            { label: 'Fallen Angel', gender: 'Male' },
-            { label: 'Vampire Queen', gender: 'Female' },
-            { label: 'Gothic Witch', gender: 'Female' },
-            { label: 'Dark Elf Sorceress', gender: 'Female' }
-        ]
+      name: 'Dark Fantasy',
+      chars: [
+        { label: 'Vampire Lord', gender: 'Male' },
+        { label: 'Dark Necromancer', gender: 'Male' },
+        { label: 'Fallen Angel', gender: 'Male' },
+        { label: 'Vampire Queen', gender: 'Female' },
+        { label: 'Gothic Witch', gender: 'Female' },
+        { label: 'Dark Elf Sorceress', gender: 'Female' }
+      ]
     },
     {
-        name: 'Horror / Thriller',
-        chars: [
-            { label: 'Zombie Survivor', gender: 'Male' },
-            { label: 'Creepy Clown', gender: 'Male' },
-            { label: 'Ghost / Spirit', gender: 'Male' },
-            { label: 'Possessed Doll', gender: 'Female' },
-            { label: 'Ghost / Banshee', gender: 'Female' },
-            { label: 'Vampire Hunter', gender: 'Female' }
-        ]
+      name: 'Horror / Thriller',
+      chars: [
+        { label: 'Zombie Survivor', gender: 'Male' },
+        { label: 'Creepy Clown', gender: 'Male' },
+        { label: 'Ghost / Spirit', gender: 'Male' },
+        { label: 'Possessed Doll', gender: 'Female' },
+        { label: 'Ghost / Banshee', gender: 'Female' },
+        { label: 'Vampire Hunter', gender: 'Female' }
+      ]
     },
     {
-        name: 'Noir / Detective',
-        chars: [
-            { label: 'Hardboiled Detective', gender: 'Male' },
-            { label: 'Mafia Godfather', gender: 'Male' },
-            { label: '1940s Mobster', gender: 'Male' },
-            { label: 'Femme Fatale (Red Dress)', gender: 'Female' },
-            { label: 'Lady Detective', gender: 'Female' },
-            { label: 'Jazz Club Singer', gender: 'Female' }
-        ]
+      name: 'Noir / Detective',
+      chars: [
+        { label: 'Hardboiled Detective', gender: 'Male' },
+        { label: 'Mafia Godfather', gender: 'Male' },
+        { label: '1940s Mobster', gender: 'Male' },
+        { label: 'Femme Fatale (Red Dress)', gender: 'Female' },
+        { label: 'Lady Detective', gender: 'Female' },
+        { label: 'Jazz Club Singer', gender: 'Female' }
+      ]
     },
     {
-        name: 'Casual / Slice of Life',
-        chars: [
-            { label: 'Coffee Shop Barista', gender: 'Male' },
-            { label: 'University Student', gender: 'Male' },
-            { label: 'Office Worker (Suit)', gender: 'Male' },
-            { label: 'Streetwear Model', gender: 'Male' },
-            { label: 'Casual Date Outfit', gender: 'Female' },
-            { label: 'School Girl (Seifuku)', gender: 'Female' },
-            { label: 'Summer Dress', gender: 'Female' },
-            { label: 'Librarian / Glasses', gender: 'Female' }
-        ]
+      name: 'Casual / Slice of Life',
+      chars: [
+        { label: 'Coffee Shop Barista', gender: 'Male' },
+        { label: 'University Student', gender: 'Male' },
+        { label: 'Office Worker (Suit)', gender: 'Male' },
+        { label: 'Streetwear Model', gender: 'Male' },
+        { label: 'Casual Date Outfit', gender: 'Female' },
+        { label: 'School Girl (Seifuku)', gender: 'Female' },
+        { label: 'Summer Dress', gender: 'Female' },
+        { label: 'Librarian / Glasses', gender: 'Female' }
+      ]
     },
     {
-        name: 'Profesi / Seragam',
-        chars: [
-            { label: 'Police Officer (SWAT)', gender: 'Male' },
-            { label: 'Doctor / Surgeon', gender: 'Male' },
-            { label: 'Pilot', gender: 'Male' },
-            { label: 'Chef / Koki', gender: 'Male' },
-            { label: 'Firefighter', gender: 'Male' },
-            { label: 'Nurse / Perawat', gender: 'Female' },
-            { label: 'Police Woman', gender: 'Female' },
-            { label: 'Flight Attendant (Pramugari)', gender: 'Female' },
-            { label: 'Doctor', gender: 'Female' },
-            { label: 'Military / Soldier', gender: 'Female' }
-        ]
+      name: 'Profesi / Seragam',
+      chars: [
+        { label: 'Police Officer (SWAT)', gender: 'Male' },
+        { label: 'Doctor / Surgeon', gender: 'Male' },
+        { label: 'Pilot', gender: 'Male' },
+        { label: 'Chef / Koki', gender: 'Male' },
+        { label: 'Firefighter', gender: 'Male' },
+        { label: 'Nurse / Perawat', gender: 'Female' },
+        { label: 'Police Woman', gender: 'Female' },
+        { label: 'Flight Attendant (Pramugari)', gender: 'Female' },
+        { label: 'Doctor', gender: 'Female' },
+        { label: 'Military / Soldier', gender: 'Female' }
+      ]
     },
     {
-        name: 'Post-Apocalyptic',
-        chars: [
-            { label: 'Wasteland Survivor', gender: 'Male' },
-            { label: 'Gas Mask Raider', gender: 'Male' },
-            { label: 'Nomad Scavenger', gender: 'Male' },
-            { label: 'Wasteland Warrior', gender: 'Female' },
-            { label: 'Survivalist', gender: 'Female' },
-            { label: 'Desert Raider', gender: 'Female' }
-        ]
+      name: 'Post-Apocalyptic',
+      chars: [
+        { label: 'Wasteland Survivor', gender: 'Male' },
+        { label: 'Gas Mask Raider', gender: 'Male' },
+        { label: 'Nomad Scavenger', gender: 'Male' },
+        { label: 'Wasteland Warrior', gender: 'Female' },
+        { label: 'Survivalist', gender: 'Female' },
+        { label: 'Desert Raider', gender: 'Female' }
+      ]
     },
     {
-        name: 'Cybernetic / Robotik',
-        chars: [
-            { label: 'Full Cyborg Soldier', gender: 'Male' },
-            { label: 'Mecha Pilot Suit', gender: 'Male' },
-            { label: 'Android Butler', gender: 'Male' },
-            { label: 'Battle Angel (Cyborg)', gender: 'Female' },
-            { label: 'Mechanical Doll', gender: 'Female' },
-            { label: 'Futuristic AI Avatar', gender: 'Female' }
-        ]
+      name: 'Cybernetic / Robotik',
+      chars: [
+        { label: 'Full Cyborg Soldier', gender: 'Male' },
+        { label: 'Mecha Pilot Suit', gender: 'Male' },
+        { label: 'Android Butler', gender: 'Male' },
+        { label: 'Battle Angel (Cyborg)', gender: 'Female' },
+        { label: 'Mechanical Doll', gender: 'Female' },
+        { label: 'Futuristic AI Avatar', gender: 'Female' }
+      ]
     },
     {
-        name: 'Superhero',
-        chars: [
-            { label: 'Masked Vigilante', gender: 'Male' },
-            { label: 'Super Soldier', gender: 'Male' },
-            { label: 'Speedster Hero', gender: 'Male' },
-            { label: 'Wonder Heroine', gender: 'Female' },
-            { label: 'Magical Girl', gender: 'Female' },
-            { label: 'Mutant Hero', gender: 'Female' }
-        ]
+      name: 'Superhero',
+      chars: [
+        { label: 'Masked Vigilante', gender: 'Male' },
+        { label: 'Super Soldier', gender: 'Male' },
+        { label: 'Speedster Hero', gender: 'Male' },
+        { label: 'Wonder Heroine', gender: 'Female' },
+        { label: 'Magical Girl', gender: 'Female' },
+        { label: 'Mutant Hero', gender: 'Female' }
+      ]
     },
     {
-        name: 'Supervillain',
-        chars: [
-            { label: 'Evil Mastermind (Suit)', gender: 'Male' },
-            { label: 'Chaos Bringer', gender: 'Male' },
-            { label: 'Mad Scientist', gender: 'Male' },
-            { label: 'Evil Queen / Empress', gender: 'Female' },
-            { label: 'Cat Burglar', gender: 'Female' },
-            { label: 'Dark Sorceress', gender: 'Female' }
-        ]
+      name: 'Supervillain',
+      chars: [
+        { label: 'Evil Mastermind (Suit)', gender: 'Male' },
+        { label: 'Chaos Bringer', gender: 'Male' },
+        { label: 'Mad Scientist', gender: 'Male' },
+        { label: 'Evil Queen / Empress', gender: 'Female' },
+        { label: 'Cat Burglar', gender: 'Female' },
+        { label: 'Dark Sorceress', gender: 'Female' }
+      ]
     }
   ],
   'Karakter Anime': [
-    { 
-      name: 'Naruto', 
+    {
+      name: 'Naruto',
       chars: [
         { label: 'Naruto Uzumaki', gender: 'Male' },
         { label: 'Sasuke Uchiha', gender: 'Male' },
@@ -182,10 +182,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Temari', gender: 'Female' },
         { label: 'Konan', gender: 'Female' },
         { label: 'Kushina Uzumaki', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'One Piece', 
+    {
+      name: 'One Piece',
       chars: [
         { label: 'Monkey D. Luffy', gender: 'Male' },
         { label: 'Roronoa Zoro', gender: 'Male' },
@@ -201,10 +201,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Uta', gender: 'Female' },
         { label: 'Vivi Nefertari', gender: 'Female' },
         { label: 'Perona', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Pokemon', 
+    {
+      name: 'Pokemon',
       chars: [
         { label: 'Ash Ketchum (Satoshi)', gender: 'Male' },
         { label: 'Brock (Takeshi)', gender: 'Male' },
@@ -225,10 +225,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Human Pikachu (Gijinka)', gender: 'Female' },
         { label: 'Human Charizard (Gijinka)', gender: 'Female' },
         { label: 'Human Eevee (Gijinka)', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Dragon Ball', 
+    {
+      name: 'Dragon Ball',
       chars: [
         { label: 'Son Goku', gender: 'Male' },
         { label: 'Vegeta', gender: 'Male' },
@@ -241,7 +241,7 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Chi-Chi', gender: 'Female' },
         { label: 'Videl', gender: 'Female' },
         { label: 'Launch', gender: 'Female' }
-      ] 
+      ]
     },
     {
       name: 'Avatar (The Last Airbender)',
@@ -311,8 +311,8 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Fubuki (Blizzard)', gender: 'Female' }
       ]
     },
-    { 
-      name: 'My Hero Academia', 
+    {
+      name: 'My Hero Academia',
       chars: [
         { label: 'Izuku Midoriya (Deku)', gender: 'Male' },
         { label: 'Katsuki Bakugo', gender: 'Male' },
@@ -324,10 +324,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Himiko Toga', gender: 'Female' },
         { label: 'Tsuyu Asui', gender: 'Female' },
         { label: 'Mirko', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Bleach', 
+    {
+      name: 'Bleach',
       chars: [
         { label: 'Ichigo Kurosaki', gender: 'Male' },
         { label: 'Byakuya Kuchiki', gender: 'Male' },
@@ -340,10 +340,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Yoruichi Shihoin', gender: 'Female' },
         { label: 'Rangiku Matsumoto', gender: 'Female' },
         { label: 'Neliel', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Demon Slayer', 
+    {
+      name: 'Demon Slayer',
       chars: [
         { label: 'Tanjiro Kamado', gender: 'Male' },
         { label: 'Zenitsu Agatsuma', gender: 'Male' },
@@ -356,10 +356,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Mitsuri Kanroji', gender: 'Female' },
         { label: 'Kanao Tsuyuri', gender: 'Female' },
         { label: 'Daki', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Jujutsu Kaisen', 
+    {
+      name: 'Jujutsu Kaisen',
       chars: [
         { label: 'Yuji Itadori', gender: 'Male' },
         { label: 'Satoru Gojo', gender: 'Male' },
@@ -373,10 +373,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Maki Zenin', gender: 'Female' },
         { label: 'Mei Mei', gender: 'Female' },
         { label: 'Yuki Tsukumo', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Hunter x Hunter', 
+    {
+      name: 'Hunter x Hunter',
       chars: [
         { label: 'Gon Freecss', gender: 'Male' },
         { label: 'Killua Zoldyck', gender: 'Male' },
@@ -386,10 +386,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Biscuit Krueger', gender: 'Female' },
         { label: 'Machi', gender: 'Female' },
         { label: 'Shizuku', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Chainsaw Man', 
+    {
+      name: 'Chainsaw Man',
       chars: [
         { label: 'Denji', gender: 'Male' },
         { label: 'Aki Hayakawa', gender: 'Male' },
@@ -398,10 +398,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Reze', gender: 'Female' },
         { label: 'Himeno', gender: 'Female' },
         { label: 'Kobeni', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Inuyasha', 
+    {
+      name: 'Inuyasha',
       chars: [
         { label: 'Inuyasha', gender: 'Male' },
         { label: 'Sesshomaru', gender: 'Male' },
@@ -409,19 +409,19 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Kagome Higurashi', gender: 'Female' },
         { label: 'Kikyo', gender: 'Female' },
         { label: 'Sango', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Spy x Family', 
+    {
+      name: 'Spy x Family',
       chars: [
         { label: 'Loid Forger', gender: 'Male' },
         { label: 'Yor Forger', gender: 'Female' },
         { label: 'Anya Forger', gender: 'Female' },
         { label: 'Fiona Frost', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Attack on Titan', 
+    {
+      name: 'Attack on Titan',
       chars: [
         { label: 'Eren Yeager', gender: 'Male' },
         { label: 'Levi Ackerman', gender: 'Male' },
@@ -431,11 +431,11 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Annie Leonhart', gender: 'Female' },
         { label: 'Historia Reiss', gender: 'Female' },
         { label: 'Sasha Braus', gender: 'Female' },
-        { label: 'Hange Zoe', gender: 'Female' } 
-      ] 
+        { label: 'Hange Zoe', gender: 'Female' }
+      ]
     },
-    { 
-      name: 'Fate Series', 
+    {
+      name: 'Fate Series',
       chars: [
         { label: 'Gilgamesh', gender: 'Male' },
         { label: 'Emiya Shirou', gender: 'Male' },
@@ -447,7 +447,7 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Nero Claudius', gender: 'Female' },
         { label: 'Ishtar', gender: 'Female' },
         { label: 'Mash Kyrielight', gender: 'Female' }
-      ] 
+      ]
     },
     {
       name: 'Sailor Moon',
@@ -471,8 +471,8 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
     }
   ],
   'Video Game': [
-    { 
-      name: 'Mobile Legends', 
+    {
+      name: 'Mobile Legends',
       chars: [
         { label: 'Alucard', gender: 'Male' },
         { label: 'Gusion', gender: 'Male' },
@@ -490,10 +490,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Odette', gender: 'Female' },
         { label: 'Selena', gender: 'Female' },
         { label: 'Rafaela', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Genshin Impact', 
+    {
+      name: 'Genshin Impact',
       chars: [
         { label: 'Zhongli', gender: 'Male' },
         { label: 'Xiao', gender: 'Male' },
@@ -509,10 +509,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Furina', gender: 'Female' },
         { label: 'Navia', gender: 'Female' },
         { label: 'Kamisato Ayaka', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Honkai: Star Rail', 
+    {
+      name: 'Honkai: Star Rail',
       chars: [
         { label: 'Dan Heng', gender: 'Male' },
         { label: 'Jing Yuan', gender: 'Male' },
@@ -526,10 +526,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Bronya', gender: 'Female' },
         { label: 'Silver Wolf', gender: 'Female' },
         { label: 'Stelle (Trailblazer)', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Final Fantasy', 
+    {
+      name: 'Final Fantasy',
       chars: [
         { label: 'Cloud Strife', gender: 'Male' },
         { label: 'Sephiroth', gender: 'Male' },
@@ -541,10 +541,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Yuna', gender: 'Female' },
         { label: 'Lightning', gender: 'Female' },
         { label: 'Terra Branford', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'League of Legends (Arcane)', 
+    {
+      name: 'League of Legends (Arcane)',
       chars: [
         { label: 'Yasuo', gender: 'Male' },
         { label: 'Yone', gender: 'Male' },
@@ -559,10 +559,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Kai\'sa', gender: 'Female' },
         { label: 'Caitlyn', gender: 'Female' },
         { label: 'Miss Fortune', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Valorant', 
+    {
+      name: 'Valorant',
       chars: [
         { label: 'Phoenix', gender: 'Male' },
         { label: 'Sova', gender: 'Male' },
@@ -575,7 +575,7 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Viper', gender: 'Female' },
         { label: 'Neon', gender: 'Female' },
         { label: 'Killjoy', gender: 'Female' }
-      ] 
+      ]
     },
     {
       name: 'Resident Evil',
@@ -590,8 +590,8 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
     }
   ],
   'Super Hero': [
-    { 
-      name: 'Marvel', 
+    {
+      name: 'Marvel',
       chars: [
         { label: 'Iron Man', gender: 'Male' },
         { label: 'Captain America', gender: 'Male' },
@@ -608,10 +608,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Gamora', gender: 'Female' },
         { label: 'Storm', gender: 'Female' },
         { label: 'Jean Grey', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'DC', 
+    {
+      name: 'DC',
       chars: [
         { label: 'Batman', gender: 'Male' },
         { label: 'Superman', gender: 'Male' },
@@ -624,12 +624,12 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Catwoman', gender: 'Female' },
         { label: 'Supergirl', gender: 'Female' },
         { label: 'Poison Ivy', gender: 'Female' }
-      ] 
+      ]
     },
   ],
   'Film / Movie': [
-    { 
-      name: 'Star Wars', 
+    {
+      name: 'Star Wars',
       chars: [
         { label: 'Darth Vader', gender: 'Male' },
         { label: 'Luke Skywalker', gender: 'Male' },
@@ -641,10 +641,10 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Rey', gender: 'Female' },
         { label: 'Padme Amidala', gender: 'Female' },
         { label: 'Ahsoka Tano', gender: 'Female' }
-      ] 
+      ]
     },
-    { 
-      name: 'Harry Potter', 
+    {
+      name: 'Harry Potter',
       chars: [
         { label: 'Harry Potter', gender: 'Male' },
         { label: 'Ron Weasley', gender: 'Male' },
@@ -655,7 +655,7 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Luna Lovegood', gender: 'Female' },
         { label: 'Ginny Weasley', gender: 'Female' },
         { label: 'Bellatrix Lestrange', gender: 'Female' }
-      ] 
+      ]
     },
     {
       name: 'Lord of the Rings',
@@ -673,25 +673,25 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
 };
 
 const LOCATIONS = [
-  '✨ Auto (AI)', 
-  'Studio Foto', 
+  '✨ Auto (AI)',
+  'Studio Foto',
   'Hutan Tropis (Rainforest)',
-  'Hutan Fantasi', 
+  'Hutan Fantasi',
   'Sungai Jernih (River)',
   'Perbukitan Hijau (Hills)',
   'Bangunan Angker / Tua',
-  'Kota Cyberpunk', 
+  'Kota Cyberpunk',
   'Laboratorium Sci-Fi',
-  'Medan Perang', 
-  'Kastil Kerajaan', 
+  'Medan Perang',
+  'Kastil Kerajaan',
   'Penjara Bawah Tanah (Dungeon)',
-  'Ruang Angkasa', 
-  'Kuil Jepang', 
-  'Pantai / Laut', 
+  'Ruang Angkasa',
+  'Kuil Jepang',
+  'Pantai / Laut',
   'Dalam Air (Underwater)',
   'Gurun Pasir',
   'Pegunungan Salju',
-  'Sekolah Anime', 
+  'Sekolah Anime',
   'Taman Bunga',
   'Rooftop Gedung',
   'Perpustakaan Kuno',
@@ -700,14 +700,14 @@ const LOCATIONS = [
 
 // Updated Times (Consistent with other modules)
 const TIMES = [
-  '✨ Auto (AI)', 'Matahari Terbit (Sunrise)', 'Pagi Cerah', 'Siang Hari (High Noon)', 
+  '✨ Auto (AI)', 'Matahari Terbit (Sunrise)', 'Pagi Cerah', 'Siang Hari (High Noon)',
   'Sore (Golden Hour)', 'Senja (Blue Hour)', 'Malam (City Lights)', 'Tengah Malam (Gelap)'
 ];
 
 // Updated Angles (Consistent with other modules)
 const CAMERA_ANGLES = [
-  '✨ Auto (AI)', 'Selevel Mata (Eye Level)', 'Sudut Rendah (Low Angle)', 'Sudut Tinggi (High Angle)', 
-  'Wide Shot (Full Body)', 'Potret Close-up', 'Dutch Angle (Miring)', 'Over the Shoulder', 
+  '✨ Auto (AI)', 'Selevel Mata (Eye Level)', 'Sudut Rendah (Low Angle)', 'Sudut Tinggi (High Angle)',
+  'Wide Shot (Full Body)', 'Potret Close-up', 'Dutch Angle (Miring)', 'Over the Shoulder',
   'Drone View (Aerial)', 'GoPro View (Fisheye)', 'Macro (Detail)', 'Telephoto (Compressed Background)'
 ];
 
@@ -715,62 +715,62 @@ const LIGHTING = ['✨ Auto (AI)', 'Cinematic', 'Soft Portrait', 'Rembrandt', 'N
 
 // NEW POSE STRUCTURE
 const POSE_OPTIONS = [
-    { value: "auto", label: "✨ Auto (AI)" },
-    {
-        label: "Berdiri & Formal",
-        options: [
-            { value: "standing_formal", label: "Berdiri Formal (Tangan di Samping)" },
-            { value: "standing_elegant", label: "Berdiri Anggun (Satu Tangan di Pinggang)" },
-            { value: "standing", label: "Berdiri Tegap (Standar)" },
-            { value: "arms_crossed", label: "Pose Wibawa (Tangan Melipat di Dada)" },
-            { value: "leaning", label: "Bersandar pada Tiang/Dinding" },
-        ]
-    },
-    {
-        label: "Duduk & Santai",
-        options: [
-            { value: "sitting_antique", label: "Duduk Santai di Kursi Antik" },
-            { value: "sitting_floor", label: "Duduk Lesehan Anggun" },
-            { value: "sitting", label: "Duduk (Umum)" },
-            { value: "kneeling", label: "Berlutut" },
-            { value: "meditative", label: "Pose Meditatif/Tenang" },
-        ]
-    },
-    {
-        label: "Gerakan & Aksi",
-        options: [
-            { value: "walking_elegant", label: "Pose Berjalan Elegan (Walking Shot)" },
-            { value: "traditional_dance", label: "Pose Gerakan Tari Tradisional" },
-            { value: "dynamic_fabric", label: "Pose Dinamis (Kain Berkibar)" },
-            { value: "action", label: "Pose Aksi / Bertarung" },
-            { value: "dynamic_jump", label: "Melompat Dinamis" },
-            { value: "casting_spell", label: "Casting Spell" },
-            { value: "flying", label: "Melayang / Terbang" },
-        ]
-    },
-    {
-        label: "Ekspresi & Interaksi",
-        options: [
-            { value: "greeting_namaste", label: "Pose Menyapa (Salam Namaste/Sembah)" },
-            { value: "offering", label: "Pose Interaksi (Menawarkan Sesuatu)" },
-            { value: "holding_prop", label: "Pose Memegang Properti (Kipas/Keris)" },
-            { value: "candid_laugh", label: "Candid Tertawa Natural" },
-            { value: "playful", label: "Gaya Bebas Ceria (Playful)" },
-            { value: "touching_chin", label: "Pose Tangan Menyentuh Dagu (Reflektif)" },
-            { value: "pensive", label: "Merenung (Pensive)" },
-        ]
-    },
-    {
-        label: "Artistik & Fashion",
-        options: [
-            { value: "fashion_editorial", label: "Pose Fashion High-End (Editorial)" },
-            { value: "side_profile", label: "Pose Menoleh ke Samping (Side Profile)" },
-            { value: "close_up_beauty", label: "Close Up Wajah (Beauty Portrait)" },
-            { value: "silhouette_mystery", label: "Pose Siluet Misterius" },
-            { value: "dramatic", label: "Dramatic Look" },
-        ]
-    },
-    { value: "manual_pose", label: "✎ Input Manual" }
+  { value: "auto", label: "✨ Auto (AI)" },
+  {
+    label: "Berdiri & Formal",
+    options: [
+      { value: "standing_formal", label: "Berdiri Formal (Tangan di Samping)" },
+      { value: "standing_elegant", label: "Berdiri Anggun (Satu Tangan di Pinggang)" },
+      { value: "standing", label: "Berdiri Tegap (Standar)" },
+      { value: "arms_crossed", label: "Pose Wibawa (Tangan Melipat di Dada)" },
+      { value: "leaning", label: "Bersandar pada Tiang/Dinding" },
+    ]
+  },
+  {
+    label: "Duduk & Santai",
+    options: [
+      { value: "sitting_antique", label: "Duduk Santai di Kursi Antik" },
+      { value: "sitting_floor", label: "Duduk Lesehan Anggun" },
+      { value: "sitting", label: "Duduk (Umum)" },
+      { value: "kneeling", label: "Berlutut" },
+      { value: "meditative", label: "Pose Meditatif/Tenang" },
+    ]
+  },
+  {
+    label: "Gerakan & Aksi",
+    options: [
+      { value: "walking_elegant", label: "Pose Berjalan Elegan (Walking Shot)" },
+      { value: "traditional_dance", label: "Pose Gerakan Tari Tradisional" },
+      { value: "dynamic_fabric", label: "Pose Dinamis (Kain Berkibar)" },
+      { value: "action", label: "Pose Aksi / Bertarung" },
+      { value: "dynamic_jump", label: "Melompat Dinamis" },
+      { value: "casting_spell", label: "Casting Spell" },
+      { value: "flying", label: "Melayang / Terbang" },
+    ]
+  },
+  {
+    label: "Ekspresi & Interaksi",
+    options: [
+      { value: "greeting_namaste", label: "Pose Menyapa (Salam Namaste/Sembah)" },
+      { value: "offering", label: "Pose Interaksi (Menawarkan Sesuatu)" },
+      { value: "holding_prop", label: "Pose Memegang Properti (Kipas/Keris)" },
+      { value: "candid_laugh", label: "Candid Tertawa Natural" },
+      { value: "playful", label: "Gaya Bebas Ceria (Playful)" },
+      { value: "touching_chin", label: "Pose Tangan Menyentuh Dagu (Reflektif)" },
+      { value: "pensive", label: "Merenung (Pensive)" },
+    ]
+  },
+  {
+    label: "Artistik & Fashion",
+    options: [
+      { value: "fashion_editorial", label: "Pose Fashion High-End (Editorial)" },
+      { value: "side_profile", label: "Pose Menoleh ke Samping (Side Profile)" },
+      { value: "close_up_beauty", label: "Close Up Wajah (Beauty Portrait)" },
+      { value: "silhouette_mystery", label: "Pose Siluet Misterius" },
+      { value: "dramatic", label: "Dramatic Look" },
+    ]
+  },
+  { value: "manual_pose", label: "✎ Input Manual" }
 ];
 
 const VISUAL_EFFECT_OPTIONS = [
@@ -840,15 +840,15 @@ const MAKEUP_STYLES = [
 export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, onTransferToStoryBoard }) => {
   const [gender, setGender] = useState(GENDERS[0]);
   const [mode, setMode] = useState(MODES[0]);
-  
+
   // Series Selection
   const [seriesList, setSeriesList] = useState<{ name: string, chars: CharDef[] }[]>([]);
   const [selectedSeries, setSelectedSeries] = useState('');
-  
+
   // Character Selection
   const [charList, setCharList] = useState<string[]>([]);
   const [selectedChar, setSelectedChar] = useState('');
-  
+
   // Custom Input Fallback
   const [customSeries, setCustomSeries] = useState('');
   const [customChar, setCustomChar] = useState('');
@@ -860,15 +860,15 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
   const [time, setTime] = useState(TIMES[0]);
   const [angle, setAngle] = useState(CAMERA_ANGLES[0]);
   const [lighting, setLighting] = useState(LIGHTING[0]);
-  
+
   const [pose, setPose] = useState('auto'); // Default to auto value
   const [customPose, setCustomPose] = useState('');
 
   const [visualEffect, setVisualEffect] = useState(VISUAL_EFFECT_OPTIONS[0].value);
   const [makeup, setMakeup] = useState(MAKEUP_STYLES[0].value);
-  
+
   const [accessories, setAccessories] = useState('');
-  
+
   // Story State
   const [generatedStory, setGeneratedStory] = useState('');
   const [isStoryLoading, setIsStoryLoading] = useState(false);
@@ -897,9 +897,9 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
         if (gender === 'Laki-laki (1 Org)') return c.gender === 'Male';
         if (gender === 'Perempuan (1 Org)') return c.gender === 'Female';
         // For Couples, we show all characters to allow choosing the main subject
-        return true; 
+        return true;
       });
-      
+
       setCharList(filtered.map(c => c.label));
       setSelectedChar('');
     } else {
@@ -910,18 +910,18 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
   // Update Auto Prompt when Character Selection Changes
   useEffect(() => {
     if (mode === 'Custom' || !SERIES_DATA[mode]) {
-        if (customChar && customSeries) {
-            let genderText = 'Seorang cosplayer';
-            if (gender.includes('Laki-laki')) genderText = 'Seorang pria';
-            else if (gender.includes('Perempuan')) genderText = 'Seorang wanita';
-            else if (gender.includes('Couple')) genderText = 'Sepasang cosplayer';
-            
-            setAutoPrompt(`${genderText} sedang cosplay menjadi ${customChar} from ${customSeries}. High quality detailed cosplay costume.`);
-        }
+      if (customChar && customSeries) {
+        let genderText = 'Seorang cosplayer';
+        if (gender.includes('Laki-laki')) genderText = 'Seorang pria';
+        else if (gender.includes('Perempuan')) genderText = 'Seorang wanita';
+        else if (gender.includes('Couple')) genderText = 'Sepasang cosplayer';
+
+        setAutoPrompt(`${genderText} sedang cosplay menjadi ${customChar} from ${customSeries}. High quality detailed cosplay costume.`);
+      }
     } else {
-        if (selectedChar && selectedSeries) {
-            setAutoPrompt(`${selectedChar} from ${selectedSeries}. High quality detailed cosplay costume.`);
-        }
+      if (selectedChar && selectedSeries) {
+        setAutoPrompt(`${selectedChar} from ${selectedSeries}. High quality detailed cosplay costume.`);
+      }
     }
   }, [selectedChar, selectedSeries, customChar, customSeries, mode, gender]);
 
@@ -930,12 +930,12 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
     if (val === 'auto') return '';
     // Flatten options to search
     for (const group of POSE_OPTIONS) {
-        if ('options' in group && group.options) {
-             const found = group.options.find((o: any) => o.value === val);
-             if (found) return found.label;
-        } else if ('value' in group && group.value === val) {
-             return group.label;
-        }
+      if ('options' in group && group.options) {
+        const found = group.options.find((o: any) => o.value === val);
+        if (found) return found.label;
+      } else if ('value' in group && group.value === val) {
+        return group.label;
+      }
     }
     return val;
   };
@@ -982,22 +982,22 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
   const getPromptPrefix = () => {
     // Note: Character Name and Series are now handled in the visible prompt ("externalPrompt")
     // This prefix focuses on quality, environment, and system instructions.
-    
+
     const locationVal = location === '✎ Custom' ? customLocation : location;
-    
+
     // Resolve Pose Value for Prompt
     const poseLabel = getPoseLabel(pose);
     const poseVal = pose === 'manual_pose' ? customPose : (pose === 'auto' ? '' : poseLabel);
-    
+
     // Find label for visual effect if possible for prompt readability, or just use value if descriptive enough
     const visualEffectLabel = VISUAL_EFFECT_OPTIONS.find(v => v.value === visualEffect)?.label || visualEffect;
-    
+
     // Resolve Detailed Makeup
     const makeupPrompt = getDetailedMakeupPrompt(makeup);
 
     let timeVal = time !== '✨ Auto (AI)' ? `Time: ${time}` : '';
     if (time === 'Tengah Malam (Gelap)') {
-        timeVal = "Time: MIDNIGHT PITCH BLACK (Very dark night). Lighting: HARD FLASH PHOTOGRAPHY pointed directly at subject. No other illumination. Background is completely dark. High contrast, paparazzi or direct flash style.";
+      timeVal = "Time: MIDNIGHT PITCH BLACK (Very dark night). Lighting: HARD FLASH PHOTOGRAPHY pointed directly at subject. No other illumination. Background is completely dark. High contrast, paparazzi or direct flash style.";
     }
 
     const details = [
@@ -1037,7 +1037,7 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
 
     setIsStoryLoading(true);
     setGeneratedStory('');
-    
+
     try {
       const story = await generateStoryFromImage(imageUrl, characterName);
       setGeneratedStory(story);
@@ -1064,265 +1064,266 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
 
   const renderCustomResultActions = (imageUrl: string) => (
     <div className="flex flex-col gap-4 mt-2">
-       <div className="flex gap-2">
-          <button
-            onClick={() => handleGenerateStory(imageUrl)}
-            disabled={isStoryLoading}
-            className="flex-1 py-2 px-3 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-          >
-             {isStoryLoading ? <Loader2 size={14} className="animate-spin"/> : <BookOpen size={14}/>}
-             {isStoryLoading ? 'Menulis Cerita...' : 'Buat Cerita (AI)'}
-          </button>
-          
-          <button
-            onClick={() => handleTransfer(imageUrl)}
-            className="flex-1 py-2 px-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
-          >
-             <Film size={14}/> Transfer ke Story Board
-          </button>
-       </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleGenerateStory(imageUrl)}
+          disabled={isStoryLoading}
+          className="flex-1 py-2 px-3 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+        >
+          {isStoryLoading ? <Loader2 size={14} className="animate-spin" /> : <BookOpen size={14} />}
+          {isStoryLoading ? 'Menulis Cerita...' : 'Buat Cerita (AI)'}
+        </button>
 
-       {generatedStory && (
-          <div className="bg-white/80 dark:bg-black/40 p-4 rounded-xl border border-purple-200 dark:border-purple-800 text-sm text-gray-800 dark:text-gray-200 animate-fade-in max-h-60 overflow-y-auto">
-             <h4 className="font-bold text-purple-600 dark:text-purple-400 mb-2 flex items-center gap-2">
-                <BookOpen size={16}/> Cerita Karakter
-             </h4>
-             <p className="whitespace-pre-wrap leading-relaxed font-serif">{generatedStory}</p>
-          </div>
-       )}
+        <button
+          onClick={() => handleTransfer(imageUrl)}
+          className="flex-1 py-2 px-3 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+        >
+          <Film size={14} /> Transfer ke Story Board
+        </button>
+      </div>
+
+      {generatedStory && (
+        <div className="bg-white/80 dark:bg-black/40 p-4 rounded-xl border border-purple-200 dark:border-purple-800 text-sm text-gray-800 dark:text-gray-200 animate-fade-in max-h-60 overflow-y-auto">
+          <h4 className="font-bold text-purple-600 dark:text-purple-400 mb-2 flex items-center gap-2">
+            <BookOpen size={16} /> Cerita Karakter
+          </h4>
+          <p className="whitespace-pre-wrap leading-relaxed font-serif">{generatedStory}</p>
+        </div>
+      )}
     </div>
   );
 
   const extraControls = (
     <div className="space-y-4">
-       <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Gender</label>
-             <select 
-               value={gender}
-               onChange={(e) => setGender(e.target.value)}
-               className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
-             >
-               {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
-             </select>
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Mode Karakter</label>
-             <select 
-               value={mode}
-               onChange={(e) => setMode(e.target.value)}
-               className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
-             >
-               {MODES.map(m => <option key={m} value={m}>{m}</option>)}
-             </select>
-          </div>
-       </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Gender</label>
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
+          >
+            {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Mode Karakter</label>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
+          >
+            {MODES.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+      </div>
 
-       {/* Dynamic Series/Char Selection */}
-       {(SERIES_DATA[mode]) ? (
-         <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-               <label className="text-[10px] font-semibold text-gray-500 uppercase">{mode === 'Video Game' ? 'Game' : (mode === 'Tema Bebas / Genre (OC)' ? 'Genre / Tema' : 'Anime / Series')}</label>
-               <select 
-                 value={selectedSeries}
-                 onChange={(e) => setSelectedSeries(e.target.value)}
-                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
-               >
-                 <option value="">-- Pilih --</option>
-                 {seriesList.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-               </select>
-            </div>
-            <div className="space-y-1">
-               <label className="text-[10px] font-semibold text-gray-500 uppercase">Karakter</label>
-               <select 
-                 value={selectedChar}
-                 onChange={(e) => setSelectedChar(e.target.value)}
-                 disabled={!selectedSeries}
-                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none disabled:opacity-50"
-               >
-                 <option value="">-- Pilih Karakter --</option>
-                 {charList.length > 0 ? (
-                    charList.map(c => <option key={c} value={c}>{c}</option>)
-                 ) : (
-                    <option value="" disabled>Tidak ada karakter yang cocok dengan gender</option>
-                 )}
-               </select>
-            </div>
-         </div>
-       ) : (
-         // Fallback for Custom Modes
-         <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-               <label className="text-[10px] font-semibold text-gray-500 uppercase">Nama Seri / Sumber</label>
-               <input 
-                 type="text" 
-                 value={customSeries}
-                 onChange={(e) => setCustomSeries(e.target.value)}
-                 placeholder="Cth: Marvel, Sejarah Indonesia..."
-                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
-               />
-            </div>
-            <div className="space-y-1">
-               <label className="text-[10px] font-semibold text-gray-500 uppercase">Nama Karakter</label>
-               <input 
-                 type="text" 
-                 value={customChar}
-                 onChange={(e) => setCustomChar(e.target.value)}
-                 placeholder="Cth: Iron Man, Gajah Mada..."
-                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
-               />
-            </div>
-         </div>
-       )}
+      {/* Dynamic Series/Char Selection */}
+      {(SERIES_DATA[mode]) ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">{mode === 'Video Game' ? 'Game' : (mode === 'Tema Bebas / Genre (OC)' ? 'Genre / Tema' : 'Anime / Series')}</label>
+            <select
+              value={selectedSeries}
+              onChange={(e) => setSelectedSeries(e.target.value)}
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
+            >
+              <option value="">-- Pilih --</option>
+              {seriesList.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Karakter</label>
+            <select
+              value={selectedChar}
+              onChange={(e) => setSelectedChar(e.target.value)}
+              disabled={!selectedSeries}
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none disabled:opacity-50"
+            >
+              <option value="">-- Pilih Karakter --</option>
+              {charList.length > 0 ? (
+                charList.map(c => <option key={c} value={c}>{c}</option>)
+              ) : (
+                <option value="" disabled>Tidak ada karakter yang cocok dengan gender</option>
+              )}
+            </select>
+          </div>
+        </div>
+      ) : (
+        // Fallback for Custom Modes
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Nama Seri / Sumber</label>
+            <input
+              type="text"
+              value={customSeries}
+              onChange={(e) => setCustomSeries(e.target.value)}
+              placeholder="Cth: Marvel, Sejarah Indonesia..."
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Nama Karakter</label>
+            <input
+              type="text"
+              value={customChar}
+              onChange={(e) => setCustomChar(e.target.value)}
+              placeholder="Cth: Iron Man, Gajah Mada..."
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-sm dark:text-white outline-none"
+            />
+          </div>
+        </div>
+      )}
 
-       {/* Environment Grid */}
-       <div className="grid grid-cols-2 gap-3 pt-2">
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Lokasi</label>
-             {location === '✎ Custom' ? (
-                <div className="flex gap-2">
-                   <input 
-                     type="text"
-                     value={customLocation}
-                     onChange={(e) => setCustomLocation(e.target.value)}
-                     placeholder="Lokasi..."
-                     className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
-                     autoFocus
-                   />
-                   <button 
-                     onClick={() => setLocation(LOCATIONS[0])}
-                     className="px-2 bg-gray-200 dark:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-red-100 hover:text-red-500"
-                   >
-                     ✕
-                   </button>
-                </div>
-             ) : (
-               <select value={location} onChange={(e) => setLocation(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
-                 {LOCATIONS.map(i => <option key={i} value={i}>{i}</option>)}
-               </select>
-             )}
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Waktu</label>
-             <select value={time} onChange={(e) => setTime(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
-               {TIMES.map(i => <option key={i} value={i}>{i}</option>)}
-             </select>
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Angle</label>
-             <select value={angle} onChange={(e) => setAngle(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
-               {CAMERA_ANGLES.map(i => <option key={i} value={i}>{i}</option>)}
-             </select>
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Pencahayaan</label>
-             <select value={lighting} onChange={(e) => setLighting(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
-               {LIGHTING.map(i => <option key={i} value={i}>{i}</option>)}
-             </select>
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Pose</label>
-             {pose === 'manual_pose' ? (
-                <div className="flex gap-2">
-                   <input 
-                     type="text"
-                     value={customPose}
-                     onChange={(e) => setCustomPose(e.target.value)}
-                     placeholder="Pose..."
-                     className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
-                     autoFocus
-                   />
-                   <button 
-                     onClick={() => setPose('auto')}
-                     className="px-2 bg-gray-200 dark:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-red-100 hover:text-red-500"
-                   >
-                     ✕
-                   </button>
-                </div>
-             ) : (
-               <select value={pose} onChange={(e) => setPose(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
-                 {POSE_OPTIONS.map((item, idx) => {
-                    if ('options' in item && item.options) {
-                        return (
-                            <optgroup key={idx} label={item.label}>
-                                {item.options.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </optgroup>
-                        );
-                    } else if ('value' in item) {
-                        return <option key={item.value} value={item.value}>{item.label}</option>;
-                    }
-                    return null;
-                 })}
-               </select>
-             )}
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Efek Visual</label>
-             <select 
-              value={visualEffect} 
-              onChange={(e) => setVisualEffect(e.target.value)} 
-              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
-             >
-               {VISUAL_EFFECT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-             </select>
-          </div>
-          <div className="space-y-1">
-             <label className="text-[10px] font-semibold text-gray-500 uppercase">Makeup</label>
-             <select 
-              value={makeup} 
-              onChange={(e) => setMakeup(e.target.value)} 
-              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
-             >
-               {MAKEUP_STYLES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-             </select>
-          </div>
-       </div>
+      {/* Environment Grid */}
+      <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Lokasi</label>
+          {location === '✎ Custom' ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customLocation}
+                onChange={(e) => setCustomLocation(e.target.value)}
+                placeholder="Lokasi..."
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
+                autoFocus
+              />
+              <button
+                onClick={() => setLocation(LOCATIONS[0])}
+                className="px-2 bg-gray-200 dark:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-red-100 hover:text-red-500"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <select value={location} onChange={(e) => setLocation(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
+              {LOCATIONS.map(i => <option key={i} value={i}>{i}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Waktu</label>
+          <select value={time} onChange={(e) => setTime(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
+            {TIMES.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Angle</label>
+          <select value={angle} onChange={(e) => setAngle(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
+            {CAMERA_ANGLES.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Pencahayaan</label>
+          <select value={lighting} onChange={(e) => setLighting(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
+            {LIGHTING.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Pose</label>
+          {pose === 'manual_pose' ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customPose}
+                onChange={(e) => setCustomPose(e.target.value)}
+                placeholder="Pose..."
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
+                autoFocus
+              />
+              <button
+                onClick={() => setPose('auto')}
+                className="px-2 bg-gray-200 dark:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-red-100 hover:text-red-500"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <select value={pose} onChange={(e) => setPose(e.target.value)} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none">
+              {POSE_OPTIONS.map((item, idx) => {
+                if ('options' in item && item.options) {
+                  return (
+                    <optgroup key={idx} label={item.label}>
+                      {item.options.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </optgroup>
+                  );
+                } else if ('value' in item) {
+                  return <option key={item.value} value={item.value}>{item.label}</option>;
+                }
+                return null;
+              })}
+            </select>
+          )}
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Efek Visual</label>
+          <select
+            value={visualEffect}
+            onChange={(e) => setVisualEffect(e.target.value)}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
+          >
+            {VISUAL_EFFECT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase">Makeup</label>
+          <select
+            value={makeup}
+            onChange={(e) => setMakeup(e.target.value)}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
+          >
+            {MAKEUP_STYLES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </div>
+      </div>
 
-       <div className="space-y-1">
-          <label className="text-[10px] font-semibold text-gray-500 uppercase">Senjata/Aksesoris (Opsional)</label>
-          <input 
-            type="text" 
-            value={accessories}
-            onChange={(e) => setAccessories(e.target.value)}
-            placeholder="Contoh: pedang katana, kunai, topi jerami, headset gaming..."
-            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-3 text-sm dark:text-white outline-none focus:border-primary-500"
-          />
-       </div>
+      <div className="space-y-1">
+        <label className="text-[10px] font-semibold text-gray-500 uppercase">Senjata/Aksesoris (Opsional)</label>
+        <input
+          type="text"
+          value={accessories}
+          onChange={(e) => setAccessories(e.target.value)}
+          placeholder="Contoh: pedang katana, kunai, topi jerami, headset gaming..."
+          className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-3 text-sm dark:text-white outline-none focus:border-primary-500"
+        />
+      </div>
     </div>
   );
 
   return (
     <div className="animate-fade-in">
-        <GeneratorModule 
-          moduleId="cosplay-fusion"
-          title="Cosplay Fusion"
-          description="Berubah menjadi karakter apa pun. Unggah foto Anda dan sebutkan nama karakternya."
-          promptPrefix={getPromptPrefix()}
-          customPromptLabel="Prompt Karakter (Otomatis/Edit)"
-          
-          requireImage={true}
-          mainImageLabel="Wajah Utama (Wajib)"
-          
-          allowAdditionalFaceImage={true}
-          secondFaceLabel="Wajah 2 / Partner (Opsional)"
-          
-          allowReferenceImage={true}
-          referenceImageLabel="Referensi Kostum (Opsional)"
-          
-          extraControls={extraControls}
-          batchModeAvailable={true}
-          
-          renderCustomResultActions={renderCustomResultActions}
-          
-          // NEW PROP: Passes the constructed prompt to the GeneratorModule input box
-          externalPrompt={autoPrompt}
-          
-          // NEW PROP: Custom large refine button
-          customRefineLabel="Berikan Deskripsi Detail"
-          customRefineHandler={refineCharacterDescription}
-        />
+      <GeneratorModule
+        moduleId="cosplay-fusion"
+        title="Cosplay Fusion"
+        description="Berubah menjadi karakter apa pun. Unggah foto Anda dan sebutkan nama karakternya."
+        promptPrefix={getPromptPrefix()}
+        customPromptLabel="Prompt Karakter (Otomatis/Edit)"
+
+        requireImage={true}
+        mainImageLabel="Wajah Utama (Wajib)"
+
+        allowAdditionalFaceImage={true}
+        secondFaceLabel="Wajah 2 / Partner (Opsional)"
+
+        allowReferenceImage={true}
+        referenceImageLabel="Referensi Kostum (Opsional)"
+
+        extraControls={extraControls}
+        batchModeAvailable={true}
+
+        renderCustomResultActions={renderCustomResultActions}
+
+        // NEW PROP: Passes the constructed prompt to the GeneratorModule input box
+        externalPrompt={autoPrompt}
+
+        // NEW PROP: Custom large refine button
+        customRefineLabel="Berikan Deskripsi Detail"
+        customRefineHandler={refineCharacterDescription}
+        useLargeRefineButton={true}
+      />
     </div>
   );
 };
