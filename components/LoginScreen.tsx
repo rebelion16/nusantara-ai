@@ -12,18 +12,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      // Ambil user dari mock Google login
       const user = await authService.loginWithGoogle();
-
-      // Kirim user ke parent (App) agar state langsung ter-update
       onLoginSuccess(user);
-      // Tidak perlu setIsLoading(false) karena setelah login,
-      // komponen ini akan di-unmount dan diganti Layout.
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
+      alert(
+        `Login gagal: ${error?.code || error?.message || "Terjadi kesalahan tak dikenal"
+        }`
+      );
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0f1d] overflow-hidden font-sans">

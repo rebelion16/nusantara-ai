@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAPEZbIMw23gZO-A1aBd7zWELxKVOSyWE",
+    apiKey: "AIzaSyAPEZbIMw23gZO-A1aBd7zWELxKVOsSYWE",
     authDomain: "nusantara-ai-18db6.firebaseapp.com",
     projectId: "nusantara-ai-18db6",
     storageBucket: "nusantara-ai-18db6.appspot.com",
