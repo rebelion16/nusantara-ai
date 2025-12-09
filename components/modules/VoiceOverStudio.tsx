@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Mic, Play, Download, Trash2, Sparkles, Wand2, AudioLines, Loader2, Music, X } from 'lucide-react';
 import { generateSpeech, generateScript } from '../../services/geminiService';
@@ -82,8 +83,8 @@ export const VoiceOverStudioModule: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl mx-auto pb-10">
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+      <div className="space-y-2 text-center md:text-left">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
           <Mic className="text-teal-500" size={32} /> Voice Over Studio
         </h2>
         <p className="text-gray-500 dark:text-gray-400">

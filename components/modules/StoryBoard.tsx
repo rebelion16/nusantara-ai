@@ -217,8 +217,8 @@ export const StoryBoardModule: React.FC<StoryBoardProps> = ({ initialImage }) =>
     <div className="space-y-6 animate-fade-in max-w-6xl mx-auto pb-10">
       
       {/* HEADER */}
-      <div className="flex items-center gap-3 mb-6">
-         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg">
+      <div className="flex flex-col md:flex-row items-center gap-3 mb-6 text-center md:text-left">
+         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shrink-0">
             <Film className="text-white" size={24} />
          </div>
          <div>

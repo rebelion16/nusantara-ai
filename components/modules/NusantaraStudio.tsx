@@ -446,8 +446,8 @@ export const NusantaraStudioModule: React.FC = () => {
         />
       )}
 
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+      <div className="space-y-2 text-center md:text-left">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
           <span className="text-4xl">🏛️</span> Studio Pakaian Adat
         </h2>
         <p className="text-gray-500 dark:text-gray-400">
@@ -834,7 +834,7 @@ export const NusantaraStudioModule: React.FC = () => {
                             {generatedImages.slice(1).map((img, idx) => (
                                <div key={idx} className="group relative rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer" onClick={() => setPreviewImage(img)}>
                                   <img src={img} alt={`History ${idx}`} className="w-full aspect-[3/4] object-cover hover:scale-105 transition-transform duration-500" />
-                               </div>
+                                </div>
                             ))}
                          </div>
                       </div>

@@ -46,6 +46,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </h1>
             <p className="text-gray-400 text-sm">
               Creative AI Superapp by Rebelion16
+              <br />
+              Instagram: @lukmandian17
+              <br />
             </p>
           </div>
 

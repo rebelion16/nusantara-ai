@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { generateVeoVideo, generateRandomPrompt } from '../../services/geminiService';
 import { Loader2, Plus, Trash2, Sparkles, Video, Film, MessageSquare, Image as ImageIcon, X } from 'lucide-react';
@@ -112,8 +113,8 @@ export const VidGenModule: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+      <div className="space-y-2 text-center md:text-left">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
           <Film className="w-8 h-8 text-indigo-500" /> VidGen by VEO3
         </h2>
         <p className="text-gray-500 dark:text-gray-400">

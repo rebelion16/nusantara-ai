@@ -32,6 +32,7 @@ const SERIES_DATA: Record<string, { name: string, chars: CharDef[] }[]> = {
         { label: 'Neon City Resident', gender: 'Female' }
       ]
     },
+    // ... (rest of the series data remains the same)
     {
       name: 'Steampunk / Retro Future',
       chars: [
@@ -994,9 +995,14 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
     // Resolve Detailed Makeup
     const makeupPrompt = getDetailedMakeupPrompt(makeup);
 
+    let timeVal = time !== '✨ Auto (AI)' ? `Time: ${time}` : '';
+    if (time === 'Tengah Malam (Gelap)') {
+        timeVal = "Time: MIDNIGHT PITCH BLACK (Very dark night). Lighting: HARD FLASH PHOTOGRAPHY pointed directly at subject. No other illumination. Background is completely dark. High contrast, paparazzi or direct flash style.";
+    }
+
     const details = [
       locationVal !== '✨ Auto (AI)' && locationVal ? `Location: ${locationVal}` : '',
-      time !== '✨ Auto (AI)' ? `Time: ${time}` : '',
+      timeVal,
       angle !== '✨ Auto (AI)' ? `Camera Angle: ${angle}` : '',
       lighting !== '✨ Auto (AI)' ? `Lighting: ${lighting}` : '',
       poseVal ? `Pose: ${poseVal}` : '',
@@ -1288,33 +1294,35 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
   );
 
   return (
-    <GeneratorModule 
-      moduleId="cosplay-fusion"
-      title="Cosplay Fusion"
-      description="Berubah menjadi karakter apa pun. Unggah foto Anda dan sebutkan nama karakternya."
-      promptPrefix={getPromptPrefix()}
-      customPromptLabel="Prompt Karakter (Otomatis/Edit)"
-      
-      requireImage={true}
-      mainImageLabel="Wajah Utama (Wajib)"
-      
-      allowAdditionalFaceImage={true}
-      secondFaceLabel="Wajah 2 / Partner (Opsional)"
-      
-      allowReferenceImage={true}
-      referenceImageLabel="Referensi Kostum (Opsional)"
-      
-      extraControls={extraControls}
-      batchModeAvailable={true}
-      
-      renderCustomResultActions={renderCustomResultActions}
-      
-      // NEW PROP: Passes the constructed prompt to the GeneratorModule input box
-      externalPrompt={autoPrompt}
-      
-      // NEW PROP: Custom large refine button
-      customRefineLabel="Berikan Deskripsi Detail"
-      customRefineHandler={refineCharacterDescription}
-    />
+    <div className="animate-fade-in">
+        <GeneratorModule 
+          moduleId="cosplay-fusion"
+          title="Cosplay Fusion"
+          description="Berubah menjadi karakter apa pun. Unggah foto Anda dan sebutkan nama karakternya."
+          promptPrefix={getPromptPrefix()}
+          customPromptLabel="Prompt Karakter (Otomatis/Edit)"
+          
+          requireImage={true}
+          mainImageLabel="Wajah Utama (Wajib)"
+          
+          allowAdditionalFaceImage={true}
+          secondFaceLabel="Wajah 2 / Partner (Opsional)"
+          
+          allowReferenceImage={true}
+          referenceImageLabel="Referensi Kostum (Opsional)"
+          
+          extraControls={extraControls}
+          batchModeAvailable={true}
+          
+          renderCustomResultActions={renderCustomResultActions}
+          
+          // NEW PROP: Passes the constructed prompt to the GeneratorModule input box
+          externalPrompt={autoPrompt}
+          
+          // NEW PROP: Custom large refine button
+          customRefineLabel="Berikan Deskripsi Detail"
+          customRefineHandler={refineCharacterDescription}
+        />
+    </div>
   );
 };
