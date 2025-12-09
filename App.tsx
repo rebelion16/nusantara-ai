@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { ModuleId } from './types';
+import { LoginScreen } from './components/LoginScreen';
+import { authService, UserProfile } from './services/authService';
 
 // Import distinct modules
 import { HomeModule } from './components/modules/Home';
 import { VirtualPhotoshootModule } from './components/modules/VirtualPhotoshoot';
-import { ContentCreatorModule } from './components/modules/ContentCreator'; 
+import { ContentCreatorModule } from './components/modules/ContentCreator';
 import { CosplayFusionModule } from './components/modules/CosplayFusion';
 import { BikiniPhotoshootModule } from './components/modules/BikiniPhotoshoot';
 import { PinstaProductModule } from './components/modules/PinstaProduct';
@@ -23,8 +25,29 @@ import { YTShortMakerModule } from './components/modules/YTShortMaker';
 
 const App: React.FC = () => {
   const [activeModuleId, setActiveModuleId] = useState<ModuleId>('home');
-  const [transferredImage, setTransferredImage] = useState<File | null>(null); // For Virtual Photoshoot
-  const [storyBoardImage, setStoryBoardImage] = useState<File | null>(null); // For Story Board
+  const [transferredImage, setTransferredImage] = useState<File | null>(null);
+  const [storyBoardImage, setStoryBoardImage] = useState<File | null>(null);
+
+  // Auth State
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Check Auth on Mount
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
+    setIsAuthChecking(false);
+  }, []);
+
+  const handleLoginSuccess = () => {
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setUser(null);
+  };
 
   const renderModule = () => {
     switch (activeModuleId) {
@@ -38,7 +61,7 @@ const App: React.FC = () => {
         return <ContentCreatorModule onNavigate={setActiveModuleId} onTransfer={setTransferredImage} />;
       case 'cosplay-fusion':
         return (
-          <CosplayFusionModule 
+          <CosplayFusionModule
             onNavigate={setActiveModuleId}
             onTransferToStoryBoard={setStoryBoardImage}
           />
@@ -72,12 +95,23 @@ const App: React.FC = () => {
     }
   };
 
+  // Loading Screen (Auth Check)
+  if (isAuthChecking) {
+    return <div className="min-h-screen bg-[#0a0f1d] flex items-center justify-center text-white">Loading Nusantara AI...</div>;
+  }
+
+  // Not Logged In
+  if (!user) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // Logged In
   return (
-    <Layout 
-      activeModule={activeModuleId} 
-      onNavigate={setActiveModuleId} 
-      user={null} 
-      onLogout={() => {}}
+    <Layout
+      activeModule={activeModuleId}
+      onNavigate={setActiveModuleId}
+      user={user}
+      onLogout={handleLogout}
     >
       {renderModule()}
     </Layout>
