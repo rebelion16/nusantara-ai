@@ -11,6 +11,7 @@ interface GeneratorModuleProps {
   promptPrefix: string;
   requireImage: boolean;
   extraControls?: React.ReactNode;
+  headerControls?: React.ReactNode; // New: Controls rendered above upload box
   onExtraControlChange?: (key: string, value: any) => void;
   defaultAspectRatio?: string;
   customPromptLabel?: string;
@@ -89,7 +90,7 @@ const QUICK_EDITS = [
 ];
 
 export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
-  moduleId, title, description, promptPrefix, requireImage, extraControls,
+  moduleId, title, description, promptPrefix, requireImage, extraControls, headerControls,
   defaultAspectRatio = "1:1", customPromptLabel, isInfographic,
   allowReferenceImage = false, referenceImageLabel = "Referensi Gaya",
   allowAdditionalFaceImage = false, secondFaceLabel = "Wajah Kedua",
@@ -539,6 +540,13 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-dark-card p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
+
+
+          {headerControls && (
+            <div className="mb-4">
+              {headerControls}
+            </div>
+          )}
 
           {(!isInfographic && !customGenerateHandler) && (
             <div className={`grid gap-4 ${(allowReferenceImage && allowAdditionalFaceImage)

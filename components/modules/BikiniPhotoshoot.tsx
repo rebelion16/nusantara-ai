@@ -14,22 +14,22 @@ const ETHNICITIES = ['Indonesian', 'Japanese', 'Korean', 'Middle Eastern (Arab)'
 
 // Updated Body Types (Strict Order as requested)
 const BODY_TYPES = [
-  'Standar (Proporsional)', 
-  'Kurus (Skinny)', 
-  'Langsing (Slim/Fit)', 
-  'Gemoy (Chubby/Curvy)', 
+  'Standar (Proporsional)',
+  'Kurus (Skinny)',
+  'Langsing (Slim/Fit)',
+  'Gemoy (Chubby/Curvy)',
   'Obesitas (Plus Size)'
 ];
 
 // Updated Breast Sizes for specific prompting
 const BREAST_SIZES = [
   'Rata (Flat/Petite)',
-  'Kecil (Small A-Cup)', 
-  'Sedang (Medium B/C-Cup)', 
-  'Berisi (Full D-Cup)', 
-  'Besar (Large E-Cup)', 
-  'Sangat Besar (Massive/Voluminous)', 
-  'Natural (Teardrop Shape)', 
+  'Kecil (Small A-Cup)',
+  'Sedang (Medium B/C-Cup)',
+  'Berisi (Full D-Cup)',
+  'Besar (Large E-Cup)',
+  'Sangat Besar (Massive/Voluminous)',
+  'Natural (Teardrop Shape)',
   'Push-Up Effect (Cleavage)'
 ];
 
@@ -45,26 +45,26 @@ const SKIN_TONES = [
 const EYE_COLORS = ['Cokelat Tua', 'Hitam', 'Cokelat Muda', 'Biru', 'Hijau', 'Hazel', 'Abu-abu'];
 
 const NAIL_COLORS = [
-  'Alami (Tanpa Cat)', 'Merah Klasik', 'Nude', 'Hitam', 'Putih', 
+  'Alami (Tanpa Cat)', 'Merah Klasik', 'Nude', 'Hitam', 'Putih',
   'French Manicure', 'Pink Cerah', 'Biru Tua'
 ];
 
 const HAIR_STYLES = [
-  'Lurus Panjang', 'Ikat Kuda', 'Model Kepang', 'Poni Depan', 'French Bob', 
-  'Classic Bob', 'Boyfriend Bob', 'Bob Oval', 'Pixie Cut', 'Retro Pixie/Mullet', 
-  'Feathery Fringe', 'Angled Bob', 'Bob dengan Layer', 'Wolf Cut', 'Bob Ikal', 
-  'Bob Keriting', 'Bob Shaggy', 'Blunt Cut', 'Side-parted Lob', 'Medium Layer', 
+  'Lurus Panjang', 'Ikat Kuda', 'Model Kepang', 'Poni Depan', 'French Bob',
+  'Classic Bob', 'Boyfriend Bob', 'Bob Oval', 'Pixie Cut', 'Retro Pixie/Mullet',
+  'Feathery Fringe', 'Angled Bob', 'Bob dengan Layer', 'Wolf Cut', 'Bob Ikal',
+  'Bob Keriting', 'Bob Shaggy', 'Blunt Cut', 'Side-parted Lob', 'Medium Layer',
   'Butterfly Haircut', 'Hime Cut', 'Shaggy', 'Rambut Layer Panjang', 'Wavy Hair'
 ];
 
 const HAIR_COLORS = [
-  'Chocolate Brown', 'Burgundy', 'Rose Pink', 'Brunette', 'Light Brown', 
-  'Chestnut', 'Ash Brown', 'Pastel', 'Jet Black', 'Golden Copper', 
+  'Chocolate Brown', 'Burgundy', 'Rose Pink', 'Brunette', 'Light Brown',
+  'Chestnut', 'Ash Brown', 'Pastel', 'Jet Black', 'Golden Copper',
   'Honey Blonde', 'Platinum Gray', 'Deep Violet', 'Sunflower Blonde'
 ];
 
 const BIKINI_TYPES = [
-  'Triangle bikini', 'Bandeau bikini', 'Microkini', 'Thong', 
+  'Triangle bikini', 'Bandeau bikini', 'Microkini', 'Thong',
   'High-Waisted bikini', 'Tankini', 'Monokini', 'Sport Bikini', 'Lace Bikini'
 ];
 
@@ -73,27 +73,27 @@ const BACKGROUND_TYPES = [
 ];
 
 const STUDIO_CONCEPTS = [
-  'Studio Modern', 'Studio Klasik', 'Studio Mewah', 'Studio Industrial', 
-  'Floral/Botanical', 'Furnitur Vintage', 'Geometris Minimalis', 
-  'Polos Putih', 'Polos Hitam', 'Polos Abu-abu', 'Polos Krem', 
+  'Studio Modern', 'Studio Klasik', 'Studio Mewah', 'Studio Industrial',
+  'Floral/Botanical', 'Furnitur Vintage', 'Geometris Minimalis',
+  'Polos Putih', 'Polos Hitam', 'Polos Abu-abu', 'Polos Krem',
   'Spotlight Dramatis', 'Neon Abstrak'
 ];
 
 const TIMES = [
-  'Matahari Terbit (Sunrise)', 'Pagi (Cerah)', 'Siang (Terik)', 'Sore (Golden Hour)', 
+  'Matahari Terbit (Sunrise)', 'Pagi (Cerah)', 'Siang (Terik)', 'Sore (Golden Hour)',
   'Senja (Blue Hour)', 'Malam (City Lights)', 'Tengah Malam (Dark)'
 ];
 
 const ANGLES = [
-  'Eye Level (Sejajar Mata)', 'Low Angle (Dari Bawah)', 'High Angle (Dari Atas)', 
-  'Bird\'s Eye View (Drone)', 'Selfie Angle', 'Close-Up', 'Medium Shot', 'Full Body Shot', 
+  'Eye Level (Sejajar Mata)', 'Low Angle (Dari Bawah)', 'High Angle (Dari Atas)',
+  'Bird\'s Eye View (Drone)', 'Selfie Angle', 'Close-Up', 'Medium Shot', 'Full Body Shot',
   'Dutch Angle', 'Over-the-Shoulder', 'Wide Angle Lens', 'Telephoto Lens (Compressed)'
 ];
 
 const POSES = [
-  'Pose Standing', 'Pose Duduk (Relax)', 'Pose Berbaring (Dreamy)', 
-  'Pose Dinamis (Action)', 'Pose Editorial', 'Body Curve Pose', 
-  'Pose Menyapa (Salam)', 'Candid Tertawa', 'Pose Berjalan Elegan', 
+  'Pose Standing', 'Pose Duduk (Relax)', 'Pose Berbaring (Dreamy)',
+  'Pose Dinamis (Action)', 'Pose Editorial', 'Body Curve Pose',
+  'Pose Menyapa (Salam)', 'Candid Tertawa', 'Pose Berjalan Elegan',
   'Pose Menoleh ke Samping', 'Close Up Wajah', 'Tangan Menyentuh Dagu',
   'Bersandar pada Dinding', 'Pose Siluet Misterius', 'Memainkan Rambut', 'Melihat ke Cakrawala'
 ];
@@ -120,7 +120,7 @@ const MAKEUP_STYLES = [
 export const BikiniPhotoshootModule: React.FC = () => {
   // --- STATE ---
   const [mode, setMode] = useState('reference'); // 'reference' | 'free'
-  
+
   // Free Mode Attributes
   const [faceShape, setFaceShape] = useState(FACE_SHAPES[0]);
   const [ethnicity, setEthnicity] = useState(ETHNICITIES[0]);
@@ -131,7 +131,7 @@ export const BikiniPhotoshootModule: React.FC = () => {
   const [skinTone, setSkinTone] = useState(SKIN_TONES[0].value);
   const [eyeColor, setEyeColor] = useState(EYE_COLORS[0]);
   const [nailColor, setNailColor] = useState(NAIL_COLORS[1]);
-  
+
   // Hair & Beauty
   const [hairStyle, setHairStyle] = useState(HAIR_STYLES[0]);
   const [customHairStyle, setCustomHairStyle] = useState('');
@@ -146,11 +146,11 @@ export const BikiniPhotoshootModule: React.FC = () => {
   const [background, setBackground] = useState(BACKGROUND_TYPES[0]);
   const [customBackground, setCustomBackground] = useState('');
   const [studioConcept, setStudioConcept] = useState(STUDIO_CONCEPTS[0]);
-  
+
   const [time, setTime] = useState(TIMES[3]); // Golden Hour default
   const [cameraAngle, setCameraAngle] = useState(ANGLES[6]); // Medium Shot default
   const [customAngle, setCustomAngle] = useState('');
-  
+
   const [pose, setPose] = useState(POSES[0]);
   const [customPose, setCustomPose] = useState('');
 
@@ -185,7 +185,7 @@ export const BikiniPhotoshootModule: React.FC = () => {
     const finalBikini = bikiniType === 'manual' ? customBikini : bikiniType;
     const finalPose = pose === 'manual' ? customPose : pose;
     const finalAngle = cameraAngle === 'manual' ? customAngle : cameraAngle;
-    
+
     let finalBg = background === 'manual' ? customBackground : background;
     let timePrompt = time;
 
@@ -200,51 +200,51 @@ export const BikiniPhotoshootModule: React.FC = () => {
 
     // 3. LOGIKA TIPE TUBUH (Body Type Mapping) - UPDATED TO 5 STRICT TYPES
     let bodyPrompt = "Balanced proportions, athletic fit physique"; // Default
-    switch(bodyType) {
-        case 'Standar (Proporsional)': 
-            bodyPrompt = "Balanced proportions, athletic fit physique, healthy weight, authentic body shape"; 
-            break;
-        case 'Kurus (Skinny)': 
-            bodyPrompt = "Very slender, skinny physique, visible collarbones, prominent bone structure, petite frame, thin model"; 
-            break;
-        case 'Langsing (Slim/Fit)': 
-            bodyPrompt = "Slim, toned, fit, elegant figure, lean muscle definition"; 
-            break;
-        case 'Gemoy (Chubby/Curvy)': 
-            bodyPrompt = "Chubby, soft round features, curvy, thick thighs, soft skin texture, natural rolls, full figure"; 
-            break;
-        case 'Obesitas (Plus Size)': 
-            bodyPrompt = "Obese, plus-size, heavy full figure, massive build, very soft body structure, realistic weight distribution"; 
-            break;
+    switch (bodyType) {
+      case 'Standar (Proporsional)':
+        bodyPrompt = "Balanced proportions, athletic fit physique, healthy weight, authentic body shape";
+        break;
+      case 'Kurus (Skinny)':
+        bodyPrompt = "Very slender, skinny physique, visible collarbones, prominent bone structure, petite frame, thin model";
+        break;
+      case 'Langsing (Slim/Fit)':
+        bodyPrompt = "Slim, toned, fit, elegant figure, lean muscle definition";
+        break;
+      case 'Gemoy (Chubby/Curvy)':
+        bodyPrompt = "Chubby, soft round features, curvy, thick thighs, soft skin texture, natural rolls, full figure";
+        break;
+      case 'Obesitas (Plus Size)':
+        bodyPrompt = "Obese, plus-size, heavy full figure, massive build, very soft body structure, realistic weight distribution";
+        break;
     }
 
     // 4. LOGIKA UKURAN PAYUDARA (Breast Size Mapping)
     let breastSizePrompt = "Medium proportional bust"; // Default
-    switch(breastSize) {
-        case 'Rata (Flat/Petite)': 
-            breastSizePrompt = "Flat chest, petite bust, small A-cup"; 
-            break;
-        case 'Kecil (Small A-Cup)': 
-            breastSizePrompt = "Small breasts, A-cup, natural lift, petite"; 
-            break;
-        case 'Sedang (Medium B/C-Cup)': 
-            breastSizePrompt = "Medium breasts, B-cup to C-cup, proportional to body"; 
-            break;
-        case 'Berisi (Full D-Cup)': 
-            breastSizePrompt = "Full breasts, D-cup, round shape, natural gravity"; 
-            break;
-        case 'Besar (Large E-Cup)': 
-            breastSizePrompt = "Large breasts, E-cup, voluminous, heavy chest, natural sag"; 
-            break;
-        case 'Sangat Besar (Massive/Voluminous)': 
-            breastSizePrompt = "Very large breasts, massive proportions, hyper-voluminous"; 
-            break;
-        case 'Natural (Teardrop Shape)': 
-            breastSizePrompt = "Natural breasts, teardrop shape, soft look, unenhanced"; 
-            break;
-        case 'Push-Up Effect (Cleavage)': 
-            breastSizePrompt = "Push-up effect, deep cleavage, lifted look, firm"; 
-            break;
+    switch (breastSize) {
+      case 'Rata (Flat/Petite)':
+        breastSizePrompt = "Flat chest, petite bust, small A-cup";
+        break;
+      case 'Kecil (Small A-Cup)':
+        breastSizePrompt = "Small breasts, A-cup, natural lift, petite";
+        break;
+      case 'Sedang (Medium B/C-Cup)':
+        breastSizePrompt = "Medium breasts, B-cup to C-cup, proportional to body";
+        break;
+      case 'Berisi (Full D-Cup)':
+        breastSizePrompt = "Full breasts, D-cup, round shape, natural gravity";
+        break;
+      case 'Besar (Large E-Cup)':
+        breastSizePrompt = "Large breasts, E-cup, voluminous, heavy chest, natural sag";
+        break;
+      case 'Sangat Besar (Massive/Voluminous)':
+        breastSizePrompt = "Very large breasts, massive proportions, hyper-voluminous";
+        break;
+      case 'Natural (Teardrop Shape)':
+        breastSizePrompt = "Natural breasts, teardrop shape, soft look, unenhanced";
+        break;
+      case 'Push-Up Effect (Cleavage)':
+        breastSizePrompt = "Push-up effect, deep cleavage, lifted look, firm";
+        break;
     }
 
     // 5. LOGIKA MAKEUP PROFESIONAL
@@ -364,10 +364,10 @@ export const BikiniPhotoshootModule: React.FC = () => {
 
   // --- UI COMPONENTS ---
 
-  const renderDropdown = (label: string, value: string, onChange: (val: string) => void, options: string[] | {value: string, label: string}[], hasManual = false) => (
+  const renderDropdown = (label: string, value: string, onChange: (val: string) => void, options: string[] | { value: string, label: string }[], hasManual = false) => (
     <div className="space-y-1">
       <label className="text-[10px] font-semibold text-gray-500 uppercase">{label}</label>
-      <select 
+      <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
@@ -382,37 +382,38 @@ export const BikiniPhotoshootModule: React.FC = () => {
     </div>
   );
 
+  const headerControls = (
+    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
+      <label className="block text-sm font-bold text-purple-700 dark:text-purple-300 mb-2 uppercase tracking-wide">Pilih Mode Generate</label>
+      <select
+        value={mode}
+        onChange={(e) => setMode(e.target.value)}
+        className="w-full rounded-lg border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 p-3 text-sm dark:text-white outline-none"
+      >
+        {MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+      </select>
+
+      {/* Free Mode Specific Inputs */}
+      {mode === 'free' && (
+        <div className="grid grid-cols-2 gap-4 mt-4 animate-fade-in">
+          {renderDropdown("Tipe Wajah", faceShape, setFaceShape, FACE_SHAPES)}
+          {renderDropdown("Etnisitas", ethnicity, setEthnicity, ETHNICITIES)}
+        </div>
+      )}
+    </div>
+  );
+
   const extraControls = (
     <div className="space-y-6">
-      
-      {/* Mode Selection */}
-      <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
-        <label className="block text-sm font-bold text-purple-700 dark:text-purple-300 mb-2 uppercase tracking-wide">Pilih Mode Generate</label>
-        <select 
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          className="w-full rounded-lg border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 p-3 text-sm dark:text-white outline-none"
-        >
-          {MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </select>
-
-        {/* Free Mode Specific Inputs */}
-        {mode === 'free' && (
-           <div className="grid grid-cols-2 gap-4 mt-4 animate-fade-in">
-              {renderDropdown("Tipe Wajah", faceShape, setFaceShape, FACE_SHAPES)}
-              {renderDropdown("Etnisitas", ethnicity, setEthnicity, ETHNICITIES)}
-           </div>
-        )}
-      </div>
 
       {/* Physical Attributes Grid */}
       <div className="bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
         <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Detail Fisik</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-           {renderDropdown("Tipe Tubuh", bodyType, setBodyType, BODY_TYPES)}
-           {renderDropdown("Ukuran Payudara", breastSize, setBreastSize, BREAST_SIZES)}
-           {renderDropdown("Warna Kulit", skinTone, setSkinTone, SKIN_TONES)}
-           {renderDropdown("Warna Mata", eyeColor, setEyeColor, EYE_COLORS)}
+          {renderDropdown("Tipe Tubuh", bodyType, setBodyType, BODY_TYPES)}
+          {renderDropdown("Ukuran Payudara", breastSize, setBreastSize, BREAST_SIZES)}
+          {renderDropdown("Warna Kulit", skinTone, setSkinTone, SKIN_TONES)}
+          {renderDropdown("Warna Mata", eyeColor, setEyeColor, EYE_COLORS)}
         </div>
       </div>
 
@@ -420,136 +421,137 @@ export const BikiniPhotoshootModule: React.FC = () => {
       <div className="bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
         <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Rambut & Gaya</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-           <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase">Gaya Rambut</label>
-              <select 
-                value={hairStyle} onChange={(e) => setHairStyle(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
-              >
-                {HAIR_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
-                <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
-              </select>
-              {hairStyle === 'manual' && (
-                <input 
-                  type="text" value={customHairStyle} onChange={(e) => setCustomHairStyle(e.target.value)} placeholder="Ketik gaya rambut..."
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
-                />
-              )}
-           </div>
-           {renderDropdown("Warna Rambut", hairColor, setHairColor, HAIR_COLORS)}
-           
-           {renderDropdown("Riasan / Makeup", makeup, setMakeup, MAKEUP_STYLES)}
-           {renderDropdown("Warna Kuku", nailColor, setNailColor, NAIL_COLORS)}
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Gaya Rambut</label>
+            <select
+              value={hairStyle} onChange={(e) => setHairStyle(e.target.value)}
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-gray-700 p-2 text-xs dark:text-white outline-none"
+            >
+              {HAIR_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
+            </select>
+            {hairStyle === 'manual' && (
+              <input
+                type="text" value={customHairStyle} onChange={(e) => setCustomHairStyle(e.target.value)} placeholder="Ketik gaya rambut..."
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
+              />
+            )}
+          </div>
+          {renderDropdown("Warna Rambut", hairColor, setHairColor, HAIR_COLORS)}
 
-           <div className="space-y-1 md:col-span-2">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase text-pink-500">Jenis Bikini</label>
-              <select 
-                value={bikiniType} onChange={(e) => setBikiniType(e.target.value)}
-                className="w-full rounded-md border border-pink-200 dark:border-pink-900 bg-pink-50 dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
-              >
-                {BIKINI_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
-                <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
-              </select>
-              {bikiniType === 'manual' && (
-                <input 
-                  type="text" value={customBikini} onChange={(e) => setCustomBikini(e.target.value)} placeholder="Detail pakaian..."
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
-                />
-              )}
-           </div>
+          {renderDropdown("Riasan / Makeup", makeup, setMakeup, MAKEUP_STYLES)}
+          {renderDropdown("Warna Kuku", nailColor, setNailColor, NAIL_COLORS)}
+
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase text-pink-500">Jenis Bikini</label>
+            <select
+              value={bikiniType} onChange={(e) => setBikiniType(e.target.value)}
+              className="w-full rounded-md border border-pink-200 dark:border-pink-900 bg-pink-50 dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
+            >
+              {BIKINI_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
+            </select>
+            {bikiniType === 'manual' && (
+              <input
+                type="text" value={customBikini} onChange={(e) => setCustomBikini(e.target.value)} placeholder="Detail pakaian..."
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
+              />
+            )}
+          </div>
         </div>
       </div>
 
       {/* Environment Grid */}
       <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
-         <h3 className="text-xs font-bold text-blue-500 uppercase mb-3 flex items-center gap-2">
-            <span>🏝️</span> Scene & Kamera
-         </h3>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            
-            {/* Background Logic */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase">Latar Belakang</label>
-              <select 
-                value={background} onChange={(e) => setBackground(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
+        <h3 className="text-xs font-bold text-blue-500 uppercase mb-3 flex items-center gap-2">
+          <span>🏝️</span> Scene & Kamera
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+          {/* Background Logic */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Latar Belakang</label>
+            <select
+              value={background} onChange={(e) => setBackground(e.target.value)}
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
+            >
+              {BACKGROUND_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
+            </select>
+            {background === 'manual' && (
+              <input
+                type="text" value={customBackground} onChange={(e) => setCustomBackground(e.target.value)} placeholder="Lokasi..."
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
+              />
+            )}
+            {background === 'Studio' && (
+              <select
+                value={studioConcept} onChange={(e) => setStudioConcept(e.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1.5 text-[10px] dark:text-white"
               >
-                {BACKGROUND_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
-                <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
+                {STUDIO_CONCEPTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              {background === 'manual' && (
-                <input 
-                  type="text" value={customBackground} onChange={(e) => setCustomBackground(e.target.value)} placeholder="Lokasi..."
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
-                />
-              )}
-              {background === 'Studio' && (
-                 <select 
-                   value={studioConcept} onChange={(e) => setStudioConcept(e.target.value)}
-                   className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1.5 text-[10px] dark:text-white"
-                 >
-                    {STUDIO_CONCEPTS.map(s => <option key={s} value={s}>{s}</option>)}
-                 </select>
-              )}
-            </div>
+            )}
+          </div>
 
-            {renderDropdown("Waktu", time, setTime, TIMES)}
+          {renderDropdown("Waktu", time, setTime, TIMES)}
 
-            {/* Angle */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase">Angle Kamera</label>
-              <select 
-                value={cameraAngle} onChange={(e) => setCameraAngle(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
-              >
-                {ANGLES.map(s => <option key={s} value={s}>{s}</option>)}
-                <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
-              </select>
-              {cameraAngle === 'manual' && (
-                <input 
-                  type="text" value={customAngle} onChange={(e) => setCustomAngle(e.target.value)} placeholder="Angle..."
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
-                />
-              )}
-            </div>
+          {/* Angle */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Angle Kamera</label>
+            <select
+              value={cameraAngle} onChange={(e) => setCameraAngle(e.target.value)}
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
+            >
+              {ANGLES.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
+            </select>
+            {cameraAngle === 'manual' && (
+              <input
+                type="text" value={customAngle} onChange={(e) => setCustomAngle(e.target.value)} placeholder="Angle..."
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
+              />
+            )}
+          </div>
 
-            {/* Pose */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-gray-500 uppercase">Pose</label>
-              <select 
-                value={pose} onChange={(e) => setPose(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
-              >
-                {POSES.map(s => <option key={s} value={s}>{s}</option>)}
-                <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
-              </select>
-              {pose === 'manual' && (
-                <input 
-                  type="text" value={customPose} onChange={(e) => setCustomPose(e.target.value)} placeholder="Pose..."
-                  className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
-                />
-              )}
-            </div>
+          {/* Pose */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase">Pose</label>
+            <select
+              value={pose} onChange={(e) => setPose(e.target.value)}
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-xs dark:text-white outline-none"
+            >
+              {POSES.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="manual" className="text-yellow-600 font-bold">✎ Input Manual...</option>
+            </select>
+            {pose === 'manual' && (
+              <input
+                type="text" value={customPose} onChange={(e) => setCustomPose(e.target.value)} placeholder="Pose..."
+                className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent p-2 text-xs dark:text-white"
+              />
+            )}
+          </div>
 
-         </div>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <GeneratorModule 
+    <GeneratorModule
       moduleId="bikini-photoshoot"
       title="Mode Musim Panas (Bikini Studio)"
       description="Hyper-Realistic 8K Virtual Studio Generator khusus untuk fotografi musim panas dan pakaian renang."
       promptPrefix={promptPrefix}
       requireImage={mode === 'reference'} // Only require image upload in Reference mode
       mainImageLabel={mode === 'reference' ? "Foto Wajah (Wajib)" : "Tidak Perlu Foto"}
-      
+
       // Use Reference Image slot for Costume Upload
       allowReferenceImage={true}
       referenceImageLabel="Foto Kostum (Opsional)"
-      
+
       extraControls={extraControls}
+      headerControls={headerControls}
       batchModeAvailable={true}
       defaultAspectRatio="3:4"
     />
