@@ -55,13 +55,19 @@ interface GeneratorModuleProps {
   useLargeRefineButton?: boolean;
 }
 
+interface BatchResultItem {
+  url: string | null;
+  error?: string;
+  loading?: boolean;
+}
+
 interface HistoryState {
   image: File | null;
   refImage: File | null;
   faceImage2: File | null;
   prompt: string;
   generatedImage: string | null;
-  batchResults?: string[] | null;
+  batchResults?: BatchResultItem[] | null;
   aspectRatio: string;
   imageSize: string;
   isBatchMode?: boolean;
@@ -129,7 +135,8 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
 
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchCount, setBatchCount] = useState(5);
-  const [batchResults, setBatchResults] = useState<string[]>([]);
+  const [batchResults, setBatchResults] = useState<BatchResultItem[]>([]);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [textLoading, setTextLoading] = useState(false);
@@ -337,12 +344,13 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
         const result = await customGenerateHandler(prompt, aspectRatio, imageSize, isBatchMode, batchCount);
 
         if (Array.isArray(result)) {
-          // Batch result
-          setBatchResults(result);
+          // Batch result - convert string[] to BatchResultItem[]
+          const batchItems: BatchResultItem[] = result.map(url => ({ url, loading: false }));
+          setBatchResults(batchItems);
           setGeneratedImage(result[0]);
           saveToHistory({
             image: null, refImage, faceImage2: null, prompt,
-            generatedImage: result[0], batchResults: result,
+            generatedImage: result[0], batchResults: batchItems,
             aspectRatio, imageSize, isBatchMode: true
           });
         } else {
@@ -359,8 +367,12 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
       } else {
         // --- DEFAULT GENERATOR LOGIC ---
         if (isBatchMode && batchModeAvailable) {
-          const results: string[] = [];
-          setBatchResults([]);
+          // Initialize batch slots with loading state
+          const initialSlots: BatchResultItem[] = Array.from({ length: batchCount }, () => ({ url: null, loading: true }));
+          setBatchResults(initialSlots);
+
+          const finalResults: BatchResultItem[] = [...initialSlots];
+          let firstSuccess: string | null = null;
 
           for (let i = 0; i < batchCount; i++) {
             setLoadingMessage(`Mengenerate gambar ${i + 1} dari ${batchCount} (Pose Acak)...`);
@@ -368,20 +380,24 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
 
             try {
               const result = await generateCreativeImage(batchVariationPrompt, image, aspectRatio, imageSize, refImage, faceImage2);
-              results.push(result);
-              setBatchResults([...results]);
-            } catch (err) {
+              finalResults[i] = { url: result, loading: false };
+              if (!firstSuccess) firstSuccess = result;
+            } catch (err: any) {
               console.error(`Batch ${i + 1} failed`, err);
+              finalResults[i] = { url: null, error: err.message || 'Gagal', loading: false };
             }
+            // Update state progressively after each image
+            setBatchResults([...finalResults]);
           }
 
-          if (results.length === 0) throw new Error("Gagal mengenerate batch.");
+          const successCount = finalResults.filter(r => r.url).length;
+          if (successCount === 0) throw new Error("Semua batch gagal dihasilkan.");
 
-          setGeneratedImage(results[0]);
+          setGeneratedImage(firstSuccess);
           saveToHistory({
             image, refImage, faceImage2, prompt,
-            generatedImage: results[0],
-            batchResults: results,
+            generatedImage: firstSuccess,
+            batchResults: finalResults,
             aspectRatio, imageSize, isBatchMode: true
           });
 
@@ -531,6 +547,38 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
           onClose={() => setError(null)}
           onRetry={handleGenerate}
         />
+      )}
+
+      {/* ZOOM MODAL */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            className="absolute top-6 right-6 text-white/80 hover:text-white p-2 bg-white/10 rounded-full z-10"
+            onClick={() => setZoomedImage(null)}
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={zoomedImage}
+            alt="Zoomed Image"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <a
+            href={zoomedImage}
+            download={`nusantara-zoom-${Date.now()}.png`}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-white text-black rounded-full font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Unduh HD
+          </a>
+        </div>
       )}
 
       <div className="space-y-2">
@@ -778,29 +826,60 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
             {batchResults.length > 0 && isBatchMode ? (
               <div className="w-full h-full animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-700 dark:text-gray-200">Hasil Batch ({batchResults.length} Gambar)</h3>
+                  <h3 className="font-bold text-gray-700 dark:text-gray-200">
+                    Hasil Batch ({batchResults.filter(r => r.url).length}/{batchResults.length} Berhasil)
+                  </h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 auto-rows-max">
-                  {batchResults.map((imgSrc, idx) => (
-                    <div key={idx} className="relative group/item rounded-lg overflow-hidden shadow-md">
-                      <img src={imgSrc} alt={`Result ${idx}`} className="w-full h-auto object-cover" />
-                      <a
-                        href={imgSrc}
-                        download={`nusantara-batch-${idx}-${Date.now()}.png`}
-                        className="absolute bottom-2 right-2 bg-white/90 text-gray-900 p-2 rounded-full shadow-lg opacity-0 group-hover/item:opacity-100 transition-opacity"
-                        title="Unduh"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 12.75l-3.3-3.3m0 0l-3.3 3.3m3.3-3.3v7.5" />
-                        </svg>
-                      </a>
+                  {batchResults.map((item, idx) => (
+                    <div key={idx} className="relative rounded-lg overflow-hidden shadow-md bg-gray-200 dark:bg-gray-700 min-h-[200px]">
+                      {item.loading ? (
+                        // Loading State
+                        <div className="flex flex-col items-center justify-center h-48 animate-pulse">
+                          <div className="w-10 h-10 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-2"></div>
+                          <span className="text-xs text-gray-500">Gambar {idx + 1}...</span>
+                        </div>
+                      ) : item.url ? (
+                        // Success State
+                        <div className="relative group/item">
+                          <img src={item.url} alt={`Result ${idx + 1}`} className="w-full h-auto object-cover" />
+                          {/* Action Buttons Below Image */}
+                          <div className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-800 justify-center">
+                            <button
+                              onClick={() => setZoomedImage(item.url)}
+                              className="px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-indigo-200 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
+                              </svg>
+                              Zoom
+                            </button>
+                            <a
+                              href={item.url}
+                              download={`nusantara-batch-${idx + 1}-${Date.now()}.png`}
+                              className="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-green-200 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                              </svg>
+                              Unduh
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        // Error State
+                        <div className="flex flex-col items-center justify-center h-48 text-center p-4">
+                          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-red-500">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                            </svg>
+                          </div>
+                          <span className="text-xs font-bold text-red-500 mb-1">Gambar {idx + 1} Gagal</span>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2">{item.error || 'Terjadi kesalahan'}</span>
+                        </div>
+                      )}
                     </div>
                   ))}
-                  {loading && batchResults.length < batchCount && (
-                    <div className="flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-lg h-40 animate-pulse">
-                      <span className="text-xs text-gray-500">Memproses...</span>
-                    </div>
-                  )}
                 </div>
               </div>
             ) : generatedImage ? (
