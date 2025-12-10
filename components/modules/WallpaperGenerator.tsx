@@ -15,7 +15,8 @@ const CATEGORIES = [
    { id: 'portrait', label: 'Portrait / Karakter', prompt: 'artistic portrait, detailed face, cinematic lighting, dramatic shadows, fashion photography, 8k resolution' },
    { id: 'anime', label: 'Anime / Ilustrasi', prompt: 'makoto shinkai style landscape, anime background, shooting stars, emotional atmosphere, vibrant colors, high quality illustration' },
    { id: 'minimal', label: 'Minimalis', prompt: 'minimalist wallpaper, simple geometric shapes, clean lines, pastel colors, soothing, zen, negative space' },
-   { id: 'sci-fi', label: 'Sci-Fi / Space', prompt: 'deep space nebula, distant planets, futuristic spaceship, cosmic horror, interstellar, stars and galaxies, 8k render' }
+   { id: 'sci-fi', label: 'Sci-Fi / Space', prompt: 'deep space nebula, distant planets, futuristic spaceship, cosmic horror, interstellar, stars and galaxies, 8k render' },
+   { id: 'miniature', label: 'Miniatur / Diorama', prompt: 'tilt-shift miniature photography, tiny diorama scene, macro photography, extremely detailed miniature model, selective focus, toy-like world, handcrafted diorama, hyper-realistic miniature, bokeh background' }
 ];
 
 const QUICK_EDITS = [
@@ -135,7 +136,28 @@ export const WallpaperGeneratorModule: React.FC = () => {
    const handleGiveIdea = async () => {
       setTextLoading(true);
       try {
-         const idea = await refineUserPrompt(`Buatkan deskripsi visual singkat tapi detail untuk wallpaper bertema "${selectedCategory.label}" yang epik dan estetik (resolusi 8k). Output promptnya saja dalam bahasa Indonesia.`);
+         let ideaPrompt = '';
+
+         // Special prompt for Miniature/Diorama category
+         if (selectedCategory.id === 'miniature') {
+            ideaPrompt = `Buatkan konsep visual untuk wallpaper bertema MINIATUR atau DIORAMA yang unik dan kreatif.
+            
+            Pilih salah satu konsep menarik seperti:
+            - Diorama kota kecil dalam botol kaca
+            - Miniatur hutan hujan di atas meja
+            - Diorama pertempuran sejarah skala kecil
+            - Kota futuristik miniatur dengan efek tilt-shift
+            - Kebun binatang mini dalam kotak kayu
+            - Diorama bawah laut dengan kapal tenggelam
+            - Miniatur stasiun kereta api klasik
+            - Diorama rumah boneka mewah
+            
+            Berikan deskripsi visual detail dalam Bahasa Indonesia. Fokus pada detail miniatur, pencahayaan dramatis, dan efek depth-of-field. Output prompt saja.`;
+         } else {
+            ideaPrompt = `Buatkan deskripsi visual singkat tapi detail untuk wallpaper bertema "${selectedCategory.label}" yang epik dan estetik (resolusi 8k). Output promptnya saja dalam bahasa Indonesia.`;
+         }
+
+         const idea = await refineUserPrompt(ideaPrompt);
          setPrompt(idea);
       } catch (e) {
          console.error(e);
@@ -247,8 +269,8 @@ export const WallpaperGeneratorModule: React.FC = () => {
                                  key={res}
                                  onClick={() => setResolution(res)}
                                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${resolution === res
-                                       ? 'bg-fuchsia-600 text-white shadow-lg'
-                                       : 'text-white/60 hover:text-white hover:bg-white/10'
+                                    ? 'bg-fuchsia-600 text-white shadow-lg'
+                                    : 'text-white/60 hover:text-white hover:bg-white/10'
                                     }`}
                               >
                                  {res}
@@ -267,8 +289,8 @@ export const WallpaperGeneratorModule: React.FC = () => {
                               key={cat.id}
                               onClick={() => { setSelectedCategory(cat); setPrompt(''); }}
                               className={`p-3 rounded-xl text-left text-sm font-medium transition-all border ${selectedCategory.id === cat.id
-                                    ? 'bg-fuchsia-600 border-fuchsia-500 text-white shadow-lg scale-105'
-                                    : 'bg-black/20 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/30'
+                                 ? 'bg-fuchsia-600 border-fuchsia-500 text-white shadow-lg scale-105'
+                                 : 'bg-black/20 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/30'
                                  }`}
                            >
                               {cat.label}
