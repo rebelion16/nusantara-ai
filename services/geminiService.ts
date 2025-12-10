@@ -322,6 +322,11 @@ export const generateStoryboardPlan = async (theme: string, panelCount: number =
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `You are a professional movie director. Create a sequential ${panelCount}-panel storyboard plan based on the theme: "${theme}". 
+    
+    IMPORTANT: Output STRICTLY in BAHASA INDONESIA.
+    - "action" must be in Indonesian.
+    - "dialogue" must be in Indonesian.
+    
     Output STRICTLY as a JSON Array of objects with keys: "action", "camera", "dialogue". Panel 1 starts immediately with action.`
   });
   const text = response.text || "[]";
