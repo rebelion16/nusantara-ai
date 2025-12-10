@@ -32,7 +32,6 @@ const EXPRESSIONS = [
 ];
 
 const HEIGHT_OPTIONS = ['✨ Auto', '150 cm (Petite)', '155 cm', '160 cm (Average)', '165 cm', '170 cm (Tall)', '175 cm', '180 cm (Model)', '185 cm', '190 cm', '✎ Input Manual (cm)'];
-const WEIGHT_OPTIONS = ['✨ Auto', '40 kg (Skinny)', '45 kg', '50 kg (Slim)', '55 kg (Ideal)', '60 kg', '65 kg (Curvy)', '70 kg', '75 kg (Full)', '80 kg+', '✎ Input Manual (kg)'];
 
 const ART_STYLES = [
   'Foto Realistik',
@@ -176,9 +175,7 @@ interface SubjectData {
   expression: string;
   // New Fields
   height: string;
-  weight: string;
   customHeight: string;
-  customWeight: string;
 }
 
 interface VirtualPhotoshootProps {
@@ -201,9 +198,7 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
       accessory: 'Tidak Ada',
       expression: EXPRESSIONS[0],
       height: HEIGHT_OPTIONS[0],
-      weight: WEIGHT_OPTIONS[0],
-      customHeight: '',
-      customWeight: ''
+      customHeight: ''
     }
   ]);
 
@@ -283,9 +278,7 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
       accessory: 'Tidak Ada',
       expression: EXPRESSIONS[0],
       height: HEIGHT_OPTIONS[0],
-      weight: WEIGHT_OPTIONS[0],
-      customHeight: '',
-      customWeight: ''
+      customHeight: ''
     }]);
   };
 
@@ -351,9 +344,8 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     const subjectDescriptions = subjects.map((s, idx) => {
       const bodyDesc = getBodyPrompt(s.bodyType);
       const finalHeight = s.height.includes('Input Manual') ? (s.customHeight || 'Average Height') : (s.height.includes('Auto') ? 'Average Height' : s.height);
-      const finalWeight = s.weight.includes('Input Manual') ? (s.customWeight || 'Proportional Weight') : (s.weight.includes('Auto') ? 'Proportional Weight' : s.weight);
 
-      return `SUBJEK ${idx + 1} (${s.name || `Orang ${idx + 1}`}): ${s.gender}, tubuh ${bodyDesc} (Tinggi: ${finalHeight}, Berat: ${finalWeight}), rambut ${s.hairStyle} warna ${s.hairColor}, pakaian ${s.clothingColor === '✨ Sesuai Prompt' ? 'sesuai tema' : s.clothingColor} ${s.fabricType !== '✨ Sesuai Prompt' ? `bahan ${s.fabricType}` : ''} ${s.accessory !== 'Tidak Ada' ? `, aksesoris ${s.accessory}` : ''}, ekspresi ${s.expression}.`;
+      return `SUBJEK ${idx + 1} (${s.name || `Orang ${idx + 1}`}): ${s.gender}, tubuh ${bodyDesc} (Tinggi: ${finalHeight}), rambut ${s.hairStyle} warna ${s.hairColor}, pakaian ${s.clothingColor === '✨ Sesuai Prompt' ? 'sesuai tema' : s.clothingColor} ${s.fabricType !== '✨ Sesuai Prompt' ? `bahan ${s.fabricType}` : ''} ${s.accessory !== 'Tidak Ada' ? `, aksesoris ${s.accessory}` : ''}, ekspresi ${s.expression}.`;
     }).join('\n');
 
     let fullPrompt = `Generasi KUALITAS TERTINGGI (8k resolution, Ultra-Sharp, Crystal Clear).
@@ -511,8 +503,8 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
         </div>
       </div>
 
-      {/* NEW: Physical Details (Height/Weight) */}
-      <div className="grid grid-cols-2 gap-3 mb-2 bg-white dark:bg-gray-900/50 p-2 rounded border border-dashed border-gray-200 dark:border-gray-700">
+      {/* Physical Details (Height) */}
+      <div className="grid grid-cols-1 gap-3 mb-2 bg-white dark:bg-gray-900/50 p-2 rounded border border-dashed border-gray-200 dark:border-gray-700">
         <div>
           <label className="text-[9px] font-bold text-indigo-500 block mb-0.5">Tinggi Badan</label>
           <select
@@ -524,21 +516,6 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
           {subject.height.includes('Input Manual') && (
             <input
               type="text" placeholder="Cth: 168 cm" value={subject.customHeight} onChange={(e) => updateSubject(subject.id, 'customHeight', e.target.value)}
-              className="mt-1 w-full p-1 text-[10px] rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
-          )}
-        </div>
-        <div>
-          <label className="text-[9px] font-bold text-indigo-500 block mb-0.5">Berat Badan</label>
-          <select
-            value={subject.weight} onChange={(e) => updateSubject(subject.id, 'weight', e.target.value)}
-            className="w-full p-1 text-[10px] rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-          >
-            {WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w}</option>)}
-          </select>
-          {subject.weight.includes('Input Manual') && (
-            <input
-              type="text" placeholder="Cth: 55 kg" value={subject.customWeight} onChange={(e) => updateSubject(subject.id, 'customWeight', e.target.value)}
               className="mt-1 w-full p-1 text-[10px] rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           )}
