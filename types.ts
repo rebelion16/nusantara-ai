@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ModuleId = 
+export type ModuleId =
   | 'home'
   | 'virtual-photoshoot'
   | 'prewed-virtual'
@@ -17,13 +17,14 @@ export type ModuleId =
   | 'voice-over'
   | 'rebel-fx'
   | 'ai-melukis'
-  | 'wallpaper-generator';
+  | 'wallpaper-generator'
+  | 'catat-duitmu';
 
 export interface ModuleDefinition {
   id: ModuleId;
   title: string;
   description: string;
-  icon: string; // Changed to string for raw emoji
+  icon: string | React.ReactNode;
   gradient: string;
   category?: string; // New field for grouping
 }
@@ -42,3 +43,30 @@ export interface UserProfile {
 }
 
 export type Theme = 'light' | 'dark';
+
+// Catat Duitmu Types
+export type WalletType = 'bank' | 'e-wallet' | 'cash';
+
+export interface WalletAccount {
+  id: string;
+  userId: string;
+  name: string;
+  type: WalletType;
+  balance: number;
+  accountNumber?: string;
+  color?: string; // For UI styling e.g. "bg-blue-500"
+}
+
+export type TransactionType = 'income' | 'expense' | 'transfer';
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  walletId: string;
+  targetWalletId?: string; // For transfers
+  amount: number;
+  category: string;
+  type: TransactionType;
+  description: string;
+  date: number; // Timestamp
+}

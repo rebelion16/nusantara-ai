@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Wallet } from 'lucide-react';
 import { ModuleDefinition, ModuleId } from '../../types';
 
 interface HomeProps {
@@ -135,6 +136,14 @@ export const MODULES: ModuleDefinition[] = ([
     icon: '📈',
     gradient: 'from-cyan-500 to-blue-600',
     category: 'Bisnis & Marketing'
+  },
+  {
+    id: 'catat-duitmu',
+    title: 'Catat Duitmu',
+    description: 'Kelola keuangan harian dengan fitur dompet pintar dan pelacakan transaksi real-time.',
+    icon: <Wallet />,
+    gradient: 'from-emerald-500 to-teal-500',
+    category: 'Keuangan'
   }
 ] as ModuleDefinition[]).sort((a, b) => a.title.localeCompare(b.title));
 
@@ -149,10 +158,10 @@ export const HomeModule: React.FC<HomeProps> = ({ onNavigate }) => {
           Satu platform, kemungkinan kreatif tak terbatas. Pilih modul untuk memulai perjalanan Anda.
         </p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {MODULES.map((mod) => (
-          <div 
+          <div
             key={mod.id}
             onClick={() => onNavigate(mod.id)}
             className="bg-white dark:bg-dark-card rounded-2xl p-6 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all cursor-pointer group relative overflow-hidden"
@@ -166,13 +175,13 @@ export const HomeModule: React.FC<HomeProps> = ({ onNavigate }) => {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{mod.title}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{mod.description}</p>
                 {mod.category && (
-                    <span className="inline-block mt-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tracking-wider">
-                        {mod.category}
-                    </span>
+                  <span className="inline-block mt-2 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tracking-wider">
+                    {mod.category}
+                  </span>
                 )}
               </div>
               <div className="pt-2 flex items-center text-primary-600 dark:text-primary-400 font-medium text-sm group-hover:translate-x-1 transition-transform">
-                Buka Modul 
+                Buka Modul
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 ml-1">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>

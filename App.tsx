@@ -22,6 +22,7 @@ import { RebelFXModule } from './components/modules/RebelFX';
 import { AiMelukisModule } from './components/modules/AiMelukis';
 import { WallpaperGeneratorModule } from './components/modules/WallpaperGenerator';
 import { YTShortMakerModule } from './components/modules/YTShortMaker';
+import { CatatDuitmuModule } from './components/modules/CatatDuitmu';
 
 const App: React.FC = () => {
   const [activeModuleId, setActiveModuleId] = useState<ModuleId>('home');
@@ -120,6 +121,8 @@ const App: React.FC = () => {
         return <AiMelukisModule />;
       case 'wallpaper-generator':
         return <WallpaperGeneratorModule />;
+      case 'catat-duitmu':
+        return <CatatDuitmuModule />;
       default:
         return <div>Module not found</div>;
     }
