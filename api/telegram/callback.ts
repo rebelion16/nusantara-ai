@@ -1,12 +1,14 @@
 // api/telegram/callback.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-// Supabase config
+// Supabase client
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Main menu keyboard
 const mainMenuKeyboard = {
@@ -23,61 +25,30 @@ const mainMenuKeyboard = {
     ],
 };
 
-// Save telegram user to Supabase
+// Save telegram user to Supabase using client
 async function saveTelegramUser(telegramId: string, email: string): Promise<boolean> {
-    console.log('saveTelegramUser called:', { telegramId, email, hasUrl: !!SUPABASE_URL, hasKey: !!SUPABASE_SERVICE_KEY });
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-        console.error('Missing Supabase credentials in callback');
-        return false;
-    }
+    console.log('saveTelegramUser called:', { telegramId, email });
 
     try {
-        // Insert new user
-        const insertUrl = `${SUPABASE_URL}/rest/v1/telegram_users`;
-        console.log('Insert URL:', insertUrl);
-
-        const insertResponse = await fetch(insertUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_SERVICE_KEY,
-                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-                'Prefer': 'return=representation',
-            },
-            body: JSON.stringify({
-                telegram_id: telegramId,
-                email: email,
-            }),
-        });
-
-        const responseText = await insertResponse.text();
-        console.log('Insert response:', insertResponse.status, responseText);
-
-        if (insertResponse.ok || insertResponse.status === 201) {
-            return true;
-        }
-
-        // If conflict (user exists), try update
-        if (insertResponse.status === 409 || responseText.includes('duplicate')) {
-            const updateUrl = `${SUPABASE_URL}/rest/v1/telegram_users?telegram_id=eq.${telegramId}`;
-            const updateResponse = await fetch(updateUrl, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_SERVICE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-                },
-                body: JSON.stringify({
+        // Upsert - insert or update if exists
+        const { data, error } = await supabase
+            .from('telegram_users')
+            .upsert(
+                {
+                    telegram_id: telegramId,
                     email: email,
                     linked_at: new Date().toISOString()
-                }),
-            });
-            console.log('Update response:', updateResponse.status);
-            return updateResponse.ok;
+                },
+                { onConflict: 'telegram_id' }
+            );
+
+        if (error) {
+            console.error('Supabase upsert error:', error);
+            return false;
         }
 
-        return false;
+        console.log('Telegram user saved successfully:', data);
+        return true;
     } catch (error) {
         console.error('Error saving telegram user:', error);
         return false;
@@ -87,15 +58,16 @@ async function saveTelegramUser(telegramId: string, email: string): Promise<bool
 // Get wallet count
 async function getWalletsCount(email: string): Promise<number> {
     try {
-        const url = `${SUPABASE_URL}/rest/v1/wallets?user_id=eq.${encodeURIComponent(email)}&select=id`;
-        const response = await fetch(url, {
-            headers: {
-                'apikey': SUPABASE_SERVICE_KEY,
-                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-            },
-        });
-        const data = await response.json();
-        return data?.length || 0;
+        const { count, error } = await supabase
+            .from('wallets')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', email);
+
+        if (error) {
+            console.error('Error getting wallets count:', error);
+            return 0;
+        }
+        return count || 0;
     } catch (error) {
         return 0;
     }
@@ -165,7 +137,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const telegramId = state.split('_')[0];
 
         // Save telegram user link to Supabase
-        await saveTelegramUser(telegramId, userInfo.email);
+        const saved = await saveTelegramUser(telegramId, userInfo.email);
+        console.log('Save result:', saved);
 
         // Get wallet count
         const walletCount = await getWalletsCount(userInfo.email);

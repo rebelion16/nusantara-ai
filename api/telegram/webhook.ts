@@ -1,13 +1,15 @@
 // api/telegram/webhook.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const APP_URL = process.env.NEXTAUTH_URL || 'https://nusantara-ai-six.vercel.app';
 
-// Supabase config
+// Supabase client
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Simple in-memory session store
 const sessions: Map<string, any> = new Map();
@@ -51,73 +53,71 @@ async function answerCallback(callbackId: string, text?: string) {
     });
 }
 
-// ==================== SUPABASE REST API ====================
-
-async function supabaseRequest(endpoint: string, method: string = 'GET', body?: any) {
-    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-    const response = await fetch(url, {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_SERVICE_KEY,
-            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-            'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal',
-        },
-        body: body ? JSON.stringify(body) : undefined,
-    });
-
-    if (!response.ok) {
-        const error = await response.text();
-        console.error('Supabase error:', error);
-        return null;
-    }
-
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
-}
+// ==================== SUPABASE FUNCTIONS ====================
 
 async function getTelegramUser(telegramId: string): Promise<any | null> {
-    const data = await supabaseRequest(`telegram_users?telegram_id=eq.${telegramId}&select=*`);
-    return data?.[0] || null;
-}
+    const { data, error } = await supabase
+        .from('telegram_users')
+        .select('*')
+        .eq('telegram_id', telegramId)
+        .single();
 
-async function saveTelegramUser(telegramId: string, email: string): Promise<boolean> {
-    // Check if exists
-    const existing = await getTelegramUser(telegramId);
-
-    if (existing) {
-        // Update
-        await supabaseRequest(`telegram_users?telegram_id=eq.${telegramId}`, 'PATCH', { email });
-    } else {
-        // Insert
-        await supabaseRequest('telegram_users', 'POST', {
-            telegram_id: telegramId,
-            email,
-        });
+    if (error) {
+        console.log('getTelegramUser error:', error.message);
+        return null;
     }
-    return true;
+    return data;
 }
 
 async function getWalletsByEmail(email: string): Promise<any[]> {
-    const data = await supabaseRequest(`wallets?user_id=eq.${encodeURIComponent(email)}&select=*&order=created_at.desc`);
+    const { data, error } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', email)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching wallets:', error);
+        return [];
+    }
     return data || [];
 }
 
 async function getTransactionsByEmail(email: string, limit: number = 10): Promise<any[]> {
-    const data = await supabaseRequest(`transactions?user_id=eq.${encodeURIComponent(email)}&select=*&order=date.desc&limit=${limit}`);
+    const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', email)
+        .order('date', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching transactions:', error);
+        return [];
+    }
     return data || [];
 }
 
 async function addWallet(email: string, name: string, type: string, balance: number = 0): Promise<any> {
     const color = type === 'bank' ? 'bg-blue-600' : type === 'e-wallet' ? 'bg-purple-600' : 'bg-green-600';
-    const data = await supabaseRequest('wallets', 'POST', {
-        user_id: email,
-        name,
-        type,
-        balance,
-        color,
-    });
-    return data?.[0] || null;
+
+    const { data, error } = await supabase
+        .from('wallets')
+        .insert({
+            user_id: email,
+            name,
+            type,
+            balance,
+            color,
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding wallet:', error);
+        return null;
+    }
+    return data;
 }
 
 async function addTransaction(
@@ -129,24 +129,36 @@ async function addTransaction(
     description: string = ''
 ): Promise<boolean> {
     // Add transaction
-    const tx = await supabaseRequest('transactions', 'POST', {
-        user_id: email,
-        wallet_id: walletId,
-        amount,
-        category,
-        type,
-        description,
-        date: new Date().toISOString(),
-    });
+    const { error: txError } = await supabase
+        .from('transactions')
+        .insert({
+            user_id: email,
+            wallet_id: walletId,
+            amount,
+            category,
+            type,
+            description,
+            date: new Date().toISOString(),
+        });
 
-    if (!tx) return false;
+    if (txError) {
+        console.error('Error adding transaction:', txError);
+        return false;
+    }
 
-    // Update wallet balance - need to get current balance first
-    const wallets = await supabaseRequest(`wallets?id=eq.${walletId}&select=balance`);
-    if (wallets?.[0]) {
-        const currentBalance = wallets[0].balance || 0;
-        const newBalance = type === 'income' ? currentBalance + amount : currentBalance - amount;
-        await supabaseRequest(`wallets?id=eq.${walletId}`, 'PATCH', { balance: newBalance });
+    // Update wallet balance
+    const { data: wallet } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', walletId)
+        .single();
+
+    if (wallet) {
+        const newBalance = type === 'income' ? wallet.balance + amount : wallet.balance - amount;
+        await supabase
+            .from('wallets')
+            .update({ balance: newBalance })
+            .eq('id', walletId);
     }
 
     return true;
@@ -265,7 +277,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
         return res.status(200).json({
             ok: true,
-            message: 'Webhook ready (Supabase)',
+            message: 'Webhook ready (Supabase JS)',
             hasToken: !!BOT_TOKEN,
             hasSupabase: !!SUPABASE_URL && !!SUPABASE_SERVICE_KEY
         });
