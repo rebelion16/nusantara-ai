@@ -121,9 +121,22 @@ export const CatatDuitmuModule: React.FC = () => {
 
     // --- Actions ---
 
+    const [saving, setSaving] = useState(false);
+
     const handleSaveWallet = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !walletForm.name) return;
+
+        if (!user) {
+            alert('Error: User tidak ditemukan. Silakan login ulang.');
+            return;
+        }
+
+        if (!walletForm.name || walletForm.name.trim() === '') {
+            alert('Nama dompet harus diisi.');
+            return;
+        }
+
+        setSaving(true);
 
         try {
             if (editingWallet) {
@@ -131,23 +144,28 @@ export const CatatDuitmuModule: React.FC = () => {
                 await updateDoc(doc(db, 'wallets', editingWallet.id), {
                     name: walletForm.name,
                     type: walletForm.type,
-                    // Balance usually not editable directly here unless complex logic, 
-                    // but for simplicity let's allow "correction" if user really wants, 
-                    // though typically initial balance is fixed. 
-                    // Let's ONLY update metadata to be safe, balance edits should be transactions.
-                    // If user wants to change balance, they should add a transaction.
+                    color: walletForm.color,
                 });
+                console.log('Wallet updated successfully');
             } else {
                 // Add new
-                await addDoc(collection(db, 'wallets'), {
-                    ...walletForm,
+                const newWallet = {
+                    name: walletForm.name,
+                    type: walletForm.type || 'bank',
+                    color: walletForm.color || 'bg-blue-600',
                     userId: user.email,
-                    balance: Number(walletForm.balance)
-                });
+                    balance: Number(walletForm.balance) || 0
+                };
+                console.log('Creating new wallet:', newWallet);
+                await addDoc(collection(db, 'wallets'), newWallet);
+                console.log('Wallet created successfully');
             }
             closeModals();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving wallet: ", error);
+            alert(`Gagal menyimpan dompet: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -1060,7 +1078,13 @@ export const CatatDuitmuModule: React.FC = () => {
                                     </div>
                                 )}
                                 <div className="flex gap-2 pt-4">
-                                    <button type="submit" className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition-colors font-bold">Simpan</button>
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {saving ? 'Menyimpan...' : 'Simpan'}
+                                    </button>
                                 </div>
                             </form>
                         </motion.div>
