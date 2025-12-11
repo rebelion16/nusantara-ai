@@ -94,30 +94,50 @@ export const CatatDuitmuModule: React.FC = () => {
     // Listen to Wallets
     useEffect(() => {
         if (!user) return;
-        const q = query(collection(db, 'wallets'), where('userId', '==', user.email));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const walletList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletAccount));
-            setWallets(walletList);
 
-            // Set default wallet if not set
-            if (!transactionForm.walletId && walletList.length > 0) {
-                setTransactionForm(prev => ({ ...prev, walletId: walletList[0].id }));
-            }
-        });
-        return () => unsubscribe();
+        try {
+            const q = query(collection(db, 'wallets'), where('userId', '==', user.email));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const walletList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletAccount));
+                setWallets(walletList);
+
+                // Set default wallet if not set
+                if (!transactionForm.walletId && walletList.length > 0) {
+                    setTransactionForm(prev => ({ ...prev, walletId: walletList[0].id }));
+                }
+            }, (error) => {
+                console.error("Error listening to wallets:", error);
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        } catch (error) {
+            console.error("Error setting up wallet listener:", error);
+            setLoading(false);
+        }
     }, [user]);
 
     // Listen to Transactions
     useEffect(() => {
         if (!user) return;
-        // In real app, might want to filter by date at Firestore level for scale
-        const q = query(collection(db, 'transactions'), where('userId', '==', user.email), orderBy('date', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const txList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-            setTransactions(txList);
+
+        try {
+            // Simple query without orderBy to avoid index requirement
+            const q = query(collection(db, 'transactions'), where('userId', '==', user.email));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const txList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+                // Sort client-side instead
+                txList.sort((a, b) => b.date - a.date);
+                setTransactions(txList);
+                setLoading(false);
+            }, (error) => {
+                console.error("Error listening to transactions:", error);
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        } catch (error) {
+            console.error("Error setting up transaction listener:", error);
             setLoading(false);
-        });
-        return () => unsubscribe();
+        }
     }, [user]);
 
     // --- Actions ---
