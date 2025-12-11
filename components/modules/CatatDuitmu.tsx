@@ -102,45 +102,65 @@ export const CatatDuitmuModule: React.FC = () => {
         if (!user) return;
 
         const fetchWallets = async () => {
-            const { data, error } = await supabase
-                .from('wallets')
-                .select('*')
-                .eq('user_id', user.email)
-                .order('created_at', { ascending: false });
+            try {
+                const { data, error } = await supabase
+                    .from('wallets')
+                    .select('*')
+                    .eq('user_id', user.email)
+                    .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error fetching wallets:", error);
-                return;
-            }
+                if (error) {
+                    console.error("Error fetching wallets:", error);
+                    return;
+                }
 
-            const walletList = (data || []).map(w => ({
-                id: w.id,
-                name: w.name,
-                type: w.type as WalletType,
-                balance: w.balance || 0,
-                color: w.color || 'bg-blue-600',
-                userId: w.user_id
-            })) as WalletAccount[];
+                const walletList = (data || []).map(w => ({
+                    id: w.id,
+                    name: w.name,
+                    type: w.type as WalletType,
+                    balance: w.balance || 0,
+                    color: w.color || 'bg-blue-600',
+                    userId: w.user_id
+                })) as WalletAccount[];
 
-            setWallets(walletList);
+                setWallets(walletList);
 
-            // Set default wallet if not set
-            if (!transactionForm.walletId && walletList.length > 0) {
-                setTransactionForm(prev => ({ ...prev, walletId: walletList[0].id }));
+                // Set default wallet if not set
+                if (!transactionForm.walletId && walletList.length > 0) {
+                    setTransactionForm(prev => ({ ...prev, walletId: walletList[0].id }));
+                }
+            } catch (err) {
+                console.error("Fetch wallets error:", err);
             }
         };
 
         fetchWallets();
 
-        // Subscribe to realtime changes
+        // Subscribe to realtime changes with user filter
         const channel = supabase
-            .channel('wallets-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets' }, () => {
+            .channel(`wallets-${user.email}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'wallets',
+                filter: `user_id=eq.${user.email}`
+            }, () => {
                 fetchWallets();
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        // Re-fetch on visibility change (when user returns to tab/app)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchWallets();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            supabase.removeChannel(channel);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [user]);
 
     // Listen to Transactions
@@ -148,44 +168,65 @@ export const CatatDuitmuModule: React.FC = () => {
         if (!user) return;
 
         const fetchTransactions = async () => {
-            const { data, error } = await supabase
-                .from('transactions')
-                .select('*')
-                .eq('user_id', user.email)
-                .order('date', { ascending: false });
+            try {
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .select('*')
+                    .eq('user_id', user.email)
+                    .order('date', { ascending: false });
 
-            if (error) {
-                console.error("Error fetching transactions:", error);
+                if (error) {
+                    console.error("Error fetching transactions:", error);
+                    setLoading(false);
+                    return;
+                }
+
+                const txList = (data || []).map(t => ({
+                    id: t.id,
+                    amount: t.amount || 0,
+                    category: t.category,
+                    type: t.type as TransactionType,
+                    description: t.description || '',
+                    date: new Date(t.date).getTime(),
+                    walletId: t.wallet_id,
+                    userId: t.user_id
+                })) as Transaction[];
+
+                setTransactions(txList);
                 setLoading(false);
-                return;
+            } catch (err) {
+                console.error("Fetch transactions error:", err);
+                setLoading(false);
             }
-
-            const txList = (data || []).map(t => ({
-                id: t.id,
-                amount: t.amount || 0,
-                category: t.category,
-                type: t.type as TransactionType,
-                description: t.description || '',
-                date: new Date(t.date).getTime(),
-                walletId: t.wallet_id,
-                userId: t.user_id
-            })) as Transaction[];
-
-            setTransactions(txList);
-            setLoading(false);
         };
 
         fetchTransactions();
 
-        // Subscribe to realtime changes
+        // Subscribe to realtime changes with user filter
         const channel = supabase
-            .channel('transactions-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+            .channel(`transactions-${user.email}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'transactions',
+                filter: `user_id=eq.${user.email}`
+            }, () => {
                 fetchTransactions();
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        // Re-fetch on visibility change (when user returns to tab/app)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchTransactions();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            supabase.removeChannel(channel);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [user]);
 
     // --- Actions ---
@@ -1829,8 +1870,8 @@ export const CatatDuitmuModule: React.FC = () => {
                                 {chatMessages.map((msg, i) => (
                                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl ${msg.role === 'user'
-                                                ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
-                                                : 'bg-white/10 text-gray-200'
+                                            ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                                            : 'bg-white/10 text-gray-200'
                                             }`}>
                                             <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         </div>
