@@ -1,21 +1,18 @@
-// services/firebase.ts
-// Firebase configuration - only used for Google Authentication
-// Database operations use Supabase (see lib/supabase.ts)
-
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+// src/services/firebase.ts
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAzitVPXHn88j-d0dJELsDAQhXiINZe6w8",
-    authDomain: "cobafix-59ee1.firebaseapp.com",
-    projectId: "cobafix-59ee1",
-    storageBucket: "cobafix-59ee1.firebasestorage.app",
-    messagingSenderId: "461309680416",
-    appId: "1:461309680416:web:a5deb24d1f6dd5af8b2c7f"
+    apiKey: "AIzaSyAPEZbIMw23gZO-A1aBd7zWELxKVOsSYWE",
+    authDomain: "nusantara-ai-18db6.firebaseapp.com",
+    projectId: "nusantara-ai-18db6",
+    storageBucket: "nusantara-ai-18db6.appspot.com",
+    messagingSenderId: "959578499658",
+    appId: "1:959578499658:web:c2d84cae28ff6bce2154b3",
+    measurementId: "G-82N7EN5L4D"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Export auth for Google login
 export const firebaseAuth = getAuth(app);
+export const db = getFirestore(app);
