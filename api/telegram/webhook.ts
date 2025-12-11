@@ -5,10 +5,15 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const APP_URL = process.env.NEXTAUTH_URL || 'https://nusantara-ai-six.vercel.app';
 
-// Simple in-memory session store (resets on cold start - for demo purposes)
+// Supabase config
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+
+// Simple in-memory session store
 const sessions: Map<string, any> = new Map();
 
-// Send message
+// ==================== TELEGRAM API ====================
+
 async function sendMessage(chatId: string, text: string, replyMarkup?: any) {
     return fetch(`${TELEGRAM_API}/sendMessage`, {
         method: 'POST',
@@ -18,11 +23,11 @@ async function sendMessage(chatId: string, text: string, replyMarkup?: any) {
             text,
             parse_mode: 'HTML',
             reply_markup: replyMarkup,
+            disable_web_page_preview: true,
         }),
     });
 }
 
-// Edit message
 async function editMessage(chatId: string, messageId: number, text: string, replyMarkup?: any) {
     return fetch(`${TELEGRAM_API}/editMessageText`, {
         method: 'POST',
@@ -33,11 +38,11 @@ async function editMessage(chatId: string, messageId: number, text: string, repl
             text,
             parse_mode: 'HTML',
             reply_markup: replyMarkup,
+            disable_web_page_preview: true,
         }),
     });
 }
 
-// Answer callback
 async function answerCallback(callbackId: string, text?: string) {
     return fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
         method: 'POST',
@@ -46,7 +51,109 @@ async function answerCallback(callbackId: string, text?: string) {
     });
 }
 
-// Keyboards
+// ==================== SUPABASE REST API ====================
+
+async function supabaseRequest(endpoint: string, method: string = 'GET', body?: any) {
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const response = await fetch(url, {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+            'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        console.error('Supabase error:', error);
+        return null;
+    }
+
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+}
+
+async function getTelegramUser(telegramId: string): Promise<any | null> {
+    const data = await supabaseRequest(`telegram_users?telegram_id=eq.${telegramId}&select=*`);
+    return data?.[0] || null;
+}
+
+async function saveTelegramUser(telegramId: string, email: string): Promise<boolean> {
+    // Check if exists
+    const existing = await getTelegramUser(telegramId);
+
+    if (existing) {
+        // Update
+        await supabaseRequest(`telegram_users?telegram_id=eq.${telegramId}`, 'PATCH', { email });
+    } else {
+        // Insert
+        await supabaseRequest('telegram_users', 'POST', {
+            telegram_id: telegramId,
+            email,
+        });
+    }
+    return true;
+}
+
+async function getWalletsByEmail(email: string): Promise<any[]> {
+    const data = await supabaseRequest(`wallets?user_id=eq.${encodeURIComponent(email)}&select=*&order=created_at.desc`);
+    return data || [];
+}
+
+async function getTransactionsByEmail(email: string, limit: number = 10): Promise<any[]> {
+    const data = await supabaseRequest(`transactions?user_id=eq.${encodeURIComponent(email)}&select=*&order=date.desc&limit=${limit}`);
+    return data || [];
+}
+
+async function addWallet(email: string, name: string, type: string, balance: number = 0): Promise<any> {
+    const color = type === 'bank' ? 'bg-blue-600' : type === 'e-wallet' ? 'bg-purple-600' : 'bg-green-600';
+    const data = await supabaseRequest('wallets', 'POST', {
+        user_id: email,
+        name,
+        type,
+        balance,
+        color,
+    });
+    return data?.[0] || null;
+}
+
+async function addTransaction(
+    email: string,
+    walletId: string,
+    amount: number,
+    category: string,
+    type: 'income' | 'expense',
+    description: string = ''
+): Promise<boolean> {
+    // Add transaction
+    const tx = await supabaseRequest('transactions', 'POST', {
+        user_id: email,
+        wallet_id: walletId,
+        amount,
+        category,
+        type,
+        description,
+        date: new Date().toISOString(),
+    });
+
+    if (!tx) return false;
+
+    // Update wallet balance - need to get current balance first
+    const wallets = await supabaseRequest(`wallets?id=eq.${walletId}&select=balance`);
+    if (wallets?.[0]) {
+        const currentBalance = wallets[0].balance || 0;
+        const newBalance = type === 'income' ? currentBalance + amount : currentBalance - amount;
+        await supabaseRequest(`wallets?id=eq.${walletId}`, 'PATCH', { balance: newBalance });
+    }
+
+    return true;
+}
+
+// ==================== KEYBOARDS ====================
+
 const mainMenuKeyboard = {
     inline_keyboard: [
         [
@@ -134,14 +241,34 @@ const walletTypeKeyboard = {
     ],
 };
 
-// Format currency
+// ==================== HELPERS ====================
+
 function formatCurrency(amount: number): string {
     return `Rp ${amount.toLocaleString('id-ID')}`;
 }
 
+function getWalletIcon(type: string): string {
+    return type === 'bank' ? '🏦' : type === 'e-wallet' ? '📱' : '💵';
+}
+
+function formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
+
+// ==================== MAIN HANDLER ====================
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
-        return res.status(200).json({ ok: true, message: 'Webhook ready', hasToken: !!BOT_TOKEN });
+        return res.status(200).json({
+            ok: true,
+            message: 'Webhook ready (Supabase)',
+            hasToken: !!BOT_TOKEN,
+            hasSupabase: !!SUPABASE_URL && !!SUPABASE_SERVICE_KEY
+        });
     }
 
     if (req.method !== 'POST') {
@@ -182,29 +309,71 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             await answerCallback(callbackId);
 
+            // Get user from Supabase
+            const telegramUser = await getTelegramUser(telegramId);
+            const userEmail = telegramUser?.email;
+
             // Main Menu
             if (data === 'menu_main' || data === 'menu_refresh') {
-                await editMessage(chatId, messageId,
-                    `📊 <b>Catat Duitmu - Menu Utama</b>\n\n` +
-                    `Pilih menu di bawah untuk melanjutkan:`,
-                    mainMenuKeyboard
-                );
+                if (!userEmail) {
+                    await editMessage(chatId, messageId,
+                        `⚠️ Anda belum login.\n\nSilakan login terlebih dahulu:`,
+                        { inline_keyboard: [[{ text: '🔐 Login dengan Gmail', url: `${APP_URL}/api/telegram/auth?state=${telegramId}_${Date.now()}` }]] }
+                    );
+                } else {
+                    const wallets = await getWalletsByEmail(userEmail);
+                    const totalAssets = wallets.reduce((sum, w) => sum + (w.balance || 0), 0);
+
+                    await editMessage(chatId, messageId,
+                        `📊 <b>Catat Duitmu - Menu Utama</b>\n\n` +
+                        `👤 ${userEmail}\n` +
+                        `💰 Total Aset: <b>${formatCurrency(totalAssets)}</b>\n` +
+                        `📁 Dompet: ${wallets.length} buah\n\n` +
+                        `Pilih menu di bawah:`,
+                        mainMenuKeyboard
+                    );
+                }
             }
 
             // Wallets Menu
             else if (data === 'menu_wallets') {
-                await editMessage(chatId, messageId,
-                    `💳 <b>Dompet Saya</b>\n\n` +
-                    `<i>Untuk melihat dan mengelola dompet, silakan buka aplikasi web Nusantara AI.</i>\n\n` +
-                    `🌐 <a href="https://nusantara-ai-six.vercel.app">Buka Web App</a>\n\n` +
-                    `Atau tambah dompet baru di sini:`,
-                    {
-                        inline_keyboard: [
-                            [{ text: '➕ Tambah Dompet Baru', callback_data: 'wallet_add' }],
-                            [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
-                        ]
+                if (!userEmail) {
+                    await editMessage(chatId, messageId, `⚠️ Silakan login terlebih dahulu.`, backKeyboard);
+                } else {
+                    const wallets = await getWalletsByEmail(userEmail);
+
+                    if (wallets.length === 0) {
+                        await editMessage(chatId, messageId,
+                            `💳 <b>Dompet Saya</b>\n\n` +
+                            `<i>Belum ada dompet. Tambahkan dompet pertama Anda!</i>`,
+                            {
+                                inline_keyboard: [
+                                    [{ text: '➕ Tambah Dompet Baru', callback_data: 'wallet_add' }],
+                                    [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
+                                ]
+                            }
+                        );
+                    } else {
+                        const walletList = wallets.map(w =>
+                            `${getWalletIcon(w.type)} <b>${w.name}</b>\n   └ ${formatCurrency(w.balance || 0)}`
+                        ).join('\n\n');
+
+                        const totalAssets = wallets.reduce((sum, w) => sum + (w.balance || 0), 0);
+
+                        await editMessage(chatId, messageId,
+                            `💳 <b>Dompet Saya</b>\n\n` +
+                            `${walletList}\n\n` +
+                            `━━━━━━━━━━━━━━━━━━\n` +
+                            `💰 <b>Total: ${formatCurrency(totalAssets)}</b>`,
+                            {
+                                inline_keyboard: [
+                                    [{ text: '➕ Tambah Dompet Baru', callback_data: 'wallet_add' }],
+                                    [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
+                                ]
+                            }
+                        );
                     }
-                );
+                }
             }
 
             // Add Wallet
@@ -232,26 +401,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // Income Start
             else if (data === 'menu_income') {
-                sessions.set(telegramId, { flow: 'income', step: 'category' });
-                await editMessage(chatId, messageId,
-                    `💰 <b>Input Pemasukan</b>\n\nPilih kategori:`,
-                    incomeCategoriesKeyboard
-                );
+                if (!userEmail) {
+                    await editMessage(chatId, messageId, `⚠️ Silakan login terlebih dahulu.`, backKeyboard);
+                } else {
+                    sessions.set(telegramId, { flow: 'income', step: 'category' });
+                    await editMessage(chatId, messageId,
+                        `💰 <b>Input Pemasukan</b>\n\nPilih kategori:`,
+                        incomeCategoriesKeyboard
+                    );
+                }
             }
 
             // Income Category Selection
             else if (data.startsWith('income_cat_')) {
                 const category = data.replace('income_cat_', '');
-                const session = sessions.get(telegramId) || {};
-                session.flow = 'income';
-                session.step = 'amount';
-                session.category = category;
-                sessions.set(telegramId, session);
+                sessions.set(telegramId, { flow: 'income', step: 'amount', category });
 
                 await editMessage(chatId, messageId,
                     `💰 <b>Input Pemasukan</b>\n\n` +
                     `📁 Kategori: ${category}\n\n` +
-                    `Pilih atau ketik jumlah:`,
+                    `Pilih jumlah:`,
                     amountKeyboard('income_amount')
                 );
             }
@@ -260,39 +429,99 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             else if (data.startsWith('income_amount_')) {
                 const amount = parseInt(data.replace('income_amount_', ''), 10);
                 const session = sessions.get(telegramId) || {};
+                session.amount = amount;
+                session.step = 'wallet';
+                sessions.set(telegramId, session);
 
-                await editMessage(chatId, messageId,
-                    `✅ <b>Pemasukan Dicatat!</b>\n\n` +
-                    `📁 Kategori: ${session.category || '-'}\n` +
-                    `💵 Jumlah: +${formatCurrency(amount)}\n\n` +
-                    `<i>Catatan: Untuk menyimpan ke database, buka web app dan input di sana.</i>`,
-                    backKeyboard
-                );
+                const wallets = await getWalletsByEmail(userEmail || '');
+
+                if (wallets.length === 0) {
+                    await editMessage(chatId, messageId,
+                        `⚠️ Belum ada dompet. Tambahkan dompet terlebih dahulu.`,
+                        {
+                            inline_keyboard: [
+                                [{ text: '➕ Tambah Dompet', callback_data: 'wallet_add' }],
+                                [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
+                            ]
+                        }
+                    );
+                } else {
+                    const walletButtons = wallets.map(w => ({
+                        text: `${getWalletIcon(w.type)} ${w.name}`,
+                        callback_data: `income_wallet_${w.id}`
+                    }));
+
+                    const rows = [];
+                    for (let i = 0; i < walletButtons.length; i += 2) {
+                        rows.push(walletButtons.slice(i, i + 2));
+                    }
+                    rows.push([{ text: '❌ Batal', callback_data: 'menu_main' }]);
+
+                    await editMessage(chatId, messageId,
+                        `💰 <b>Input Pemasukan</b>\n\n` +
+                        `📁 Kategori: ${session.category}\n` +
+                        `💵 Jumlah: +${formatCurrency(amount)}\n\n` +
+                        `Pilih dompet tujuan:`,
+                        { inline_keyboard: rows }
+                    );
+                }
+            }
+
+            // Income Wallet Selection - Save to Supabase
+            else if (data.startsWith('income_wallet_')) {
+                const walletId = data.replace('income_wallet_', '');
+                const session = sessions.get(telegramId) || {};
+
+                if (userEmail && session.amount && session.category) {
+                    const success = await addTransaction(
+                        userEmail,
+                        walletId,
+                        session.amount,
+                        session.category,
+                        'income',
+                        'Via Telegram Bot'
+                    );
+
+                    if (success) {
+                        await editMessage(chatId, messageId,
+                            `✅ <b>Pemasukan Berhasil Dicatat!</b>\n\n` +
+                            `📁 Kategori: ${session.category}\n` +
+                            `💵 Jumlah: +${formatCurrency(session.amount)}\n\n` +
+                            `<i>Data sudah tersimpan dan sync dengan web app.</i>`,
+                            backKeyboard
+                        );
+                    } else {
+                        await editMessage(chatId, messageId,
+                            `❌ Gagal menyimpan pemasukan. Coba lagi.`,
+                            backKeyboard
+                        );
+                    }
+                }
                 sessions.delete(telegramId);
             }
 
             // Expense Start
             else if (data === 'menu_expense') {
-                sessions.set(telegramId, { flow: 'expense', step: 'category' });
-                await editMessage(chatId, messageId,
-                    `💸 <b>Input Pengeluaran</b>\n\nPilih kategori:`,
-                    expenseCategoriesKeyboard
-                );
+                if (!userEmail) {
+                    await editMessage(chatId, messageId, `⚠️ Silakan login terlebih dahulu.`, backKeyboard);
+                } else {
+                    sessions.set(telegramId, { flow: 'expense', step: 'category' });
+                    await editMessage(chatId, messageId,
+                        `💸 <b>Input Pengeluaran</b>\n\nPilih kategori:`,
+                        expenseCategoriesKeyboard
+                    );
+                }
             }
 
             // Expense Category Selection
             else if (data.startsWith('expense_cat_')) {
                 const category = data.replace('expense_cat_', '');
-                const session = sessions.get(telegramId) || {};
-                session.flow = 'expense';
-                session.step = 'amount';
-                session.category = category;
-                sessions.set(telegramId, session);
+                sessions.set(telegramId, { flow: 'expense', step: 'amount', category });
 
                 await editMessage(chatId, messageId,
                     `💸 <b>Input Pengeluaran</b>\n\n` +
                     `📁 Kategori: ${category}\n\n` +
-                    `Pilih atau ketik jumlah:`,
+                    `Pilih jumlah:`,
                     amountKeyboard('expense_amount')
                 );
             }
@@ -301,35 +530,145 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             else if (data.startsWith('expense_amount_')) {
                 const amount = parseInt(data.replace('expense_amount_', ''), 10);
                 const session = sessions.get(telegramId) || {};
+                session.amount = amount;
+                session.step = 'wallet';
+                sessions.set(telegramId, session);
 
-                await editMessage(chatId, messageId,
-                    `✅ <b>Pengeluaran Dicatat!</b>\n\n` +
-                    `📁 Kategori: ${session.category || '-'}\n` +
-                    `💵 Jumlah: -${formatCurrency(amount)}\n\n` +
-                    `<i>Catatan: Untuk menyimpan ke database, buka web app dan input di sana.</i>`,
-                    backKeyboard
-                );
+                const wallets = await getWalletsByEmail(userEmail || '');
+
+                if (wallets.length === 0) {
+                    await editMessage(chatId, messageId,
+                        `⚠️ Belum ada dompet. Tambahkan dompet terlebih dahulu.`,
+                        {
+                            inline_keyboard: [
+                                [{ text: '➕ Tambah Dompet', callback_data: 'wallet_add' }],
+                                [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
+                            ]
+                        }
+                    );
+                } else {
+                    const walletButtons = wallets.map(w => ({
+                        text: `${getWalletIcon(w.type)} ${w.name}`,
+                        callback_data: `expense_wallet_${w.id}`
+                    }));
+
+                    const rows = [];
+                    for (let i = 0; i < walletButtons.length; i += 2) {
+                        rows.push(walletButtons.slice(i, i + 2));
+                    }
+                    rows.push([{ text: '❌ Batal', callback_data: 'menu_main' }]);
+
+                    await editMessage(chatId, messageId,
+                        `💸 <b>Input Pengeluaran</b>\n\n` +
+                        `📁 Kategori: ${session.category}\n` +
+                        `💵 Jumlah: -${formatCurrency(amount)}\n\n` +
+                        `Pilih dompet sumber:`,
+                        { inline_keyboard: rows }
+                    );
+                }
+            }
+
+            // Expense Wallet Selection - Save to Supabase
+            else if (data.startsWith('expense_wallet_')) {
+                const walletId = data.replace('expense_wallet_', '');
+                const session = sessions.get(telegramId) || {};
+
+                if (userEmail && session.amount && session.category) {
+                    const success = await addTransaction(
+                        userEmail,
+                        walletId,
+                        session.amount,
+                        session.category,
+                        'expense',
+                        'Via Telegram Bot'
+                    );
+
+                    if (success) {
+                        await editMessage(chatId, messageId,
+                            `✅ <b>Pengeluaran Berhasil Dicatat!</b>\n\n` +
+                            `📁 Kategori: ${session.category}\n` +
+                            `💵 Jumlah: -${formatCurrency(session.amount)}\n\n` +
+                            `<i>Data sudah tersimpan dan sync dengan web app.</i>`,
+                            backKeyboard
+                        );
+                    } else {
+                        await editMessage(chatId, messageId,
+                            `❌ Gagal menyimpan pengeluaran. Coba lagi.`,
+                            backKeyboard
+                        );
+                    }
+                }
                 sessions.delete(telegramId);
             }
 
             // Report
             else if (data === 'menu_report') {
-                await editMessage(chatId, messageId,
-                    `📊 <b>Laporan Keuangan</b>\n\n` +
-                    `<i>Untuk melihat laporan lengkap dengan grafik, silakan buka aplikasi web:</i>\n\n` +
-                    `🌐 <a href="https://nusantara-ai-six.vercel.app">Buka Web App</a>`,
-                    backKeyboard
-                );
+                if (!userEmail) {
+                    await editMessage(chatId, messageId, `⚠️ Silakan login terlebih dahulu.`, backKeyboard);
+                } else {
+                    const transactions = await getTransactionsByEmail(userEmail, 100);
+                    const wallets = await getWalletsByEmail(userEmail);
+
+                    const now = new Date();
+                    const thisMonth = now.getMonth();
+                    const thisYear = now.getFullYear();
+
+                    const monthlyTx = transactions.filter(t => {
+                        const txDate = new Date(t.date);
+                        return txDate.getMonth() === thisMonth && txDate.getFullYear() === thisYear;
+                    });
+
+                    const totalIncome = monthlyTx.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
+                    const totalExpense = monthlyTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+                    const netFlow = totalIncome - totalExpense;
+                    const totalAssets = wallets.reduce((sum, w) => sum + (w.balance || 0), 0);
+
+                    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+                    await editMessage(chatId, messageId,
+                        `📊 <b>Laporan Keuangan</b>\n` +
+                        `📅 ${monthNames[thisMonth]} ${thisYear}\n\n` +
+                        `━━━━━━━━━━━━━━━━━━\n\n` +
+                        `💰 <b>Total Aset:</b> ${formatCurrency(totalAssets)}\n\n` +
+                        `📈 Pemasukan: +${formatCurrency(totalIncome)}\n` +
+                        `📉 Pengeluaran: -${formatCurrency(totalExpense)}\n` +
+                        `━━━━━━━━━━━━━━━━━━\n` +
+                        `${netFlow >= 0 ? '✅' : '⚠️'} <b>Net: ${netFlow >= 0 ? '+' : ''}${formatCurrency(netFlow)}</b>\n\n` +
+                        `📊 Transaksi bulan ini: ${monthlyTx.length}`,
+                        backKeyboard
+                    );
+                }
             }
 
             // History
             else if (data === 'menu_history') {
-                await editMessage(chatId, messageId,
-                    `📜 <b>Riwayat Transaksi</b>\n\n` +
-                    `<i>Untuk melihat riwayat lengkap, silakan buka aplikasi web:</i>\n\n` +
-                    `🌐 <a href="https://nusantara-ai-six.vercel.app">Buka Web App</a>`,
-                    backKeyboard
-                );
+                if (!userEmail) {
+                    await editMessage(chatId, messageId, `⚠️ Silakan login terlebih dahulu.`, backKeyboard);
+                } else {
+                    const transactions = await getTransactionsByEmail(userEmail, 10);
+
+                    if (transactions.length === 0) {
+                        await editMessage(chatId, messageId,
+                            `📜 <b>Riwayat Transaksi</b>\n\n` +
+                            `<i>Belum ada transaksi.</i>`,
+                            backKeyboard
+                        );
+                    } else {
+                        const txList = transactions.map(t => {
+                            const icon = t.type === 'income' ? '📈' : '📉';
+                            const sign = t.type === 'income' ? '+' : '-';
+                            return `${icon} <b>${t.category}</b>\n   ${sign}${formatCurrency(t.amount || 0)} • ${formatDate(t.date)}`;
+                        }).join('\n\n');
+
+                        await editMessage(chatId, messageId,
+                            `📜 <b>Riwayat Transaksi</b>\n` +
+                            `<i>10 transaksi terakhir</i>\n\n` +
+                            `${txList}`,
+                            backKeyboard
+                        );
+                    }
+                }
             }
 
             // Unknown callback
@@ -348,14 +687,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const text = update.message.text;
             const session = sessions.get(telegramId);
 
-            if (session?.flow === 'add_wallet' && session?.step === 'name') {
-                await sendMessage(chatId,
-                    `✅ <b>Dompet Berhasil Ditambahkan!</b>\n\n` +
-                    `🏷️ Nama: ${text}\n` +
-                    `📁 Jenis: ${session.walletType}\n\n` +
-                    `<i>Catatan: Untuk menyimpan ke database secara permanen, tambahkan juga melalui web app.</i>`,
-                    backKeyboard
-                );
+            const telegramUser = await getTelegramUser(telegramId);
+            const userEmail = telegramUser?.email;
+
+            if (session?.flow === 'add_wallet' && session?.step === 'name' && userEmail) {
+                const wallet = await addWallet(userEmail, text, session.walletType, 0);
+
+                if (wallet) {
+                    await sendMessage(chatId,
+                        `✅ <b>Dompet Berhasil Ditambahkan!</b>\n\n` +
+                        `🏷️ Nama: ${text}\n` +
+                        `📁 Jenis: ${session.walletType}\n` +
+                        `💵 Saldo: Rp 0\n\n` +
+                        `<i>Data sudah tersimpan dan sync dengan web app.</i>`,
+                        backKeyboard
+                    );
+                } else {
+                    await sendMessage(chatId,
+                        `❌ Gagal menambahkan dompet. Coba lagi.`,
+                        backKeyboard
+                    );
+                }
                 sessions.delete(telegramId);
             }
         }

@@ -4,7 +4,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-// Main menu keyboard - inline
+// Supabase config
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+
+// Main menu keyboard
 const mainMenuKeyboard = {
     inline_keyboard: [
         [
@@ -18,6 +22,71 @@ const mainMenuKeyboard = {
         ],
     ],
 };
+
+// Save telegram user to Supabase
+async function saveTelegramUser(telegramId: string, email: string): Promise<boolean> {
+    try {
+        // Check if exists
+        const checkUrl = `${SUPABASE_URL}/rest/v1/telegram_users?telegram_id=eq.${telegramId}&select=id`;
+        const checkResponse = await fetch(checkUrl, {
+            headers: {
+                'apikey': SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+            },
+        });
+        const existing = await checkResponse.json();
+
+        if (existing?.length > 0) {
+            // Update existing
+            const updateUrl = `${SUPABASE_URL}/rest/v1/telegram_users?telegram_id=eq.${telegramId}`;
+            await fetch(updateUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_SERVICE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                },
+                body: JSON.stringify({ email, linked_at: new Date().toISOString() }),
+            });
+        } else {
+            // Insert new
+            const insertUrl = `${SUPABASE_URL}/rest/v1/telegram_users`;
+            await fetch(insertUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_SERVICE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                },
+                body: JSON.stringify({
+                    telegram_id: telegramId,
+                    email,
+                }),
+            });
+        }
+        return true;
+    } catch (error) {
+        console.error('Error saving telegram user:', error);
+        return false;
+    }
+}
+
+// Get wallet count
+async function getWalletsCount(email: string): Promise<number> {
+    try {
+        const url = `${SUPABASE_URL}/rest/v1/wallets?user_id=eq.${encodeURIComponent(email)}&select=id`;
+        const response = await fetch(url, {
+            headers: {
+                'apikey': SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+            },
+        });
+        const data = await response.json();
+        return data?.length || 0;
+    } catch (error) {
+        return 0;
+    }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { code, state, error } = req.query;
@@ -82,13 +151,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Extract telegram ID from state (format: telegramId_timestamp)
         const telegramId = state.split('_')[0];
 
+        // Save telegram user link to Supabase
+        await saveTelegramUser(telegramId, userInfo.email);
+
+        // Get wallet count
+        const walletCount = await getWalletsCount(userInfo.email);
+
         // Send success message to Telegram
         await fetch(`${TELEGRAM_API}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: telegramId,
-                text: `✅ <b>Login Berhasil!</b>\n\n👤 Email: ${userInfo.email}\n\nSelamat menggunakan Catat Duitmu Bot!\n\n<i>Pilih menu di bawah untuk melanjutkan:</i>`,
+                text: `✅ <b>Login Berhasil!</b>\n\n` +
+                    `👤 Email: ${userInfo.email}\n` +
+                    `📁 Dompet: ${walletCount} buah\n\n` +
+                    `Selamat menggunakan Catat Duitmu Bot!\n\n` +
+                    `<i>Pilih menu di bawah untuk melanjutkan:</i>`,
                 parse_mode: 'HTML',
                 reply_markup: mainMenuKeyboard,
             }),
