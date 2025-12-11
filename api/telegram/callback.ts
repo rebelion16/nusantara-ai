@@ -25,46 +25,59 @@ const mainMenuKeyboard = {
 
 // Save telegram user to Supabase
 async function saveTelegramUser(telegramId: string, email: string): Promise<boolean> {
+    console.log('saveTelegramUser called:', { telegramId, email, hasUrl: !!SUPABASE_URL, hasKey: !!SUPABASE_SERVICE_KEY });
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        console.error('Missing Supabase credentials in callback');
+        return false;
+    }
+
     try {
-        // Check if exists
-        const checkUrl = `${SUPABASE_URL}/rest/v1/telegram_users?telegram_id=eq.${telegramId}&select=id`;
-        const checkResponse = await fetch(checkUrl, {
+        // Insert new user
+        const insertUrl = `${SUPABASE_URL}/rest/v1/telegram_users`;
+        console.log('Insert URL:', insertUrl);
+
+        const insertResponse = await fetch(insertUrl, {
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'apikey': SUPABASE_SERVICE_KEY,
                 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                'Prefer': 'return=representation',
             },
+            body: JSON.stringify({
+                telegram_id: telegramId,
+                email: email,
+            }),
         });
-        const existing = await checkResponse.json();
 
-        if (existing?.length > 0) {
-            // Update existing
+        const responseText = await insertResponse.text();
+        console.log('Insert response:', insertResponse.status, responseText);
+
+        if (insertResponse.ok || insertResponse.status === 201) {
+            return true;
+        }
+
+        // If conflict (user exists), try update
+        if (insertResponse.status === 409 || responseText.includes('duplicate')) {
             const updateUrl = `${SUPABASE_URL}/rest/v1/telegram_users?telegram_id=eq.${telegramId}`;
-            await fetch(updateUrl, {
+            const updateResponse = await fetch(updateUrl, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_SERVICE_KEY,
                     'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
                 },
-                body: JSON.stringify({ email, linked_at: new Date().toISOString() }),
-            });
-        } else {
-            // Insert new
-            const insertUrl = `${SUPABASE_URL}/rest/v1/telegram_users`;
-            await fetch(insertUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_SERVICE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-                },
                 body: JSON.stringify({
-                    telegram_id: telegramId,
-                    email,
+                    email: email,
+                    linked_at: new Date().toISOString()
                 }),
             });
+            console.log('Update response:', updateResponse.status);
+            return updateResponse.ok;
         }
-        return true;
+
+        return false;
     } catch (error) {
         console.error('Error saving telegram user:', error);
         return false;
