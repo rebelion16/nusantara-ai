@@ -692,16 +692,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
-        // Handle text messages (for wallet name input)
+        // Handle text messages
         if (update.message?.text && update.message.text !== '/start') {
             const chatId = update.message.chat.id.toString();
             const telegramId = update.message.from.id.toString();
-            const text = update.message.text;
+            const text = update.message.text.trim();
             const session = sessions.get(telegramId);
 
             const telegramUser = await getTelegramUser(telegramId);
             const userEmail = telegramUser?.email;
 
+            // Handle wallet name input flow
             if (session?.flow === 'add_wallet' && session?.step === 'name' && userEmail) {
                 const wallet = await addWallet(userEmail, text, session.walletType, 0);
 
@@ -721,6 +722,136 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     );
                 }
                 sessions.delete(telegramId);
+                return res.status(200).json({ ok: true });
+            }
+
+            // Quick command parsing: +kategori nominal or -kategori nominal
+            // Formats: +gaji 500000, -makanan 50rb, pemasukan gaji 1jt, pengeluaran makan 25000
+
+            // Define category mappings
+            const incomeCategories: { [key: string]: string } = {
+                'gaji': 'Gaji', 'bonus': 'Bonus', 'penjualan': 'Penjualan',
+                'investasi': 'Investasi', 'hadiah': 'Hadiah', 'lainnya': 'Lainnya',
+                'freelance': 'Bonus', 'project': 'Bonus', 'dividen': 'Investasi'
+            };
+
+            const expenseCategories: { [key: string]: string } = {
+                'makanan': 'Makanan', 'makan': 'Makanan', 'food': 'Makanan', 'snack': 'Makanan',
+                'transport': 'Transportasi', 'transportasi': 'Transportasi', 'bensin': 'Transportasi', 'grab': 'Transportasi', 'gojek': 'Transportasi', 'ojol': 'Transportasi',
+                'belanja': 'Belanja', 'shopping': 'Belanja',
+                'tagihan': 'Tagihan', 'listrik': 'Tagihan', 'air': 'Tagihan', 'internet': 'Tagihan', 'pulsa': 'Tagihan',
+                'hiburan': 'Hiburan', 'game': 'Hiburan', 'netflix': 'Hiburan', 'spotify': 'Hiburan',
+                'kesehatan': 'Kesehatan', 'obat': 'Kesehatan', 'dokter': 'Kesehatan',
+                'lainnya': 'Lainnya'
+            };
+
+            // Parse amount helper
+            const parseAmount = (str: string): number => {
+                str = str.toLowerCase().replace(/[.\s]/g, '');
+                if (str.endsWith('rb') || str.endsWith('ribu')) {
+                    return parseInt(str) * 1000;
+                } else if (str.endsWith('jt') || str.endsWith('juta')) {
+                    return parseInt(str) * 1000000;
+                }
+                return parseInt(str) || 0;
+            };
+
+            // Pattern: +kategori nominal or pemasukan kategori nominal
+            const incomePattern = /^(\+|pemasukan|income|masuk)\s*(\w+)\s+([\d.,]+(?:rb|ribu|jt|juta)?)/i;
+            // Pattern: -kategori nominal or pengeluaran kategori nominal
+            const expensePattern = /^(-|pengeluaran|expense|keluar)\s*(\w+)\s+([\d.,]+(?:rb|ribu|jt|juta)?)/i;
+
+            const incomeMatch = text.match(incomePattern);
+            const expenseMatch = text.match(expensePattern);
+
+            if ((incomeMatch || expenseMatch) && userEmail) {
+                const wallets = await getWalletsByEmail(userEmail);
+
+                if (wallets.length === 0) {
+                    await sendMessage(chatId,
+                        `⚠️ Belum ada dompet. Tambahkan dompet terlebih dahulu.`,
+                        {
+                            inline_keyboard: [
+                                [{ text: '➕ Tambah Dompet', callback_data: 'wallet_add' }],
+                                [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
+                            ]
+                        }
+                    );
+                    return res.status(200).json({ ok: true });
+                }
+
+                const defaultWallet = wallets[0];
+                let type: 'income' | 'expense';
+                let category: string;
+                let amount: number;
+
+                if (incomeMatch) {
+                    type = 'income';
+                    const catKey = incomeMatch[2].toLowerCase();
+                    category = incomeCategories[catKey] || 'Lainnya';
+                    amount = parseAmount(incomeMatch[3]);
+                } else {
+                    type = 'expense';
+                    const catKey = expenseMatch![2].toLowerCase();
+                    category = expenseCategories[catKey] || 'Lainnya';
+                    amount = parseAmount(expenseMatch![3]);
+                }
+
+                if (amount <= 0) {
+                    await sendMessage(chatId,
+                        `❌ Format salah. Contoh:\n` +
+                        `• <code>+gaji 500000</code>\n` +
+                        `• <code>-makanan 50rb</code>\n` +
+                        `• <code>pemasukan bonus 1jt</code>\n` +
+                        `• <code>pengeluaran transport 25000</code>`,
+                        backKeyboard
+                    );
+                    return res.status(200).json({ ok: true });
+                }
+
+                const success = await addTransaction(
+                    userEmail,
+                    defaultWallet.id,
+                    amount,
+                    category,
+                    type,
+                    'Quick command via Telegram'
+                );
+
+                if (success) {
+                    const icon = type === 'income' ? '📈' : '📉';
+                    const sign = type === 'income' ? '+' : '-';
+                    await sendMessage(chatId,
+                        `${icon} <b>${type === 'income' ? 'Pemasukan' : 'Pengeluaran'} Dicatat!</b>\n\n` +
+                        `📁 Kategori: ${category}\n` +
+                        `💵 Jumlah: ${sign}${formatCurrency(amount)}\n` +
+                        `🏦 Dompet: ${defaultWallet.name}\n\n` +
+                        `<i>Data sync dengan web app.</i>`,
+                        backKeyboard
+                    );
+                } else {
+                    await sendMessage(chatId,
+                        `❌ Gagal mencatat transaksi. Coba lagi.`,
+                        backKeyboard
+                    );
+                }
+                return res.status(200).json({ ok: true });
+            }
+
+            // If not a command and not in a flow, show help
+            if (!session && userEmail) {
+                await sendMessage(chatId,
+                    `💡 <b>Tips Cepat:</b>\n\n` +
+                    `Ketik perintah langsung:\n` +
+                    `• <code>+gaji 5000000</code> → Pemasukan\n` +
+                    `• <code>-makanan 50rb</code> → Pengeluaran\n\n` +
+                    `<b>Kategori Pemasukan:</b>\n` +
+                    `gaji, bonus, penjualan, investasi, hadiah\n\n` +
+                    `<b>Kategori Pengeluaran:</b>\n` +
+                    `makanan, transport, belanja, tagihan, hiburan, kesehatan\n\n` +
+                    `Atau gunakan menu di bawah:`,
+                    mainMenuKeyboard
+                );
             }
         }
 
