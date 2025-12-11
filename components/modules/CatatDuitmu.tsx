@@ -432,13 +432,13 @@ export const CatatDuitmuModule: React.FC = () => {
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">
                         Catat Duitmu
                     </h1>
-                    <p className="text-gray-400">Atur keuanganmu, gapai impianmu.</p>
+                    <p className="text-gray-600 dark:text-gray-400">Atur keuanganmu, gapai impianmu.</p>
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
                     {/* Period Filter */}
                     <div className="bg-white/5 border border-white/10 rounded-xl p-1 flex items-center">
                         <select
-                            className="bg-transparent border-none text-sm focus:ring-0 text-white cursor-pointer px-2"
+                            className="bg-transparent border-none text-sm focus:ring-0 text-gray-900 dark:text-white cursor-pointer px-2"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(Number(e.target.value))}
                         >
@@ -446,7 +446,7 @@ export const CatatDuitmuModule: React.FC = () => {
                         </select>
                         <span className="text-gray-600">/</span>
                         <select
-                            className="bg-transparent border-none text-sm focus:ring-0 text-white cursor-pointer px-2"
+                            className="bg-transparent border-none text-sm focus:ring-0 text-gray-900 dark:text-white cursor-pointer px-2"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
                         >
@@ -458,37 +458,37 @@ export const CatatDuitmuModule: React.FC = () => {
 
                     <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
                         <Bot size={18} className="text-blue-400" />
-                        <span className="text-sm text-gray-300">ID: {user?.email?.split('@')[0]}</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">ID: {user?.email?.split('@')[0]}</span>
                     </div>
                 </div>
             </div>
 
             {/* Financial Health Stats (Always Visible) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-6 bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 rounded-2xl border border-emerald-500/20 backdrop-blur-sm">
-                    <p className="text-gray-400 text-sm mb-1">Total Aset (Semua)</p>
-                    <div className="text-2xl font-bold text-white">
+                <div className="p-6 bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/40 dark:to-emerald-800/20 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 backdrop-blur-sm">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Aset (Semua)</p>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         Rp {totalAssets.toLocaleString('id-ID')}
                     </div>
                 </div>
-                <div className="p-6 bg-gradient-to-br from-blue-900/40 to-blue-800/20 rounded-2xl border border-blue-500/20 backdrop-blur-sm">
-                    <p className="text-gray-400 text-sm mb-1">Pemasukan ({MONTHS[selectedMonth]})</p>
-                    <div className="text-2xl font-bold text-emerald-400">
+                <div className="p-6 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 rounded-2xl border border-blue-200 dark:border-blue-500/20 backdrop-blur-sm">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Pemasukan ({MONTHS[selectedMonth]})</p>
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                         + Rp {monthlyIncome.toLocaleString('id-ID')}
                     </div>
                 </div>
-                <div className="p-6 bg-gradient-to-br from-red-900/40 to-red-800/20 rounded-2xl border border-red-500/20 backdrop-blur-sm">
-                    <p className="text-gray-400 text-sm mb-1">Pengeluaran ({MONTHS[selectedMonth]})</p>
-                    <div className="text-2xl font-bold text-red-400">
+                <div className="p-6 bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/40 dark:to-red-800/20 rounded-2xl border border-red-200 dark:border-red-500/20 backdrop-blur-sm">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Pengeluaran ({MONTHS[selectedMonth]})</p>
+                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                         - Rp {monthlyExpense.toLocaleString('id-ID')}
                     </div>
                 </div>
-                <div className="p-6 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm flex flex-col justify-center">
+                <div className="p-6 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 backdrop-blur-sm flex flex-col justify-center">
                     <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-400">Burn Rate</span>
+                        <span className="text-gray-600 dark:text-gray-400">Burn Rate</span>
                         <span className="font-bold">{burnRate.toFixed(1)}%</span>
                     </div>
-                    <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                         <div
                             className={`h-2.5 rounded-full ${burnRate > 80 ? 'bg-red-500' : burnRate > 50 ? 'bg-yellow-500' : 'bg-green-500'}`}
                             style={{ width: `${Math.min(burnRate, 100)}%` }}
@@ -598,7 +598,7 @@ export const CatatDuitmuModule: React.FC = () => {
 
                 {/* Right/Main Column: Transaction List (Full width if not dashboard) */}
                 <div className={activeTab === 'dashboard' ? "lg:col-span-1" : "lg:col-span-3"}>
-                    <div className="bg-[#131b2c] rounded-3xl p-6 border border-white/5 h-full flex flex-col min-h-[500px]">
+                    <div className="bg-white dark:bg-[#131b2c] rounded-3xl p-6 border border-gray-200 dark:border-white/5 h-full flex flex-col min-h-[500px] shadow-sm dark:shadow-none">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-semibold flex items-center gap-2">
                                 <History className="w-5 h-5 text-orange-400" />
@@ -616,15 +616,15 @@ export const CatatDuitmuModule: React.FC = () => {
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 max-h-[600px]">
                             {Object.entries(groupedTransactions).map(([date, txs]) => (
                                 <div key={date}>
-                                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 sticky top-0 bg-[#131b2c] py-1 z-10">
+                                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 sticky top-0 bg-white dark:bg-[#131b2c] py-1 z-10">
                                         {date}
                                     </h3>
                                     <div className="space-y-2">
                                         {(txs as Transaction[]).map((tx) => (
-                                            <div key={tx.id} className="group p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/5 flex justify-between items-center">
+                                            <div key={tx.id} className="group p-4 bg-gray-50 dark:bg-white/5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors border border-gray-200 dark:border-white/5 flex justify-between items-center">
                                                 <div className="flex-1">
-                                                    <div className="font-medium text-white">{tx.description || tx.category}</div>
-                                                    <div className="text-xs text-gray-400 flex items-center gap-2">
+                                                    <div className="font-medium text-gray-900 dark:text-white">{tx.description || tx.category}</div>
+                                                    <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                                         <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">{tx.category}</span>
                                                         <span>•</span>
                                                         <span>{wallets.find(w => w.id === tx.walletId)?.name}</span>
@@ -679,21 +679,21 @@ export const CatatDuitmuModule: React.FC = () => {
                                     <Calendar className="w-5 h-5 text-blue-400" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white">Laporan Hari Ini</h3>
-                                    <p className="text-xs text-gray-400">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Laporan Hari Ini</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
-                                    <span className="text-gray-400">Pemasukan</span>
+                                <div className="flex justify-between items-center p-3 bg-gray-100 dark:bg-white/5 rounded-xl">
+                                    <span className="text-gray-600 dark:text-gray-400">Pemasukan</span>
                                     <span className="font-bold text-emerald-400">+ Rp {todayIncome.toLocaleString('id-ID')}</span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
-                                    <span className="text-gray-400">Pengeluaran</span>
+                                <div className="flex justify-between items-center p-3 bg-gray-100 dark:bg-white/5 rounded-xl">
+                                    <span className="text-gray-600 dark:text-gray-400">Pengeluaran</span>
                                     <span className="font-bold text-red-400">- Rp {todayExpense.toLocaleString('id-ID')}</span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border border-white/10">
-                                    <span className="text-gray-300 font-medium">Selisih</span>
+                                <div className="flex justify-between items-center p-3 bg-gray-200 dark:bg-white/10 rounded-xl border border-gray-300 dark:border-white/10">
+                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Selisih</span>
                                     <span className={`font-bold ${todayIncome - todayExpense >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                         {todayIncome - todayExpense >= 0 ? '+' : ''} Rp {(todayIncome - todayExpense).toLocaleString('id-ID')}
                                     </span>
@@ -708,14 +708,14 @@ export const CatatDuitmuModule: React.FC = () => {
                                     <ArrowRightLeft className="w-5 h-5 text-purple-400" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white">Perbandingan Hari Ini vs Kemarin</h3>
-                                    <p className="text-xs text-gray-400">Perubahan aktivitas keuangan</p>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Perbandingan Hari Ini vs Kemarin</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Perubahan aktivitas keuangan</p>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <div className="p-3 bg-white/5 rounded-xl">
+                                <div className="p-3 bg-gray-100 dark:bg-white/5 rounded-xl">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-gray-400 text-sm">Pemasukan</span>
+                                        <span className="text-gray-600 dark:text-gray-400 text-sm">Pemasukan</span>
                                         <div className="flex items-center gap-2">
                                             {calcPercentChange(todayIncome, yesterdayIncome) >= 0 ? (
                                                 <ChevronUp className="w-4 h-4 text-emerald-400" />
@@ -732,9 +732,9 @@ export const CatatDuitmuModule: React.FC = () => {
                                         <span>Hari ini: Rp {todayIncome.toLocaleString('id-ID')}</span>
                                     </div>
                                 </div>
-                                <div className="p-3 bg-white/5 rounded-xl">
+                                <div className="p-3 bg-gray-100 dark:bg-white/5 rounded-xl">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-gray-400 text-sm">Pengeluaran</span>
+                                        <span className="text-gray-600 dark:text-gray-400 text-sm">Pengeluaran</span>
                                         <div className="flex items-center gap-2">
                                             {calcPercentChange(todayExpense, yesterdayExpense) <= 0 ? (
                                                 <ChevronDown className="w-4 h-4 text-emerald-400" />
@@ -762,8 +762,8 @@ export const CatatDuitmuModule: React.FC = () => {
                                 <TrendingUp className="w-5 h-5 text-cyan-400" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-white">Perbandingan Bulan Ini vs Bulan Lalu</h3>
-                                <p className="text-xs text-gray-400">{MONTHS[new Date().getMonth()]} vs {MONTHS[new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1]}</p>
+                                <h3 className="font-bold text-gray-900 dark:text-white">Perbandingan Bulan Ini vs Bulan Lalu</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{MONTHS[new Date().getMonth()]} vs {MONTHS[new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1]}</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -781,7 +781,7 @@ export const CatatDuitmuModule: React.FC = () => {
                                                 style={{ width: `${Math.min((lastMonthIncome / Math.max(thisMonthIncome, lastMonthIncome, 1)) * 100, 100)}%` }}
                                             />
                                         </div>
-                                        <p className="text-sm font-bold text-gray-300 mt-1">Rp {lastMonthIncome.toLocaleString('id-ID')}</p>
+                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mt-1">Rp {lastMonthIncome.toLocaleString('id-ID')}</p>
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-xs text-gray-500 mb-1">Bulan Ini</p>
@@ -814,7 +814,7 @@ export const CatatDuitmuModule: React.FC = () => {
                                                 style={{ width: `${Math.min((lastMonthExpense / Math.max(thisMonthExpense, lastMonthExpense, 1)) * 100, 100)}%` }}
                                             />
                                         </div>
-                                        <p className="text-sm font-bold text-gray-300 mt-1">Rp {lastMonthExpense.toLocaleString('id-ID')}</p>
+                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mt-1">Rp {lastMonthExpense.toLocaleString('id-ID')}</p>
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-xs text-gray-500 mb-1">Bulan Ini</p>
@@ -839,14 +839,14 @@ export const CatatDuitmuModule: React.FC = () => {
                     {/* Category Charts */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Top Income Categories */}
-                        <div className="bg-[#131b2c] rounded-2xl border border-white/5 p-6">
+                        <div className="bg-white dark:bg-[#131b2c] rounded-2xl border border-gray-200 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-emerald-500/20 rounded-lg">
                                     <BarChart3 className="w-5 h-5 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white">Pemasukan Tertinggi</h3>
-                                    <p className="text-xs text-gray-400">Kategori bulan ini</p>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Pemasukan Tertinggi</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Kategori bulan ini</p>
                                 </div>
                             </div>
                             <div className="space-y-3">
@@ -857,10 +857,10 @@ export const CatatDuitmuModule: React.FC = () => {
                                         return (
                                             <div key={category} className="space-y-1">
                                                 <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-400">{category}</span>
-                                                    <span className="font-bold text-emerald-400">Rp {amount.toLocaleString('id-ID')}</span>
+                                                    <span className="text-gray-600 dark:text-gray-400">{category}</span>
+                                                    <span className="font-bold text-emerald-500 dark:text-emerald-400">Rp {amount.toLocaleString('id-ID')}</span>
                                                 </div>
-                                                <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-3 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${percentage}%` }}
@@ -878,14 +878,14 @@ export const CatatDuitmuModule: React.FC = () => {
                         </div>
 
                         {/* Top Expense Categories */}
-                        <div className="bg-[#131b2c] rounded-2xl border border-white/5 p-6">
+                        <div className="bg-white dark:bg-[#131b2c] rounded-2xl border border-gray-200 dark:border-white/5 p-6 shadow-sm dark:shadow-none">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-red-500/20 rounded-lg">
                                     <BarChart3 className="w-5 h-5 text-red-400" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white">Pengeluaran Tertinggi</h3>
-                                    <p className="text-xs text-gray-400">Kategori bulan ini</p>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Pengeluaran Tertinggi</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Kategori bulan ini</p>
                                 </div>
                             </div>
                             <div className="space-y-3">
@@ -896,10 +896,10 @@ export const CatatDuitmuModule: React.FC = () => {
                                         return (
                                             <div key={category} className="space-y-1">
                                                 <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-400">{category}</span>
-                                                    <span className="font-bold text-red-400">Rp {amount.toLocaleString('id-ID')}</span>
+                                                    <span className="text-gray-600 dark:text-gray-400">{category}</span>
+                                                    <span className="font-bold text-red-500 dark:text-red-400">Rp {amount.toLocaleString('id-ID')}</span>
                                                 </div>
-                                                <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-3 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${percentage}%` }}
