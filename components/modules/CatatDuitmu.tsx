@@ -428,18 +428,29 @@ export const CatatDuitmuModule: React.FC = () => {
 
         try {
             // Delete all transactions for this user
-            await supabase
+            const { error: txError } = await supabase
                 .from('transactions')
                 .delete()
                 .eq('user_id', user.email);
 
+            if (txError) {
+                console.error("Error deleting transactions:", txError);
+                throw txError;
+            }
+
             // Delete all wallets for this user
-            await supabase
+            const { error: walletError } = await supabase
                 .from('wallets')
                 .delete()
                 .eq('user_id', user.email);
 
+            if (walletError) {
+                console.error("Error deleting wallets:", walletError);
+                throw walletError;
+            }
+
             console.log('All data reset successfully');
+            alert('✅ Semua data berhasil dihapus!');
         } catch (error: any) {
             console.error("Error resetting data: ", error);
             alert(`Gagal mereset data: ${error?.message || 'Unknown error'}`);
