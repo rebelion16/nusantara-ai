@@ -73,6 +73,7 @@ export const CatatDuitmuModule: React.FC = () => {
     const [editingWallet, setEditingWallet] = useState<WalletAccount | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [showDevWarning, setShowDevWarning] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     // Forms State
     const [walletForm, setWalletForm] = useState<Partial<WalletAccount>>({
@@ -120,8 +121,6 @@ export const CatatDuitmuModule: React.FC = () => {
     }, [user]);
 
     // --- Actions ---
-
-    const [saving, setSaving] = useState(false);
 
     const handleSaveWallet = async (e: React.FormEvent) => {
         e.preventDefault();
