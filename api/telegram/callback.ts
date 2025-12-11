@@ -4,7 +4,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-// Main menu keyboard - inline
+// Firebase REST API config
+const FIREBASE_PROJECT_ID = 'nusantara-ai-18db6';
+const FIREBASE_API_KEY = 'AIzaSyAPEZbIMw23gZO-A1aBd7zWELxKVOsSYWE';
+const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+
+// Main menu keyboard
 const mainMenuKeyboard = {
     inline_keyboard: [
         [
@@ -18,6 +23,62 @@ const mainMenuKeyboard = {
         ],
     ],
 };
+
+// Save telegram user link to Firestore
+async function saveTelegramUser(telegramId: string, email: string): Promise<boolean> {
+    try {
+        // Use telegramId as document ID for easy lookup
+        const url = `${FIRESTORE_URL}/telegram_users/${telegramId}?key=${FIREBASE_API_KEY}`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fields: {
+                    telegramId: { stringValue: telegramId },
+                    email: { stringValue: email },
+                    linkedAt: { timestampValue: new Date().toISOString() },
+                }
+            })
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Error saving telegram user:', error);
+        return false;
+    }
+}
+
+// Get wallets count for summary
+async function getWalletsCount(email: string): Promise<number> {
+    try {
+        const url = `${FIRESTORE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                structuredQuery: {
+                    from: [{ collectionId: 'wallets' }],
+                    where: {
+                        fieldFilter: {
+                            field: { fieldPath: 'userId' },
+                            op: 'EQUAL',
+                            value: { stringValue: email }
+                        }
+                    }
+                }
+            })
+        });
+        const data = await response.json();
+        if (!Array.isArray(data)) return 0;
+        return data.filter((item: any) => item.document).length;
+    } catch (error) {
+        return 0;
+    }
+}
+
+// Format currency helper
+function formatCurrency(amount: number): string {
+    return `Rp ${amount.toLocaleString('id-ID')}`;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { code, state, error } = req.query;
@@ -82,13 +143,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Extract telegram ID from state (format: telegramId_timestamp)
         const telegramId = state.split('_')[0];
 
+        // Save telegram user link to Firestore
+        await saveTelegramUser(telegramId, userInfo.email);
+
+        // Get wallet count for summary
+        const walletCount = await getWalletsCount(userInfo.email);
+
         // Send success message to Telegram
         await fetch(`${TELEGRAM_API}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: telegramId,
-                text: `✅ <b>Login Berhasil!</b>\n\n👤 Email: ${userInfo.email}\n\nSelamat menggunakan Catat Duitmu Bot!\n\n<i>Pilih menu di bawah untuk melanjutkan:</i>`,
+                text: `✅ <b>Login Berhasil!</b>\n\n` +
+                    `👤 Email: ${userInfo.email}\n` +
+                    `📁 Dompet: ${walletCount} buah\n\n` +
+                    `Selamat menggunakan Catat Duitmu Bot!\n\n` +
+                    `<i>Pilih menu di bawah untuk melanjutkan:</i>`,
                 parse_mode: 'HTML',
                 reply_markup: mainMenuKeyboard,
             }),
