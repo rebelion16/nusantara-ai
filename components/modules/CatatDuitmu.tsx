@@ -199,7 +199,23 @@ export const CatatDuitmuModule: React.FC = () => {
 
     const handleSaveTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !transactionForm.amount || !transactionForm.walletId) return;
+
+        if (!user) {
+            alert('Error: User tidak ditemukan. Silakan login ulang.');
+            return;
+        }
+
+        if (!transactionForm.amount || transactionForm.amount <= 0) {
+            alert('Jumlah harus diisi dan lebih dari 0.');
+            return;
+        }
+
+        if (!transactionForm.walletId) {
+            alert('Pilih dompet terlebih dahulu.');
+            return;
+        }
+
+        setSaving(true);
 
         try {
             const batch = writeBatch(db);
@@ -226,16 +242,22 @@ export const CatatDuitmuModule: React.FC = () => {
                     ...newTx,
                     amount: amount
                 });
+                console.log('Updating transaction:', editingTransaction.id);
 
             } else {
                 // ADD LOGIC
                 const txRef = doc(collection(db, 'transactions'));
-                batch.set(txRef, {
-                    ...transactionForm,
+                const newTransaction = {
+                    category: transactionForm.category,
+                    type: transactionForm.type,
+                    description: transactionForm.description || '',
+                    walletId: transactionForm.walletId,
                     userId: user.email,
                     amount: amount,
                     date: Date.now()
-                });
+                };
+                console.log('Creating new transaction:', newTransaction);
+                batch.set(txRef, newTransaction);
 
                 const walletRef = doc(db, 'wallets', transactionForm.walletId);
                 const balanceChange = transactionForm.type === 'income' ? amount : -amount;
@@ -243,9 +265,13 @@ export const CatatDuitmuModule: React.FC = () => {
             }
 
             await batch.commit();
+            console.log('Transaction saved successfully!');
             closeModals();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving transaction: ", error);
+            alert(`Gagal menyimpan transaksi: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(false);
         }
     };
 
