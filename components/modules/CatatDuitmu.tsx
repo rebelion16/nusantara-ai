@@ -73,7 +73,7 @@ export const CatatDuitmuModule: React.FC = () => {
     const [showAddTransaction, setShowAddTransaction] = useState(false);
     const [editingWallet, setEditingWallet] = useState<WalletAccount | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [showDevWarning, setShowDevWarning] = useState(true);
+
     const [saving, setSaving] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -1309,35 +1309,7 @@ export const CatatDuitmuModule: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {/* Development Warning Popup */}
-            <AnimatePresence>
-                {showDevWarning && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[#1a2333] p-8 rounded-2xl border border-amber-500/30 w-full max-w-md relative text-center"
-                        >
-                            <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <AlertTriangle className="w-8 h-8 text-amber-400" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-amber-400 mb-3">Modul Dalam Pengembangan</h3>
-                            <p className="text-gray-300 mb-6 leading-relaxed">
-                                Modul <span className="font-semibold text-white">Catat Duitmu</span> sedang dalam tahap pengembangan dan belum bisa digunakan sepenuhnya.
-                                Beberapa fitur mungkin tidak berfungsi dengan baik.
-                            </p>
-                            <button
-                                onClick={() => setShowDevWarning(false)}
-                                className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold transition-colors"
-                            >
-                                Saya Mengerti
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
 
             {/* Reset Data Confirmation Modal */}
             <AnimatePresence>
@@ -1501,8 +1473,8 @@ export const CatatDuitmuModule: React.FC = () => {
                                 animate={{ scale: 1 }}
                                 transition={{ type: "spring", delay: 0.1 }}
                                 className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 ${deleteTransactionTarget.type === 'income'
-                                        ? 'bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border-emerald-500/50'
-                                        : 'bg-gradient-to-br from-rose-500/30 to-rose-600/20 border-rose-500/50'
+                                    ? 'bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border-emerald-500/50'
+                                    : 'bg-gradient-to-br from-rose-500/30 to-rose-600/20 border-rose-500/50'
                                     }`}
                             >
                                 {deleteTransactionTarget.type === 'income'
