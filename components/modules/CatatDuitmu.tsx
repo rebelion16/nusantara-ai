@@ -46,7 +46,14 @@ const MONTHS = [
 ];
 
 export const CatatDuitmuModule: React.FC = () => {
-    const user = authService.getCurrentUser();
+    const rawUser = authService.getCurrentUser();
+    // Normalize email to lowercase to ensure consistent matching
+    const user = rawUser ? { ...rawUser, email: rawUser.email.toLowerCase() } : null;
+
+    // Debug log on mount
+    useEffect(() => {
+        console.log('CatatDuitmu mounted. User:', user?.email || 'NOT LOGGED IN');
+    }, []);
 
     // Data State
     const [wallets, setWallets] = useState<WalletAccount[]>([]);
@@ -768,6 +775,72 @@ export const CatatDuitmuModule: React.FC = () => {
         URL.revokeObjectURL(url);
     };
 
+    // Manual refresh for mobile troubleshooting
+    const manualRefresh = async () => {
+        if (!user) {
+            alert('User tidak ditemukan. Silakan login ulang.');
+            return;
+        }
+
+        setLoading(true);
+        console.log('Manual refresh triggered for:', user.email);
+
+        try {
+            // Fetch wallets
+            const { data: walletsData, error: walletsError } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('user_id', user.email)
+                .order('created_at', { ascending: false });
+
+            if (walletsError) {
+                console.error('Refresh wallets error:', walletsError);
+            } else {
+                console.log('Fetched wallets:', walletsData?.length || 0);
+                const walletList = (walletsData || []).map(w => ({
+                    id: w.id,
+                    name: w.name,
+                    type: w.type as WalletType,
+                    balance: w.balance || 0,
+                    color: w.color || 'bg-blue-600',
+                    userId: w.user_id
+                })) as WalletAccount[];
+                setWallets(walletList);
+            }
+
+            // Fetch transactions
+            const { data: txData, error: txError } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('user_id', user.email)
+                .order('date', { ascending: false });
+
+            if (txError) {
+                console.error('Refresh transactions error:', txError);
+            } else {
+                console.log('Fetched transactions:', txData?.length || 0);
+                const txList = (txData || []).map(t => ({
+                    id: t.id,
+                    amount: t.amount || 0,
+                    category: t.category,
+                    type: t.type as TransactionType,
+                    description: t.description || '',
+                    date: new Date(t.date).getTime(),
+                    walletId: t.wallet_id,
+                    userId: t.user_id
+                })) as Transaction[];
+                setTransactions(txList);
+            }
+
+            alert(`✅ Data refreshed!\nWallets: ${walletsData?.length || 0}\nTransactions: ${txData?.length || 0}`);
+        } catch (err) {
+            console.error('Manual refresh error:', err);
+            alert('❌ Gagal refresh data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // --- Analytics & Filtering ---
 
     // Filter by Month & Year
@@ -953,12 +1026,21 @@ export const CatatDuitmuModule: React.FC = () => {
                             <span className="hidden sm:inline">CSV</span>
                         </button>
                         <button
+                            onClick={manualRefresh}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
+                            title="Refresh data dari server"
+                        >
+                            <RotateCcw size={16} className={loading ? 'animate-spin' : ''} />
+                            <span className="hidden sm:inline">Sync</span>
+                        </button>
+                        <button
                             onClick={handleResetData}
                             disabled={saving || (transactions.length === 0 && wallets.length === 0)}
                             className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
                             title="Hapus semua data dan mulai ulang"
                         >
-                            <RotateCcw size={16} />
+                            <Trash2 size={16} />
                             <span className="hidden sm:inline">Reset</span>
                         </button>
                     </div>
