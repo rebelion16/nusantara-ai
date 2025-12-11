@@ -23,7 +23,8 @@ import {
     ChevronUp,
     ChevronDown,
     Download,
-    FileText
+    FileText,
+    RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../services/authService';
@@ -292,6 +293,51 @@ export const CatatDuitmuModule: React.FC = () => {
             await batch.commit();
         } catch (error) {
             console.error("Error deleting filteredTx: ", error);
+        }
+    };
+
+    // Reset all data for current user
+    const handleResetData = async () => {
+        if (!user) {
+            alert('Error: User tidak ditemukan.');
+            return;
+        }
+
+        // Double confirmation
+        if (!confirm('⚠️ PERINGATAN: Anda akan menghapus SEMUA data (dompet dan transaksi). Tindakan ini tidak dapat dibatalkan!\n\nApakah Anda yakin?')) {
+            return;
+        }
+
+        if (!confirm('🔴 KONFIRMASI AKHIR: Ketik OK untuk melanjutkan penghapusan semua data.')) {
+            return;
+        }
+
+        setSaving(true);
+
+        try {
+            const batch = writeBatch(db);
+
+            // Delete all wallets
+            for (const wallet of wallets) {
+                const walletRef = doc(db, 'wallets', wallet.id);
+                batch.delete(walletRef);
+            }
+
+            // Delete all transactions
+            for (const transaction of transactions) {
+                const txRef = doc(db, 'transactions', transaction.id);
+                batch.delete(txRef);
+            }
+
+            await batch.commit();
+
+            alert('✅ Semua data berhasil dihapus! Anda bisa mulai dari awal.');
+            console.log('All data reset successfully');
+        } catch (error: any) {
+            console.error("Error resetting data: ", error);
+            alert(`Gagal mereset data: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -611,6 +657,15 @@ export const CatatDuitmuModule: React.FC = () => {
                         >
                             <FileText size={16} />
                             <span className="hidden sm:inline">CSV</span>
+                        </button>
+                        <button
+                            onClick={handleResetData}
+                            disabled={saving || (transactions.length === 0 && wallets.length === 0)}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+                            title="Hapus semua data dan mulai ulang"
+                        >
+                            <RotateCcw size={16} />
+                            <span className="hidden sm:inline">Reset</span>
                         </button>
                     </div>
                 </div>
