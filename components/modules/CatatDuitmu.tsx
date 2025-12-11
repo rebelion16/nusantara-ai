@@ -405,7 +405,7 @@ export const CatatDuitmuModule: React.FC = () => {
             console.error("Error deleting transaction: ", error);
             alert(`Gagal menghapus transaksi: ${error?.message || 'Unknown error'}`);
         } finally {
-            setSaving(true);
+            setSaving(false);
             setDeleteTransactionTarget(null);
         }
     };
