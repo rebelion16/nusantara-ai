@@ -1,13 +1,31 @@
 // api/telegram/webhook.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+// Simple send message function
+async function sendMessage(chatId: string, text: string, replyMarkup?: any) {
+    const response = await fetch(`${TELEGRAM_API}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'HTML',
+            reply_markup: replyMarkup,
+        }),
+    });
+    return response.json();
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle GET request for testing
     if (req.method === 'GET') {
         return res.status(200).json({
             ok: true,
             message: 'Telegram webhook is ready',
-            method: 'GET'
+            hasToken: !!BOT_TOKEN
         });
     }
 
@@ -17,100 +35,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const update = req.body;
+        console.log('Received update:', JSON.stringify(update));
 
-        // Import handlers dynamically to avoid cold start issues
-        const { answerCallback } = await import('../../lib/telegram/bot');
-        const handlers = await import('../../lib/telegram/handlers');
-
-        // Handle text messages
-        if (update.message?.text) {
+        // Handle /start command
+        if (update.message?.text === '/start') {
             const chatId = update.message.chat.id.toString();
-            const telegramId = update.message.from.id.toString();
-            const text = update.message.text;
-            const username = update.message.from.username;
+            const username = update.message.from.first_name || 'User';
 
-            // Handle commands
-            if (text === '/start') {
-                await handlers.handleStart(chatId, telegramId, username);
-            } else {
-                // Handle text input (wallet name, custom amount, etc.)
-                await handlers.handleTextMessage(chatId, telegramId, text);
-            }
+            await sendMessage(
+                chatId,
+                `👋 <b>Selamat datang di Catat Duitmu Bot, ${username}!</b>\n\n` +
+                `Bot ini terintegrasi dengan aplikasi Nusantara AI untuk mengelola keuangan Anda.\n\n` +
+                `🔗 Silakan login dengan Gmail untuk melanjutkan:`,
+                {
+                    inline_keyboard: [[
+                        {
+                            text: '🔐 Login dengan Gmail',
+                            url: `${process.env.NEXTAUTH_URL}/api/telegram/auth?state=${update.message.from.id}_${Date.now()}`
+                        }
+                    ]]
+                }
+            );
         }
 
-        // Handle callback queries (inline keyboard buttons)
+        // Handle callback queries
         if (update.callback_query) {
             const callbackId = update.callback_query.id;
-            const chatId = update.callback_query.message.chat.id.toString();
-            const messageId = update.callback_query.message.message_id;
-            const telegramId = update.callback_query.from.id.toString();
-            const data = update.callback_query.data;
-
-            // Acknowledge the callback
-            await answerCallback(callbackId);
-
-            // Route based on callback data
-            if (data === 'menu_main' || data === 'menu_refresh') {
-                await handlers.handleMainMenu(chatId, messageId, telegramId);
-            }
-            else if (data === 'menu_wallets') {
-                await handlers.handleWalletsList(chatId, messageId, telegramId);
-            }
-            else if (data === 'menu_income') {
-                await handlers.handleIncomeStart(chatId, messageId, telegramId);
-            }
-            else if (data === 'menu_expense') {
-                await handlers.handleExpenseStart(chatId, messageId, telegramId);
-            }
-            else if (data === 'menu_history') {
-                await handlers.handleHistory(chatId, messageId, telegramId);
-            }
-            else if (data === 'menu_report') {
-                await handlers.handleReport(chatId, messageId, telegramId);
-            }
-            else if (data === 'wallet_add') {
-                await handlers.handleAddWalletStart(chatId, messageId, telegramId);
-            }
-            // Income category selection
-            else if (data.startsWith('income_cat_')) {
-                const category = data.replace('income_cat_', '');
-                await handlers.handleCategorySelection(chatId, messageId, telegramId, 'income', category);
-            }
-            // Expense category selection
-            else if (data.startsWith('expense_cat_')) {
-                const category = data.replace('expense_cat_', '');
-                await handlers.handleCategorySelection(chatId, messageId, telegramId, 'expense', category);
-            }
-            // Income amount selection
-            else if (data.startsWith('income_amount_')) {
-                const amount = parseInt(data.replace('income_amount_', ''), 10);
-                await handlers.handleAmountSelection(chatId, messageId, telegramId, 'income', amount);
-            }
-            // Expense amount selection
-            else if (data.startsWith('expense_amount_')) {
-                const amount = parseInt(data.replace('expense_amount_', ''), 10);
-                await handlers.handleAmountSelection(chatId, messageId, telegramId, 'expense', amount);
-            }
-            // Income wallet selection
-            else if (data.startsWith('income_wallet_')) {
-                const walletId = data.replace('income_wallet_', '');
-                await handlers.handleWalletSelection(chatId, messageId, telegramId, 'income', walletId);
-            }
-            // Expense wallet selection
-            else if (data.startsWith('expense_wallet_')) {
-                const walletId = data.replace('expense_wallet_', '');
-                await handlers.handleWalletSelection(chatId, messageId, telegramId, 'expense', walletId);
-            }
-            // Wallet type selection
-            else if (data.startsWith('wallet_type_')) {
-                const walletType = data.replace('wallet_type_', '');
-                await handlers.handleWalletTypeSelection(chatId, messageId, telegramId, walletType);
-            }
+            await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ callback_query_id: callbackId }),
+            });
         }
 
-        res.status(200).json({ ok: true });
-    } catch (error) {
+        return res.status(200).json({ ok: true });
+    } catch (error: any) {
         console.error('Webhook error:', error);
-        res.status(200).json({ ok: true, error: String(error) }); // Always return 200 to Telegram
+        return res.status(200).json({ ok: true, error: error.message });
     }
 }
