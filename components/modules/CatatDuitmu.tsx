@@ -234,8 +234,12 @@ export const CatatDuitmuModule: React.FC = () => {
     const handleSaveWallet = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!user) {
+        // Re-check user from storage for mobile compatibility
+        const currentUser = user || authService.getCurrentUser();
+
+        if (!currentUser) {
             alert('Error: User tidak ditemukan. Silakan login ulang.');
+            console.error('handleSaveWallet: No user found');
             return;
         }
 
@@ -245,6 +249,7 @@ export const CatatDuitmuModule: React.FC = () => {
         }
 
         setSaving(true);
+        console.log('Saving wallet for user:', currentUser.email);
 
         try {
             if (editingWallet) {
@@ -257,26 +262,37 @@ export const CatatDuitmuModule: React.FC = () => {
                         color: walletForm.color,
                     })
                     .eq('id', editingWallet.id);
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase update error:', error);
+                    throw error;
+                }
                 console.log('Wallet updated successfully');
             } else {
                 // Add new
-                const { error } = await supabase
+                const insertData = {
+                    name: walletForm.name,
+                    type: walletForm.type || 'bank',
+                    color: walletForm.color || 'bg-blue-600',
+                    user_id: currentUser.email,
+                    balance: Number(walletForm.balance) || 0
+                };
+                console.log('Inserting wallet:', insertData);
+
+                const { data, error } = await supabase
                     .from('wallets')
-                    .insert({
-                        name: walletForm.name,
-                        type: walletForm.type || 'bank',
-                        color: walletForm.color || 'bg-blue-600',
-                        user_id: user.email,
-                        balance: Number(walletForm.balance) || 0
-                    });
-                if (error) throw error;
-                console.log('Wallet created successfully');
+                    .insert(insertData)
+                    .select();
+
+                if (error) {
+                    console.error('Supabase insert error:', error);
+                    throw error;
+                }
+                console.log('Wallet created successfully:', data);
             }
             closeModals();
         } catch (error: any) {
-            console.error("Error saving wallet: ", error);
-            alert(`Gagal menyimpan dompet: ${error?.message || 'Unknown error'}`);
+            console.error("Error saving wallet:", error);
+            alert(`Gagal menyimpan dompet: ${error?.message || error?.code || 'Unknown error'}`);
         } finally {
             setSaving(false);
         }
