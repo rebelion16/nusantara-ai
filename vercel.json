@@ -15,21 +15,20 @@
     ],
     "routes": [
         {
-            "src": "/api/(.*)",
-            "dest": "/api/$1"
+            "src": "/api/telegram/webhook",
+            "dest": "/api/telegram/webhook.ts"
+        },
+        {
+            "src": "/api/telegram/auth",
+            "dest": "/api/telegram/auth.ts"
+        },
+        {
+            "src": "/api/telegram/callback",
+            "dest": "/api/telegram/callback.ts"
         },
         {
             "src": "/(.*)",
             "dest": "/$1"
         }
-    ],
-    "env": {
-        "TELEGRAM_BOT_TOKEN": "@telegram_bot_token",
-        "FIREBASE_PROJECT_ID": "@firebase_project_id",
-        "FIREBASE_CLIENT_EMAIL": "@firebase_client_email",
-        "FIREBASE_PRIVATE_KEY": "@firebase_private_key",
-        "GOOGLE_CLIENT_ID": "@google_client_id",
-        "GOOGLE_CLIENT_SECRET": "@google_client_secret",
-        "NEXTAUTH_URL": "@nextauth_url"
-    }
+    ]
 }
