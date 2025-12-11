@@ -1,7 +1,7 @@
-// src/services/firebase.ts
+// services/firebase.ts
+// Firebase Auth only - Database uses Supabase (lib/supabase.ts)
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAPEZbIMw23gZO-A1aBd7zWELxKVOsSYWE",
@@ -15,4 +15,3 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
-export const db = getFirestore(app);

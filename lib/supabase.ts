@@ -1,13 +1,10 @@
 // lib/supabase.ts
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase config - use environment variables
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn('Supabase credentials not found. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
-}
+// Supabase config
+// Note: For production, use environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ngjdmeuownnvurpsitqn.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5namRtZXVvd25udnVycHNpdHFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxODEwMTUsImV4cCI6MjA4MDc1NzAxNX0.PA_XW-iOFKTOpWgXKmjl3Zgxp1AfAsqNreI9O64QAsk';
 
 // Create Supabase client for browser
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
