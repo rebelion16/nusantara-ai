@@ -21,7 +21,9 @@ import {
     AlertTriangle,
     BarChart3,
     ChevronUp,
-    ChevronDown
+    ChevronDown,
+    Download,
+    FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../services/authService';
@@ -297,6 +299,72 @@ export const CatatDuitmuModule: React.FC = () => {
         setShowAddTransaction(true);
     };
 
+    // --- EXPORT FUNCTIONS ---
+
+    const exportToJSON = () => {
+        const exportData = {
+            exportDate: new Date().toISOString(),
+            user: user?.email,
+            wallets: wallets.map(w => ({
+                id: w.id,
+                name: w.name,
+                type: w.type,
+                balance: w.balance,
+                color: w.color
+            })),
+            transactions: transactions.map(t => ({
+                id: t.id,
+                amount: t.amount,
+                category: t.category,
+                type: t.type,
+                description: t.description,
+                walletId: t.walletId,
+                date: new Date(t.date).toISOString()
+            }))
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `catat-duitmu-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const exportToCSV = () => {
+        // Export transactions to CSV
+        const headers = ['Tanggal', 'Tipe', 'Kategori', 'Deskripsi', 'Jumlah', 'Dompet'];
+        const rows = transactions.map(t => {
+            const wallet = wallets.find(w => w.id === t.walletId);
+            return [
+                new Date(t.date).toLocaleDateString('id-ID'),
+                t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                t.category,
+                t.description || '-',
+                t.amount.toString(),
+                wallet?.name || '-'
+            ];
+        });
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transaksi-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     // --- Analytics & Filtering ---
 
     // Filter by Month & Year
@@ -459,6 +527,28 @@ export const CatatDuitmuModule: React.FC = () => {
                     <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
                         <Bot size={18} className="text-blue-400" />
                         <span className="text-sm text-gray-700 dark:text-gray-300">ID: {user?.email?.split('@')[0]}</span>
+                    </div>
+
+                    {/* Export Buttons */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={exportToJSON}
+                            disabled={transactions.length === 0 && wallets.length === 0}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                            title="Export semua data ke JSON"
+                        >
+                            <Download size={16} />
+                            <span className="hidden sm:inline">Backup</span>
+                        </button>
+                        <button
+                            onClick={exportToCSV}
+                            disabled={transactions.length === 0}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20"
+                            title="Export transaksi ke CSV (Excel)"
+                        >
+                            <FileText size={16} />
+                            <span className="hidden sm:inline">CSV</span>
+                        </button>
                     </div>
                 </div>
             </div>
