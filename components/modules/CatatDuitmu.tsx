@@ -18,7 +18,10 @@ import {
     Calendar,
     PieChart,
     Filter,
-    AlertTriangle
+    AlertTriangle,
+    BarChart3,
+    ChevronUp,
+    ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../services/authService';
@@ -60,7 +63,7 @@ export const CatatDuitmuModule: React.FC = () => {
     // Filter State
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'income' | 'expense'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'income' | 'expense' | 'report'>('dashboard');
 
     // UI State
     const [showAddWallet, setShowAddWallet] = useState(false);
@@ -334,6 +337,93 @@ export const CatatDuitmuModule: React.FC = () => {
         return groups;
     }, [filteredTransactions, activeTab, validIncome, validExpense]);
 
+    // --- REPORT ANALYTICS ---
+
+    // Helper: Get start/end of day
+    const getDateRange = (date: Date) => {
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+        return { start: start.getTime(), end: end.getTime() };
+    };
+
+    // Today's transactions
+    const todayRange = useMemo(() => getDateRange(new Date()), []);
+    const todayTransactions = useMemo(() =>
+        transactions.filter(tx => tx.date >= todayRange.start && tx.date <= todayRange.end),
+        [transactions, todayRange]
+    );
+    const todayIncome = todayTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const todayExpense = todayTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+
+    // Yesterday's transactions
+    const yesterdayRange = useMemo(() => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return getDateRange(yesterday);
+    }, []);
+    const yesterdayTransactions = useMemo(() =>
+        transactions.filter(tx => tx.date >= yesterdayRange.start && tx.date <= yesterdayRange.end),
+        [transactions, yesterdayRange]
+    );
+    const yesterdayIncome = yesterdayTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const yesterdayExpense = yesterdayTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+
+    // This month vs Last month
+    const thisMonthData = useMemo(() => {
+        const now = new Date();
+        return transactions.filter(tx => {
+            const d = new Date(tx.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+    }, [transactions]);
+
+    const lastMonthData = useMemo(() => {
+        const now = new Date();
+        const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        return transactions.filter(tx => {
+            const d = new Date(tx.date);
+            return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+        });
+    }, [transactions]);
+
+    const thisMonthIncome = thisMonthData.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const thisMonthExpense = thisMonthData.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    const lastMonthIncome = lastMonthData.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const lastMonthExpense = lastMonthData.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+
+    // Category breakdown for charts
+    const categoryBreakdown = useMemo(() => {
+        const incomeByCategory: Record<string, number> = {};
+        const expenseByCategory: Record<string, number> = {};
+
+        thisMonthData.forEach(tx => {
+            if (tx.type === 'income') {
+                incomeByCategory[tx.category] = (incomeByCategory[tx.category] || 0) + tx.amount;
+            } else {
+                expenseByCategory[tx.category] = (expenseByCategory[tx.category] || 0) + tx.amount;
+            }
+        });
+
+        // Sort and get top 5
+        const topIncome = Object.entries(incomeByCategory)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+        const topExpense = Object.entries(expenseByCategory)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        return { topIncome, topExpense };
+    }, [thisMonthData]);
+
+    // Calculate percentage change
+    const calcPercentChange = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+    };
+
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
@@ -411,7 +501,7 @@ export const CatatDuitmuModule: React.FC = () => {
             </div>
 
             {/* Content Tabs */}
-            <div className="flex gap-2 p-1 bg-white/5 rounded-xl w-fit">
+            <div className="flex gap-2 p-1 bg-white/5 rounded-xl w-fit flex-wrap">
                 <button
                     onClick={() => setActiveTab('dashboard')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
@@ -429,6 +519,13 @@ export const CatatDuitmuModule: React.FC = () => {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'expense' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}`}
                 >
                     Pengeluaran
+                </button>
+                <button
+                    onClick={() => setActiveTab('report')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === 'report' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                    <BarChart3 size={16} />
+                    Laporan
                 </button>
             </div>
 
@@ -569,6 +666,258 @@ export const CatatDuitmuModule: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Report Tab Content */}
+            {activeTab === 'report' && (
+                <div className="space-y-6">
+                    {/* Daily Report */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Today's Report */}
+                        <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 rounded-2xl border border-blue-500/20 p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-blue-500/20 rounded-lg">
+                                    <Calendar className="w-5 h-5 text-blue-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white">Laporan Hari Ini</h3>
+                                    <p className="text-xs text-gray-400">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+                                    <span className="text-gray-400">Pemasukan</span>
+                                    <span className="font-bold text-emerald-400">+ Rp {todayIncome.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+                                    <span className="text-gray-400">Pengeluaran</span>
+                                    <span className="font-bold text-red-400">- Rp {todayExpense.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-white/10 rounded-xl border border-white/10">
+                                    <span className="text-gray-300 font-medium">Selisih</span>
+                                    <span className={`font-bold ${todayIncome - todayExpense >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {todayIncome - todayExpense >= 0 ? '+' : ''} Rp {(todayIncome - todayExpense).toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Today vs Yesterday Comparison */}
+                        <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/20 rounded-2xl border border-purple-500/20 p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-purple-500/20 rounded-lg">
+                                    <ArrowRightLeft className="w-5 h-5 text-purple-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white">Perbandingan Hari Ini vs Kemarin</h3>
+                                    <p className="text-xs text-gray-400">Perubahan aktivitas keuangan</p>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="p-3 bg-white/5 rounded-xl">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-gray-400 text-sm">Pemasukan</span>
+                                        <div className="flex items-center gap-2">
+                                            {calcPercentChange(todayIncome, yesterdayIncome) >= 0 ? (
+                                                <ChevronUp className="w-4 h-4 text-emerald-400" />
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4 text-red-400" />
+                                            )}
+                                            <span className={`text-sm font-bold ${calcPercentChange(todayIncome, yesterdayIncome) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {calcPercentChange(todayIncome, yesterdayIncome).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Kemarin: Rp {yesterdayIncome.toLocaleString('id-ID')}</span>
+                                        <span>Hari ini: Rp {todayIncome.toLocaleString('id-ID')}</span>
+                                    </div>
+                                </div>
+                                <div className="p-3 bg-white/5 rounded-xl">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-gray-400 text-sm">Pengeluaran</span>
+                                        <div className="flex items-center gap-2">
+                                            {calcPercentChange(todayExpense, yesterdayExpense) <= 0 ? (
+                                                <ChevronDown className="w-4 h-4 text-emerald-400" />
+                                            ) : (
+                                                <ChevronUp className="w-4 h-4 text-red-400" />
+                                            )}
+                                            <span className={`text-sm font-bold ${calcPercentChange(todayExpense, yesterdayExpense) <= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {Math.abs(calcPercentChange(todayExpense, yesterdayExpense)).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Kemarin: Rp {yesterdayExpense.toLocaleString('id-ID')}</span>
+                                        <span>Hari ini: Rp {todayExpense.toLocaleString('id-ID')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Monthly Comparison */}
+                    <div className="bg-gradient-to-br from-cyan-900/40 to-cyan-800/20 rounded-2xl border border-cyan-500/20 p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-cyan-500/20 rounded-lg">
+                                <TrendingUp className="w-5 h-5 text-cyan-400" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white">Perbandingan Bulan Ini vs Bulan Lalu</h3>
+                                <p className="text-xs text-gray-400">{MONTHS[new Date().getMonth()]} vs {MONTHS[new Date().getMonth() === 0 ? 11 : new Date().getMonth() - 1]}</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Income Comparison */}
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium text-emerald-400 flex items-center gap-2">
+                                    <TrendingUp size={14} /> Pemasukan
+                                </h4>
+                                <div className="flex justify-between items-end gap-4">
+                                    <div className="flex-1">
+                                        <p className="text-xs text-gray-500 mb-1">Bulan Lalu</p>
+                                        <div className="h-8 bg-emerald-500/20 rounded-lg relative overflow-hidden">
+                                            <div
+                                                className="h-full bg-emerald-500/40 rounded-lg"
+                                                style={{ width: `${Math.min((lastMonthIncome / Math.max(thisMonthIncome, lastMonthIncome, 1)) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-sm font-bold text-gray-300 mt-1">Rp {lastMonthIncome.toLocaleString('id-ID')}</p>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs text-gray-500 mb-1">Bulan Ini</p>
+                                        <div className="h-8 bg-emerald-500/20 rounded-lg relative overflow-hidden">
+                                            <div
+                                                className="h-full bg-emerald-500 rounded-lg"
+                                                style={{ width: `${Math.min((thisMonthIncome / Math.max(thisMonthIncome, lastMonthIncome, 1)) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-sm font-bold text-emerald-400 mt-1">Rp {thisMonthIncome.toLocaleString('id-ID')}</p>
+                                    </div>
+                                </div>
+                                <div className={`text-center p-2 rounded-lg ${calcPercentChange(thisMonthIncome, lastMonthIncome) >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                    <span className="text-sm font-bold">
+                                        {calcPercentChange(thisMonthIncome, lastMonthIncome) >= 0 ? '↑' : '↓'} {Math.abs(calcPercentChange(thisMonthIncome, lastMonthIncome)).toFixed(1)}%
+                                    </span>
+                                </div>
+                            </div>
+                            {/* Expense Comparison */}
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium text-red-400 flex items-center gap-2">
+                                    <TrendingDown size={14} /> Pengeluaran
+                                </h4>
+                                <div className="flex justify-between items-end gap-4">
+                                    <div className="flex-1">
+                                        <p className="text-xs text-gray-500 mb-1">Bulan Lalu</p>
+                                        <div className="h-8 bg-red-500/20 rounded-lg relative overflow-hidden">
+                                            <div
+                                                className="h-full bg-red-500/40 rounded-lg"
+                                                style={{ width: `${Math.min((lastMonthExpense / Math.max(thisMonthExpense, lastMonthExpense, 1)) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-sm font-bold text-gray-300 mt-1">Rp {lastMonthExpense.toLocaleString('id-ID')}</p>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs text-gray-500 mb-1">Bulan Ini</p>
+                                        <div className="h-8 bg-red-500/20 rounded-lg relative overflow-hidden">
+                                            <div
+                                                className="h-full bg-red-500 rounded-lg"
+                                                style={{ width: `${Math.min((thisMonthExpense / Math.max(thisMonthExpense, lastMonthExpense, 1)) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-sm font-bold text-red-400 mt-1">Rp {thisMonthExpense.toLocaleString('id-ID')}</p>
+                                    </div>
+                                </div>
+                                <div className={`text-center p-2 rounded-lg ${calcPercentChange(thisMonthExpense, lastMonthExpense) <= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                    <span className="text-sm font-bold">
+                                        {calcPercentChange(thisMonthExpense, lastMonthExpense) >= 0 ? '↑' : '↓'} {Math.abs(calcPercentChange(thisMonthExpense, lastMonthExpense)).toFixed(1)}%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Category Charts */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Top Income Categories */}
+                        <div className="bg-[#131b2c] rounded-2xl border border-white/5 p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                    <BarChart3 className="w-5 h-5 text-emerald-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white">Pemasukan Tertinggi</h3>
+                                    <p className="text-xs text-gray-400">Kategori bulan ini</p>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                {categoryBreakdown.topIncome.length > 0 ? (
+                                    categoryBreakdown.topIncome.map(([category, amount], index) => {
+                                        const maxAmount = categoryBreakdown.topIncome[0][1];
+                                        const percentage = (amount / maxAmount) * 100;
+                                        return (
+                                            <div key={category} className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-400">{category}</span>
+                                                    <span className="font-bold text-emerald-400">Rp {amount.toLocaleString('id-ID')}</span>
+                                                </div>
+                                                <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${percentage}%` }}
+                                                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                                                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <p className="text-center text-gray-500 py-4">Belum ada data pemasukan bulan ini</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Top Expense Categories */}
+                        <div className="bg-[#131b2c] rounded-2xl border border-white/5 p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-red-500/20 rounded-lg">
+                                    <BarChart3 className="w-5 h-5 text-red-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white">Pengeluaran Tertinggi</h3>
+                                    <p className="text-xs text-gray-400">Kategori bulan ini</p>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                {categoryBreakdown.topExpense.length > 0 ? (
+                                    categoryBreakdown.topExpense.map(([category, amount], index) => {
+                                        const maxAmount = categoryBreakdown.topExpense[0][1];
+                                        const percentage = (amount / maxAmount) * 100;
+                                        return (
+                                            <div key={category} className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-400">{category}</span>
+                                                    <span className="font-bold text-red-400">Rp {amount.toLocaleString('id-ID')}</span>
+                                                </div>
+                                                <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${percentage}%` }}
+                                                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                                                        className="h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <p className="text-center text-gray-500 py-4">Belum ada data pengeluaran bulan ini</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* --- MODALS --- */}
 
