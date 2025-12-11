@@ -787,13 +787,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
                 if (incomeMatch) {
                     type = 'income';
-                    const catKey = incomeMatch[2].toLowerCase();
-                    category = incomeCategories[catKey] || 'Lainnya';
+                    const rawCategory = incomeMatch[2];
+                    // Use mapped category if exists, otherwise capitalize the original text
+                    category = incomeCategories[rawCategory.toLowerCase()] ||
+                        rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1).toLowerCase();
                     amount = parseAmount(incomeMatch[3]);
                 } else {
                     type = 'expense';
-                    const catKey = expenseMatch![2].toLowerCase();
-                    category = expenseCategories[catKey] || 'Lainnya';
+                    const rawCategory = expenseMatch![2];
+                    // Use mapped category if exists, otherwise capitalize the original text
+                    category = expenseCategories[rawCategory.toLowerCase()] ||
+                        rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1).toLowerCase();
                     amount = parseAmount(expenseMatch![3]);
                 }
 
@@ -815,7 +819,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     amount,
                     category,
                     type,
-                    'Quick command via Telegram'
+                    'Via Telegram'
                 );
 
                 if (success) {
