@@ -9,6 +9,10 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronRight,
+  Settings,
+  Palette,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { MODULES } from './modules/Home';
 
@@ -229,6 +233,333 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   );
 };
 
+// Settings Panel Component
+interface SettingsPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  bgOpacity: number;
+  setBgOpacity: (val: number) => void;
+  bgColor: string;
+  setBgColor: (val: string) => void;
+  theme: Theme;
+  setTheme: (val: Theme) => void;
+}
+
+const SettingsPanel: React.FC<SettingsPanelProps> = ({
+  isOpen,
+  onClose,
+  bgOpacity,
+  setBgOpacity,
+  bgColor,
+  setBgColor,
+  theme,
+  setTheme,
+}) => {
+  const [activeTab, setActiveTab] = useState<'background' | 'theme'>('background');
+
+  const handleOpacityChange = (val: number) => {
+    setBgOpacity(val);
+    localStorage.setItem('NUSANTARA_BG_OPACITY', String(val));
+  };
+
+  const handleColorChange = (val: string) => {
+    setBgColor(val);
+    localStorage.setItem('NUSANTARA_BG_COLOR', val);
+  };
+
+  const handleThemeChange = (val: Theme) => {
+    setTheme(val);
+    localStorage.setItem('NUSANTARA_THEME', val);
+  };
+
+  const presetColors = [
+    '#000000', '#1a1a2e', '#16213e', '#0f3460', '#1b262c',
+    '#2d132c', '#3d1c02', '#0a3200', '#1a0000', '#0a1628'
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-white dark:bg-dark-card w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-gray-700 transform scale-100 transition-transform relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+
+        <div className="flex justify-between items-start mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 p-1.5 rounded-lg">
+              <Settings size={20} />
+            </span>
+            Pengaturan Tampilan
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+          <button
+            onClick={() => setActiveTab('background')}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === 'background'
+              ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+          >
+            <Palette size={16} />
+            Background
+          </button>
+          <button
+            onClick={() => setActiveTab('theme')}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === 'theme'
+              ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+          >
+            <Sun size={16} />
+            Tema
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="space-y-6">
+          {activeTab === 'background' && (
+            <>
+              {/* Opacity Slider */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                  Transparansi Overlay
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={bgOpacity}
+                    onChange={(e) => handleOpacityChange(Number(e.target.value))}
+                    className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  />
+                  <div className="w-14 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-center text-sm font-mono font-bold text-gray-700 dark:text-gray-300">
+                    {bgOpacity}%
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Atur tingkat kegelapan/kecerahan overlay di atas gambar background
+                </p>
+              </div>
+
+              {/* Color Picker */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                  Warna Overlay (Mode Gelap)
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="color"
+                    value={bgColor}
+                    onChange={(e) => handleColorChange(e.target.value)}
+                    className="w-12 h-12 rounded-xl border-2 border-gray-300 dark:border-gray-600 cursor-pointer overflow-hidden"
+                  />
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={bgColor}
+                      onChange={(e) => handleColorChange(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+                {/* Preset Colors */}
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {presetColors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => handleColorChange(color)}
+                      className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-110 ${bgColor === color ? 'border-purple-500 ring-2 ring-purple-300' : 'border-gray-300 dark:border-gray-600'
+                        }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'theme' && (
+            <div>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                Pilih Tema Tampilan
+              </label>
+
+              {/* Base Mode Selection */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => handleThemeChange('light')}
+                  className={`p-3 rounded-xl border-2 transition-all flex items-center gap-3 ${theme === 'light'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+                    <Sun size={20} className="text-yellow-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Terang</p>
+                    <p className="text-[10px] text-gray-500">Mode siang</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleThemeChange('dark')}
+                  className={`p-3 rounded-xl border-2 transition-all flex items-center gap-3 ${theme === 'dark'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gray-900 border border-gray-700 flex items-center justify-center shadow-sm">
+                    <Moon size={20} className="text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-sm text-gray-800 dark:text-gray-200">Gelap</p>
+                    <p className="text-[10px] text-gray-500">Mode malam</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Color Theme Presets */}
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                Preset Warna
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {/* Pastel */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#e8d5e0');
+                    handleOpacityChange(65);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-pink-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-pink-500">Pastel</p>
+                </button>
+
+                {/* Blue Sky */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#0a1628');
+                    handleOpacityChange(60);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-sky-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-sky-300 via-blue-400 to-indigo-500"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-sky-500">Blue Sky</p>
+                </button>
+
+                {/* Pop Colors */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#1a0a2e');
+                    handleOpacityChange(55);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-fuchsia-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-fuchsia-500">Pop</p>
+                </button>
+
+                {/* Sci-Fi */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#0a0f1d');
+                    handleOpacityChange(75);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-cyan-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-700"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-cyan-500">Sci-Fi</p>
+                </button>
+
+                {/* Nature */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#0a2010');
+                    handleOpacityChange(65);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-emerald-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-emerald-400 via-green-500 to-teal-600"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-emerald-500">Nature</p>
+                </button>
+
+                {/* Sunset */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#1a0a0a');
+                    handleOpacityChange(60);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-orange-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-orange-400 via-red-500 to-pink-600"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-orange-500">Sunset</p>
+                </button>
+
+                {/* Midnight */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#0f0f23');
+                    handleOpacityChange(80);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-indigo-500">Midnight</p>
+                </button>
+
+                {/* Ocean */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#0a1a2a');
+                    handleOpacityChange(70);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-teal-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-teal-400 via-cyan-600 to-blue-800"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-teal-500">Ocean</p>
+                </button>
+
+                {/* Monochrome */}
+                <button
+                  onClick={() => {
+                    handleColorChange('#1a1a1a');
+                    handleOpacityChange(75);
+                  }}
+                  className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-gray-400 transition-all flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-gray-300 via-gray-500 to-gray-800"></div>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-gray-500">Mono</p>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Close Button */}
+        <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-700 mt-6">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg shadow-lg transition-transform active:scale-95"
+          >
+            Selesai
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Footer: React.FC<{ theme: Theme; toggleTheme: () => void }> = ({
   theme,
   toggleTheme,
@@ -328,6 +659,17 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
 
+  // Settings Panel State
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [bgOpacity, setBgOpacity] = useState<number>(() => {
+    const saved = localStorage.getItem('NUSANTARA_BG_OPACITY');
+    return saved ? Number(saved) : 70;
+  });
+  const [bgColor, setBgColor] = useState<string>(() => {
+    const saved = localStorage.getItem('NUSANTARA_BG_COLOR');
+    return saved || '#000000';
+  });
+
   // Grouping Modules Logic
   const groupedModules = useMemo(() => {
     const groups: Record<string, typeof MODULES> = {};
@@ -407,14 +749,33 @@ export const Layout: React.FC<LayoutProps> = ({
         <img
           src="https://i.ibb.co/dvPVtRw/wallpaper-landscape-1765110537087-1.jpg"
           alt="Global Background"
-          className="w-full h-full object-cover opacity-80 dark:opacity-50 transition-opacity duration-500"
+          className="w-full h-full object-cover transition-opacity duration-500"
+          style={{ opacity: theme === 'dark' ? 0.5 : 0.8 }}
         />
-        <div className="absolute inset-0 bg-white/60 dark:bg-black/70 backdrop-blur-[1px]"></div>
+        <div
+          className="absolute inset-0 backdrop-blur-[1px] transition-colors duration-300"
+          style={{
+            backgroundColor: theme === 'dark'
+              ? `${bgColor}${Math.round((bgOpacity / 100) * 255).toString(16).padStart(2, '0')}`
+              : `rgba(255, 255, 255, ${bgOpacity / 100})`
+          }}
+        ></div>
       </div>
 
       <ApiKeyModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <SettingsPanel
+        isOpen={showSettingsPanel}
+        onClose={() => setShowSettingsPanel(false)}
+        bgOpacity={bgOpacity}
+        setBgOpacity={setBgOpacity}
+        bgColor={bgColor}
+        setBgColor={setBgColor}
+        theme={theme}
+        setTheme={setTheme}
       />
 
       {/* Sidebar / Topbar */}
@@ -441,6 +802,12 @@ export const Layout: React.FC<LayoutProps> = ({
             {/* Mobile Header Actions */}
             <div className="flex items-center gap-2 md:hidden">
               <button
+                onClick={() => setShowSettingsPanel(true)}
+                className="p-2 rounded-lg text-gray-500 dark:text-gray-400"
+              >
+                <Settings size={24} />
+              </button>
+              <button
                 onClick={() => setIsSettingsOpen(true)}
                 className={`p-2 rounded-lg ${hasApiKey
                   ? 'text-gray-500 dark:text-gray-400'
@@ -457,7 +824,15 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="flex items-center justify-between">
               <Clock />
               <div className="flex items-center gap-2">
-                {/* Desktop Settings Button with Key Icon */}
+                {/* Desktop Settings Button */}
+                <button
+                  onClick={() => setShowSettingsPanel(true)}
+                  className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400 transition-colors"
+                  title="Pengaturan Tampilan"
+                >
+                  <Settings size={20} />
+                </button>
+                {/* Desktop API Key Button */}
                 <button
                   onClick={() => setIsSettingsOpen(true)}
                   className={`p-2 rounded-full transition-colors ${hasApiKey
