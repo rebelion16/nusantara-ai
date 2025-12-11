@@ -1,8 +1,23 @@
 // api/telegram/callback.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { firestoreHelpers } from '../../lib/firebase-admin';
-import { sendMessage } from '../../lib/telegram/bot';
-import { mainMenuKeyboard } from '../../lib/telegram/keyboards';
+
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+// Main menu keyboard - inline
+const mainMenuKeyboard = {
+    inline_keyboard: [
+        [
+            { text: '💳 Dompet', callback_data: 'menu_wallets' },
+            { text: '➕ Pemasukan', callback_data: 'menu_income' },
+            { text: '➖ Pengeluaran', callback_data: 'menu_expense' },
+        ],
+        [
+            { text: '📊 Laporan', callback_data: 'menu_report' },
+            { text: '📜 Riwayat', callback_data: 'menu_history' },
+        ],
+    ],
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { code, state, error } = req.query;
@@ -11,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).send(`
             <html>
                 <head><title>Login Error</title></head>
-                <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                <body style="font-family: sans-serif; text-align: center; padding: 50px; background: #1a1a2e; color: white;">
                     <h1>❌ Login Gagal</h1>
                     <p>Error: ${error}</p>
                     <p>Silakan tutup halaman ini dan coba lagi di Telegram.</p>
@@ -25,15 +40,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+        const appUrl = process.env.NEXTAUTH_URL || 'https://nusantara-ai-six.vercel.app';
+
+        if (!clientId || !clientSecret) {
+            throw new Error('Missing OAuth credentials');
+        }
+
         // Exchange code for tokens
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 code,
-                client_id: process.env.GOOGLE_CLIENT_ID!,
-                client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-                redirect_uri: `${process.env.NEXTAUTH_URL}/api/telegram/callback`,
+                client_id: clientId,
+                client_secret: clientSecret,
+                redirect_uri: `${appUrl}/api/telegram/callback`,
                 grant_type: 'authorization_code',
             }),
         });
@@ -41,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const tokens = await tokenResponse.json();
 
         if (!tokens.access_token) {
+            console.error('Token response:', tokens);
             throw new Error('Failed to get access token');
         }
 
@@ -55,37 +79,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new Error('Failed to get user email');
         }
 
-        // Get session from Firestore
-        const session = await firestoreHelpers.getAndDeleteOAuthSession(state);
-
-        if (!session) {
-            throw new Error('Session expired or invalid');
-        }
-
-        // Link telegram user
-        await firestoreHelpers.linkTelegramUser(
-            session.telegramId,
-            session.chatId,
-            userInfo.email,
-            userInfo.name
-        );
-
-        // Get wallets for initial summary
-        const wallets = await firestoreHelpers.getWalletsByEmail(userInfo.email);
-        const totalAssets = wallets.reduce((sum: number, w: any) => sum + (w.balance || 0), 0);
+        // Extract telegram ID from state (format: telegramId_timestamp)
+        const telegramId = state.split('_')[0];
 
         // Send success message to Telegram
-        await sendMessage(
-            session.chatId,
-            `✅ <b>Login Berhasil!</b>
-
-👤 Email: ${userInfo.email}
-💰 Total Aset: Rp ${totalAssets.toLocaleString('id-ID')}
-📊 Dompet: ${wallets.length} buah
-
-Selamat menggunakan Catat Duitmu Bot!`,
-            { reply_markup: mainMenuKeyboard }
-        );
+        await fetch(`${TELEGRAM_API}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: telegramId,
+                text: `✅ <b>Login Berhasil!</b>\n\n👤 Email: ${userInfo.email}\n\nSelamat menggunakan Catat Duitmu Bot!\n\n<i>Pilih menu di bawah untuk melanjutkan:</i>`,
+                parse_mode: 'HTML',
+                reply_markup: mainMenuKeyboard,
+            }),
+        });
 
         // Show success page
         res.send(`
@@ -115,20 +122,9 @@ Selamat menggunakan Catat Duitmu Bot!`,
                             max-width: 400px;
                             border: 1px solid rgba(255,255,255,0.1);
                         }
-                        .icon {
-                            font-size: 64px;
-                            margin-bottom: 20px;
-                        }
-                        h1 {
-                            font-size: 24px;
-                            margin-bottom: 12px;
-                            color: #4ade80;
-                        }
-                        p {
-                            color: rgba(255,255,255,0.7);
-                            line-height: 1.6;
-                            margin-bottom: 8px;
-                        }
+                        .icon { font-size: 64px; margin-bottom: 20px; }
+                        h1 { font-size: 24px; margin-bottom: 12px; color: #4ade80; }
+                        p { color: rgba(255,255,255,0.7); line-height: 1.6; }
                         .email {
                             background: rgba(74, 222, 128, 0.1);
                             border: 1px solid rgba(74, 222, 128, 0.3);
@@ -138,11 +134,7 @@ Selamat menggunakan Catat Duitmu Bot!`,
                             color: #4ade80;
                             font-weight: 500;
                         }
-                        .hint {
-                            font-size: 14px;
-                            color: rgba(255,255,255,0.5);
-                            margin-top: 24px;
-                        }
+                        .hint { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 24px; }
                     </style>
                 </head>
                 <body>
@@ -157,14 +149,14 @@ Selamat menggunakan Catat Duitmu Bot!`,
             </html>
         `);
 
-    } catch (error) {
-        console.error('Callback error:', error);
+    } catch (err: any) {
+        console.error('Callback error:', err);
         res.status(500).send(`
             <html>
                 <head><title>Error</title></head>
-                <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                <body style="font-family: sans-serif; text-align: center; padding: 50px; background: #1a1a2e; color: white;">
                     <h1>❌ Terjadi Kesalahan</h1>
-                    <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
+                    <p>${err.message}</p>
                     <p>Silakan tutup halaman ini dan coba lagi di Telegram.</p>
                 </body>
             </html>
