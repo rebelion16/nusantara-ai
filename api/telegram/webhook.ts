@@ -11,6 +11,11 @@ const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// Gemini AI for smart categorization
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
 // Simple in-memory session store
 const sessions: Map<string, any> = new Map();
 
@@ -51,6 +56,63 @@ async function answerCallback(callbackId: string, text?: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ callback_query_id: callbackId, text }),
     });
+}
+
+// ==================== GEMINI AI FUNCTIONS ====================
+
+interface ParsedTransaction {
+    type: 'income' | 'expense';
+    category: string;
+    amount: number;
+    description: string;
+}
+
+async function parseTransactionWithAI(text: string): Promise<ParsedTransaction | null> {
+    if (!GEMINI_API_KEY) {
+        console.log('Gemini API key not configured, falling back to regex parsing');
+        return null;
+    }
+
+    try {
+        const systemPrompt = `Kamu adalah parser transaksi keuangan. Ekstrak informasi dari teks bahasa Indonesia.
+Kembalikan HANYA JSON tanpa markdown atau penjelasan.
+Format: {"type":"income"|"expense","category":"string","amount":number,"description":"string"}
+Kategori pemasukan: Gaji, Bonus, Penjualan, Investasi, Hadiah, Lainnya
+Kategori pengeluaran: Makanan, Transportasi, Belanja, Tagihan, Hiburan, Kesehatan, Pendidikan, Donasi, Lainnya
+Gunakan kategori yang paling cocok berdasarkan konteks. Jika tidak pasti, gunakan Lainnya.
+Jika teks tidak bisa diparsing sebagai transaksi, kembalikan: null`;
+
+        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 256,
+                }
+            })
+        });
+
+        if (!response.ok) {
+            console.log('Gemini API error:', await response.text());
+            return null;
+        }
+
+        const data = await response.json();
+        const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const cleaned = resultText.replace(/```json\n?|\n?```/g, '').trim();
+
+        const parsed = JSON.parse(cleaned);
+        if (parsed && parsed.type && parsed.category && parsed.amount) {
+            return parsed;
+        }
+        return null;
+    } catch (error) {
+        console.log('AI parsing error:', error);
+        return null;
+    }
 }
 
 // ==================== SUPABASE FUNCTIONS ====================
@@ -842,17 +904,69 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(200).json({ ok: true });
             }
 
-            // If not a command and not in a flow, show help
+            // If not a regex command, try AI parsing
             if (!session && userEmail) {
+                // Try AI-powered parsing for natural language
+                const aiParsed = await parseTransactionWithAI(text);
+
+                if (aiParsed && aiParsed.amount > 0) {
+                    const wallets = await getWalletsByEmail(userEmail);
+
+                    if (wallets.length === 0) {
+                        await sendMessage(chatId,
+                            `⚠️ Belum ada dompet. Tambahkan dompet terlebih dahulu.`,
+                            {
+                                inline_keyboard: [
+                                    [{ text: '➕ Tambah Dompet', callback_data: 'wallet_add' }],
+                                    [{ text: '🏠 Menu Utama', callback_data: 'menu_main' }],
+                                ]
+                            }
+                        );
+                        return res.status(200).json({ ok: true });
+                    }
+
+                    const defaultWallet = wallets[0];
+                    const success = await addTransaction(
+                        userEmail,
+                        defaultWallet.id,
+                        aiParsed.amount,
+                        aiParsed.category,
+                        aiParsed.type,
+                        aiParsed.description || text
+                    );
+
+                    if (success) {
+                        const icon = aiParsed.type === 'income' ? '📈' : '📉';
+                        const sign = aiParsed.type === 'income' ? '+' : '-';
+                        await sendMessage(chatId,
+                            `${icon} <b>${aiParsed.type === 'income' ? 'Pemasukan' : 'Pengeluaran'} Dicatat!</b>\n\n` +
+                            `✨ <i>AI mendeteksi:</i>\n` +
+                            `📁 Kategori: ${aiParsed.category}\n` +
+                            `💵 Jumlah: ${sign}${formatCurrency(aiParsed.amount)}\n` +
+                            `🏦 Dompet: ${defaultWallet.name}\n\n` +
+                            `<i>Data sync dengan web app.</i>`,
+                            backKeyboard
+                        );
+                    } else {
+                        await sendMessage(chatId,
+                            `❌ Gagal mencatat transaksi. Coba lagi.`,
+                            backKeyboard
+                        );
+                    }
+                    return res.status(200).json({ ok: true });
+                }
+
+                // If AI can't parse, show help
                 await sendMessage(chatId,
                     `💡 <b>Tips Cepat:</b>\n\n` +
                     `Ketik perintah langsung:\n` +
                     `• <code>+gaji 5000000</code> → Pemasukan\n` +
                     `• <code>-makanan 50rb</code> → Pengeluaran\n\n` +
-                    `<b>Kategori Pemasukan:</b>\n` +
-                    `gaji, bonus, penjualan, investasi, hadiah\n\n` +
-                    `<b>Kategori Pengeluaran:</b>\n` +
-                    `makanan, transport, belanja, tagihan, hiburan, kesehatan\n\n` +
+                    `✨ <b>Atau ketik dalam bahasa natural:</b>\n` +
+                    `• "beli kopi 25rb"\n` +
+                    `• "terima gaji 5jt"\n` +
+                    `• "bayar listrik 300rb"\n\n` +
+                    `AI akan otomatis mendeteksi kategori!\n\n` +
                     `Atau gunakan menu di bawah:`,
                     mainMenuKeyboard
                 );

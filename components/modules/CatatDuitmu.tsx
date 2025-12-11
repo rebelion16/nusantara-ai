@@ -24,11 +24,16 @@ import {
     ChevronDown,
     Download,
     FileText,
-    RotateCcw
+    RotateCcw,
+    MessageSquare,
+    Send,
+    Sparkles,
+    Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../services/authService';
 import { supabase } from '../../lib/supabase';
+import { chatWithAssistant, parseTransactionFromText, GeminiMessage } from '../../lib/gemini';
 import { WalletAccount, Transaction, WalletType, TransactionType } from '../../types';
 
 // Predefined Categories
@@ -81,6 +86,16 @@ export const CatatDuitmuModule: React.FC = () => {
         description: '',
         walletId: ''
     });
+
+    // AI Chat State
+    const [showAIChat, setShowAIChat] = useState(false);
+    const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
+    const [chatInput, setChatInput] = useState('');
+    const [chatLoading, setChatLoading] = useState(false);
+
+    // NLP Quick Input State
+    const [nlpInput, setNlpInput] = useState('');
+    const [nlpLoading, setNlpLoading] = useState(false);
 
     // Listen to Wallets
     useEffect(() => {
@@ -456,6 +471,110 @@ export const CatatDuitmuModule: React.FC = () => {
             alert(`Gagal mereset data: ${error?.message || 'Unknown error'}`);
         } finally {
             setSaving(false);
+        }
+    };
+
+    // --- AI Functions ---
+
+    // Send message to AI chat
+    const handleSendChat = async () => {
+        if (!chatInput.trim() || chatLoading) return;
+
+        const userMessage = chatInput.trim();
+        setChatInput('');
+        setChatMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+        setChatLoading(true);
+
+        try {
+            // Calculate context
+            const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+            const monthlyTx = transactions.filter(t => t.date >= monthStart);
+            const monthlyIncome = monthlyTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const monthlyExpense = monthlyTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+            // Convert chat history to Gemini format
+            const history: GeminiMessage[] = chatMessages.map(m => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text }]
+            }));
+
+            const response = await chatWithAssistant(userMessage, {
+                totalBalance,
+                monthlyIncome,
+                monthlyExpense
+            }, history);
+
+            setChatMessages(prev => [...prev, { role: 'assistant', text: response }]);
+        } catch (error: any) {
+            setChatMessages(prev => [...prev, {
+                role: 'assistant',
+                text: '❌ Maaf, terjadi kesalahan. Pastikan API key sudah dikonfigurasi dengan benar.'
+            }]);
+            console.error('Chat error:', error);
+        } finally {
+            setChatLoading(false);
+        }
+    };
+
+    // Process NLP input to create transaction
+    const handleNLPInput = async () => {
+        if (!nlpInput.trim() || nlpLoading || !user) return;
+
+        if (wallets.length === 0) {
+            alert('Tambahkan dompet terlebih dahulu!');
+            return;
+        }
+
+        setNlpLoading(true);
+
+        try {
+            const parsed = await parseTransactionFromText(nlpInput.trim());
+
+            if (!parsed) {
+                alert('❌ Tidak bisa memahami input. Coba format: "beli kopi 25rb" atau "gaji bulan ini 5jt"');
+                return;
+            }
+
+            const defaultWallet = wallets[0];
+            const { error: txError } = await supabase
+                .from('transactions')
+                .insert({
+                    category: parsed.category,
+                    type: parsed.type,
+                    description: parsed.description || nlpInput.trim(),
+                    wallet_id: defaultWallet.id,
+                    user_id: user.email,
+                    amount: parsed.amount,
+                    date: new Date().toISOString()
+                });
+
+            if (txError) throw txError;
+
+            // Update wallet balance
+            const { data: wallet } = await supabase
+                .from('wallets')
+                .select('balance')
+                .eq('id', defaultWallet.id)
+                .single();
+
+            if (wallet) {
+                const balanceChange = parsed.type === 'income' ? parsed.amount : -parsed.amount;
+                await supabase
+                    .from('wallets')
+                    .update({ balance: wallet.balance + balanceChange })
+                    .eq('id', defaultWallet.id);
+            }
+
+            const icon = parsed.type === 'income' ? '📈' : '📉';
+            alert(`${icon} ${parsed.type === 'income' ? 'Pemasukan' : 'Pengeluaran'} dicatat!\n\nKategori: ${parsed.category}\nJumlah: Rp ${parsed.amount.toLocaleString('id-ID')}\nDompet: ${defaultWallet.name}`);
+            setNlpInput('');
+        } catch (error: any) {
+            console.error('NLP input error:', error);
+            alert(`❌ Gagal: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setNlpLoading(false);
         }
     };
 
@@ -1615,6 +1734,140 @@ export const CatatDuitmuModule: React.FC = () => {
                                         </>
                                     )}
                                 </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* AI Chat Floating Button */}
+            <motion.button
+                onClick={() => setShowAIChat(true)}
+                className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full shadow-lg shadow-purple-500/30 flex items-center justify-center z-40 hover:scale-110 transition-transform"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+            >
+                <Sparkles className="w-6 h-6 text-white" />
+            </motion.button>
+
+            {/* AI Chat Modal */}
+            <AnimatePresence>
+                {showAIChat && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+                    >
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+                            className="bg-gradient-to-br from-[#1a2333] to-[#0f1520] w-full sm:w-[450px] h-[85vh] sm:h-[600px] sm:rounded-2xl border-t sm:border border-purple-500/30 flex flex-col shadow-2xl"
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-4 border-b border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center">
+                                        <Bot className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white">Catat Duit AI</h3>
+                                        <p className="text-xs text-gray-400">Asisten Keuangan Pribadi</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowAIChat(false)}
+                                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center"
+                                >
+                                    <X className="w-4 h-4 text-gray-400" />
+                                </button>
+                            </div>
+
+                            {/* NLP Quick Input */}
+                            <div className="p-3 border-b border-white/5">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={nlpInput}
+                                        onChange={(e) => setNlpInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleNLPInput()}
+                                        placeholder="✨ Ketik: beli kopi 25rb atau gaji 5jt"
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
+                                    />
+                                    <button
+                                        onClick={handleNLPInput}
+                                        disabled={nlpLoading || !nlpInput.trim()}
+                                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {nlpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1 px-1">
+                                    AI akan otomatis mendeteksi kategori & nominal
+                                </p>
+                            </div>
+
+                            {/* Chat Messages */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {chatMessages.length === 0 && (
+                                    <div className="text-center text-gray-500 py-10">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <MessageSquare className="w-8 h-8 text-purple-400" />
+                                        </div>
+                                        <p className="text-sm">Halo! 👋 Saya Catat Duit AI.</p>
+                                        <p className="text-xs mt-1">Tanyakan apa saja tentang keuanganmu!</p>
+                                        <div className="flex flex-wrap gap-2 justify-center mt-4">
+                                            {['Gimana kondisi keuangan saya?', 'Tips menabung?', 'Analisis pengeluaran'].map((q) => (
+                                                <button
+                                                    key={q}
+                                                    onClick={() => { setChatInput(q); }}
+                                                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400"
+                                                >
+                                                    {q}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {chatMessages.map((msg, i) => (
+                                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl ${msg.role === 'user'
+                                                ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                                                : 'bg-white/10 text-gray-200'
+                                            }`}>
+                                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {chatLoading && (
+                                    <div className="flex justify-start">
+                                        <div className="bg-white/10 px-4 py-3 rounded-2xl">
+                                            <div className="flex gap-1">
+                                                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Chat Input */}
+                            <div className="p-4 border-t border-white/10">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+                                        placeholder="Tanya sesuatu..."
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
+                                    />
+                                    <button
+                                        onClick={handleSendChat}
+                                        disabled={chatLoading || !chatInput.trim()}
+                                        className="px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {chatLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>
