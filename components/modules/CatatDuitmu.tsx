@@ -28,22 +28,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../services/authService';
-import { db } from '../../services/firebase';
-import {
-    collection,
-    addDoc,
-    query,
-    where,
-    onSnapshot,
-    orderBy,
-    Timestamp,
-    doc,
-    updateDoc,
-    increment,
-    writeBatch,
-    deleteDoc,
-    getDoc
-} from 'firebase/firestore';
+import { supabase } from '../../lib/supabase';
 import { WalletAccount, Transaction, WalletType, TransactionType } from '../../types';
 
 // Predefined Categories
@@ -101,49 +86,91 @@ export const CatatDuitmuModule: React.FC = () => {
     useEffect(() => {
         if (!user) return;
 
-        try {
-            const q = query(collection(db, 'wallets'), where('userId', '==', user.email));
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const walletList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletAccount));
-                setWallets(walletList);
+        const fetchWallets = async () => {
+            const { data, error } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('user_id', user.email)
+                .order('created_at', { ascending: false });
 
-                // Set default wallet if not set
-                if (!transactionForm.walletId && walletList.length > 0) {
-                    setTransactionForm(prev => ({ ...prev, walletId: walletList[0].id }));
-                }
-            }, (error) => {
-                console.error("Error listening to wallets:", error);
-                setLoading(false);
-            });
-            return () => unsubscribe();
-        } catch (error) {
-            console.error("Error setting up wallet listener:", error);
-            setLoading(false);
-        }
+            if (error) {
+                console.error("Error fetching wallets:", error);
+                return;
+            }
+
+            const walletList = (data || []).map(w => ({
+                id: w.id,
+                name: w.name,
+                type: w.type as WalletType,
+                balance: w.balance || 0,
+                color: w.color || 'bg-blue-600',
+                userId: w.user_id
+            })) as WalletAccount[];
+
+            setWallets(walletList);
+
+            // Set default wallet if not set
+            if (!transactionForm.walletId && walletList.length > 0) {
+                setTransactionForm(prev => ({ ...prev, walletId: walletList[0].id }));
+            }
+        };
+
+        fetchWallets();
+
+        // Subscribe to realtime changes
+        const channel = supabase
+            .channel('wallets-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets' }, () => {
+                fetchWallets();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
     }, [user]);
 
     // Listen to Transactions
     useEffect(() => {
         if (!user) return;
 
-        try {
-            // Simple query without orderBy to avoid index requirement
-            const q = query(collection(db, 'transactions'), where('userId', '==', user.email));
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const txList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-                // Sort client-side instead
-                txList.sort((a, b) => b.date - a.date);
-                setTransactions(txList);
+        const fetchTransactions = async () => {
+            const { data, error } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('user_id', user.email)
+                .order('date', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching transactions:", error);
                 setLoading(false);
-            }, (error) => {
-                console.error("Error listening to transactions:", error);
-                setLoading(false);
-            });
-            return () => unsubscribe();
-        } catch (error) {
-            console.error("Error setting up transaction listener:", error);
+                return;
+            }
+
+            const txList = (data || []).map(t => ({
+                id: t.id,
+                amount: t.amount || 0,
+                category: t.category,
+                type: t.type as TransactionType,
+                description: t.description || '',
+                date: new Date(t.date).getTime(),
+                walletId: t.wallet_id,
+                userId: t.user_id
+            })) as Transaction[];
+
+            setTransactions(txList);
             setLoading(false);
-        }
+        };
+
+        fetchTransactions();
+
+        // Subscribe to realtime changes
+        const channel = supabase
+            .channel('transactions-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+                fetchTransactions();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
     }, [user]);
 
     // --- Actions ---
@@ -166,23 +193,28 @@ export const CatatDuitmuModule: React.FC = () => {
         try {
             if (editingWallet) {
                 // Edit existing
-                await updateDoc(doc(db, 'wallets', editingWallet.id), {
-                    name: walletForm.name,
-                    type: walletForm.type,
-                    color: walletForm.color,
-                });
+                const { error } = await supabase
+                    .from('wallets')
+                    .update({
+                        name: walletForm.name,
+                        type: walletForm.type,
+                        color: walletForm.color,
+                    })
+                    .eq('id', editingWallet.id);
+                if (error) throw error;
                 console.log('Wallet updated successfully');
             } else {
                 // Add new
-                const newWallet = {
-                    name: walletForm.name,
-                    type: walletForm.type || 'bank',
-                    color: walletForm.color || 'bg-blue-600',
-                    userId: user.email,
-                    balance: Number(walletForm.balance) || 0
-                };
-                console.log('Creating new wallet:', newWallet);
-                await addDoc(collection(db, 'wallets'), newWallet);
+                const { error } = await supabase
+                    .from('wallets')
+                    .insert({
+                        name: walletForm.name,
+                        type: walletForm.type || 'bank',
+                        color: walletForm.color || 'bg-blue-600',
+                        user_id: user.email,
+                        balance: Number(walletForm.balance) || 0
+                    });
+                if (error) throw error;
                 console.log('Wallet created successfully');
             }
             closeModals();
@@ -205,7 +237,11 @@ export const CatatDuitmuModule: React.FC = () => {
 
         setSaving(true);
         try {
-            await deleteDoc(doc(db, 'wallets', deleteWalletTarget.id));
+            const { error } = await supabase
+                .from('wallets')
+                .delete()
+                .eq('id', deleteWalletTarget.id);
+            if (error) throw error;
             console.log('Wallet deleted successfully');
         } catch (error: any) {
             console.error("Error deleting wallet: ", error);
@@ -237,7 +273,6 @@ export const CatatDuitmuModule: React.FC = () => {
         setSaving(true);
 
         try {
-            const batch = writeBatch(db);
             const amount = Number(transactionForm.amount);
 
             if (editingTransaction) {
@@ -245,46 +280,82 @@ export const CatatDuitmuModule: React.FC = () => {
                 const oldTx = editingTransaction;
                 const newTx = transactionForm;
 
-                // 1. Revert Old Effect on Old Wallet
-                const oldWalletRef = doc(db, 'wallets', oldTx.walletId);
-                const oldRevert = oldTx.type === 'income' ? -oldTx.amount : oldTx.amount;
-                batch.update(oldWalletRef, { balance: increment(oldRevert) });
+                // 1. Revert old effect on old wallet
+                const { data: oldWallet } = await supabase
+                    .from('wallets')
+                    .select('balance')
+                    .eq('id', oldTx.walletId)
+                    .single();
 
-                // 2. Apply New Effect on New Wallet (could be same wallet)
-                const newWalletRef = doc(db, 'wallets', newTx.walletId!);
-                const newApply = newTx.type === 'income' ? amount : -amount;
-                batch.update(newWalletRef, { balance: increment(newApply) });
+                if (oldWallet) {
+                    const oldRevert = oldTx.type === 'income' ? -oldTx.amount : oldTx.amount;
+                    await supabase
+                        .from('wallets')
+                        .update({ balance: oldWallet.balance + oldRevert })
+                        .eq('id', oldTx.walletId);
+                }
 
-                // 3. Update Transaction Doc
-                const txRef = doc(db, 'transactions', editingTransaction.id);
-                batch.update(txRef, {
-                    ...newTx,
-                    amount: amount
-                });
-                console.log('Updating transaction:', editingTransaction.id);
+                // 2. Apply new effect on new wallet
+                const { data: newWallet } = await supabase
+                    .from('wallets')
+                    .select('balance')
+                    .eq('id', newTx.walletId)
+                    .single();
+
+                if (newWallet) {
+                    const newApply = newTx.type === 'income' ? amount : -amount;
+                    await supabase
+                        .from('wallets')
+                        .update({ balance: newWallet.balance + newApply })
+                        .eq('id', newTx.walletId);
+                }
+
+                // 3. Update transaction
+                const { error } = await supabase
+                    .from('transactions')
+                    .update({
+                        category: newTx.category,
+                        type: newTx.type,
+                        description: newTx.description || '',
+                        wallet_id: newTx.walletId,
+                        amount: amount
+                    })
+                    .eq('id', editingTransaction.id);
+                if (error) throw error;
+                console.log('Transaction updated successfully');
 
             } else {
                 // ADD LOGIC
-                const txRef = doc(collection(db, 'transactions'));
-                const newTransaction = {
-                    category: transactionForm.category,
-                    type: transactionForm.type,
-                    description: transactionForm.description || '',
-                    walletId: transactionForm.walletId,
-                    userId: user.email,
-                    amount: amount,
-                    date: Date.now()
-                };
-                console.log('Creating new transaction:', newTransaction);
-                batch.set(txRef, newTransaction);
+                const { error: txError } = await supabase
+                    .from('transactions')
+                    .insert({
+                        category: transactionForm.category,
+                        type: transactionForm.type,
+                        description: transactionForm.description || '',
+                        wallet_id: transactionForm.walletId,
+                        user_id: user.email,
+                        amount: amount,
+                        date: new Date().toISOString()
+                    });
+                if (txError) throw txError;
 
-                const walletRef = doc(db, 'wallets', transactionForm.walletId);
-                const balanceChange = transactionForm.type === 'income' ? amount : -amount;
-                batch.update(walletRef, { balance: increment(balanceChange) });
+                // Update wallet balance
+                const { data: wallet } = await supabase
+                    .from('wallets')
+                    .select('balance')
+                    .eq('id', transactionForm.walletId)
+                    .single();
+
+                if (wallet) {
+                    const balanceChange = transactionForm.type === 'income' ? amount : -amount;
+                    await supabase
+                        .from('wallets')
+                        .update({ balance: wallet.balance + balanceChange })
+                        .eq('id', transactionForm.walletId);
+                }
+                console.log('Transaction created successfully');
             }
 
-            await batch.commit();
-            console.log('Transaction saved successfully!');
             closeModals();
         } catch (error: any) {
             console.error("Error saving transaction: ", error);
@@ -305,24 +376,36 @@ export const CatatDuitmuModule: React.FC = () => {
 
         setSaving(true);
         try {
-            const batch = writeBatch(db);
-
             // Revert balance
-            const walletRef = doc(db, 'wallets', deleteTransactionTarget.walletId);
-            const revertAmount = deleteTransactionTarget.type === 'income' ? -deleteTransactionTarget.amount : deleteTransactionTarget.amount;
-            batch.update(walletRef, { balance: increment(revertAmount) });
+            const { data: wallet } = await supabase
+                .from('wallets')
+                .select('balance')
+                .eq('id', deleteTransactionTarget.walletId)
+                .single();
 
-            // Delete doc
-            const txRef = doc(db, 'transactions', deleteTransactionTarget.id);
-            batch.delete(txRef);
+            if (wallet) {
+                const revertAmount = deleteTransactionTarget.type === 'income'
+                    ? -deleteTransactionTarget.amount
+                    : deleteTransactionTarget.amount;
+                await supabase
+                    .from('wallets')
+                    .update({ balance: wallet.balance + revertAmount })
+                    .eq('id', deleteTransactionTarget.walletId);
+            }
 
-            await batch.commit();
+            // Delete transaction
+            const { error } = await supabase
+                .from('transactions')
+                .delete()
+                .eq('id', deleteTransactionTarget.id);
+            if (error) throw error;
+
             console.log('Transaction deleted successfully');
         } catch (error: any) {
             console.error("Error deleting transaction: ", error);
             alert(`Gagal menghapus transaksi: ${error?.message || 'Unknown error'}`);
         } finally {
-            setSaving(false);
+            setSaving(true);
             setDeleteTransactionTarget(null);
         }
     };
@@ -344,21 +427,18 @@ export const CatatDuitmuModule: React.FC = () => {
         setShowResetConfirm(false);
 
         try {
-            const batch = writeBatch(db);
+            // Delete all transactions for this user
+            await supabase
+                .from('transactions')
+                .delete()
+                .eq('user_id', user.email);
 
-            // Delete all wallets
-            for (const wallet of wallets) {
-                const walletRef = doc(db, 'wallets', wallet.id);
-                batch.delete(walletRef);
-            }
+            // Delete all wallets for this user
+            await supabase
+                .from('wallets')
+                .delete()
+                .eq('user_id', user.email);
 
-            // Delete all transactions
-            for (const transaction of transactions) {
-                const txRef = doc(db, 'transactions', transaction.id);
-                batch.delete(txRef);
-            }
-
-            await batch.commit();
             console.log('All data reset successfully');
         } catch (error: any) {
             console.error("Error resetting data: ", error);
