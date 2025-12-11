@@ -77,6 +77,10 @@ export const CatatDuitmuModule: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+    // Delete confirmation state
+    const [deleteWalletTarget, setDeleteWalletTarget] = useState<WalletAccount | null>(null);
+    const [deleteTransactionTarget, setDeleteTransactionTarget] = useState<Transaction | null>(null);
+
     // Forms State
     const [walletForm, setWalletForm] = useState<Partial<WalletAccount>>({
         name: '',
@@ -190,12 +194,25 @@ export const CatatDuitmuModule: React.FC = () => {
         }
     };
 
-    const handleDeleteWallet = async (walletId: string) => {
-        if (!confirm('Apakah anda yakin? Transaksi terkait tidak akan dihapus otomatis.')) return;
+    // Show wallet delete confirmation
+    const handleDeleteWallet = (wallet: WalletAccount) => {
+        setDeleteWalletTarget(wallet);
+    };
+
+    // Execute wallet deletion
+    const confirmDeleteWallet = async () => {
+        if (!deleteWalletTarget) return;
+
+        setSaving(true);
         try {
-            await deleteDoc(doc(db, 'wallets', walletId));
-        } catch (error) {
+            await deleteDoc(doc(db, 'wallets', deleteWalletTarget.id));
+            console.log('Wallet deleted successfully');
+        } catch (error: any) {
             console.error("Error deleting wallet: ", error);
+            alert(`Gagal menghapus dompet: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(false);
+            setDeleteWalletTarget(null);
         }
     };
 
@@ -277,23 +294,36 @@ export const CatatDuitmuModule: React.FC = () => {
         }
     };
 
-    const handleDeleteTransaction = async (tx: Transaction) => {
-        if (!confirm('Hapus transaksi ini? Saldo dompet akan dikembalikan.')) return;
+    // Show transaction delete confirmation
+    const handleDeleteTransaction = (tx: Transaction) => {
+        setDeleteTransactionTarget(tx);
+    };
+
+    // Execute transaction deletion
+    const confirmDeleteTransaction = async () => {
+        if (!deleteTransactionTarget) return;
+
+        setSaving(true);
         try {
             const batch = writeBatch(db);
 
             // Revert balance
-            const walletRef = doc(db, 'wallets', tx.walletId);
-            const revertAmount = tx.type === 'income' ? -tx.amount : tx.amount;
+            const walletRef = doc(db, 'wallets', deleteTransactionTarget.walletId);
+            const revertAmount = deleteTransactionTarget.type === 'income' ? -deleteTransactionTarget.amount : deleteTransactionTarget.amount;
             batch.update(walletRef, { balance: increment(revertAmount) });
 
             // Delete doc
-            const txRef = doc(db, 'transactions', tx.id);
+            const txRef = doc(db, 'transactions', deleteTransactionTarget.id);
             batch.delete(txRef);
 
             await batch.commit();
-        } catch (error) {
-            console.error("Error deleting filteredTx: ", error);
+            console.log('Transaction deleted successfully');
+        } catch (error: any) {
+            console.error("Error deleting transaction: ", error);
+            alert(`Gagal menghapus transaksi: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(false);
+            setDeleteTransactionTarget(null);
         }
     };
 
@@ -767,7 +797,7 @@ export const CatatDuitmuModule: React.FC = () => {
                                         {/* Always Visible Delete Button for Wallet */}
                                         <div className="absolute top-4 right-4 flex gap-2 z-20">
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteWallet(wallet.id); }}
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteWallet(wallet); }}
                                                 className="p-1.5 bg-black/40 hover:bg-red-500 rounded-lg text-white/80 hover:text-white transition-colors"
                                                 title="Hapus Dompet"
                                             >
@@ -1385,6 +1415,140 @@ export const CatatDuitmuModule: React.FC = () => {
                                         <>
                                             <Trash2 size={18} />
                                             Ya, Hapus Semua
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Delete Wallet Confirmation Modal */}
+            <AnimatePresence>
+                {deleteWalletTarget && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-gradient-to-br from-[#1a2333] to-[#0f1520] p-6 rounded-2xl border border-orange-500/30 w-full max-w-sm relative shadow-2xl"
+                        >
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", delay: 0.1 }}
+                                className="w-16 h-16 bg-gradient-to-br from-orange-500/30 to-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-orange-500/50"
+                            >
+                                <Wallet className="w-8 h-8 text-orange-400" />
+                            </motion.div>
+
+                            <h3 className="text-xl font-bold text-orange-400 mb-2 text-center">Hapus Dompet?</h3>
+
+                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4 mb-4">
+                                <div className="text-center">
+                                    <p className="text-white font-semibold text-lg">{deleteWalletTarget.name}</p>
+                                    <p className="text-gray-400 text-sm">{deleteWalletTarget.type}</p>
+                                    <p className="text-orange-400 font-bold text-xl mt-2">
+                                        Rp {deleteWalletTarget.balance.toLocaleString('id-ID')}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p className="text-gray-400 text-sm text-center mb-4">
+                                Transaksi terkait tidak akan dihapus otomatis.
+                            </p>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteWalletTarget(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={confirmDeleteWallet}
+                                    disabled={saving}
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {saving ? 'Menghapus...' : (
+                                        <>
+                                            <Trash2 size={16} />
+                                            Hapus
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Delete Transaction Confirmation Modal */}
+            <AnimatePresence>
+                {deleteTransactionTarget && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-gradient-to-br from-[#1a2333] to-[#0f1520] p-6 rounded-2xl border border-rose-500/30 w-full max-w-sm relative shadow-2xl"
+                        >
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", delay: 0.1 }}
+                                className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 ${deleteTransactionTarget.type === 'income'
+                                        ? 'bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border-emerald-500/50'
+                                        : 'bg-gradient-to-br from-rose-500/30 to-rose-600/20 border-rose-500/50'
+                                    }`}
+                            >
+                                {deleteTransactionTarget.type === 'income'
+                                    ? <ArrowUpRight className="w-8 h-8 text-emerald-400" />
+                                    : <ArrowDownRight className="w-8 h-8 text-rose-400" />
+                                }
+                            </motion.div>
+
+                            <h3 className="text-xl font-bold text-rose-400 mb-2 text-center">Hapus Transaksi?</h3>
+
+                            <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 mb-4">
+                                <div className="text-center">
+                                    <p className="text-gray-400 text-sm">{deleteTransactionTarget.category}</p>
+                                    <p className={`font-bold text-xl mt-1 ${deleteTransactionTarget.type === 'income' ? 'text-emerald-400' : 'text-rose-400'
+                                        }`}>
+                                        {deleteTransactionTarget.type === 'income' ? '+' : '-'} Rp {deleteTransactionTarget.amount.toLocaleString('id-ID')}
+                                    </p>
+                                    {deleteTransactionTarget.description && (
+                                        <p className="text-gray-500 text-sm mt-2 italic">"{deleteTransactionTarget.description}"</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
+                                <ArrowRightLeft className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-xs text-blue-200">
+                                    Saldo dompet akan dikembalikan setelah dihapus.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteTransactionTarget(null)}
+                                    className="flex-1 py-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={confirmDeleteTransaction}
+                                    disabled={saving}
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {saving ? 'Menghapus...' : (
+                                        <>
+                                            <Trash2 size={16} />
+                                            Hapus
                                         </>
                                     )}
                                 </button>
