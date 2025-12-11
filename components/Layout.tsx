@@ -399,8 +399,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <button
                   onClick={() => handleThemeChange('light')}
                   className={`p-3 rounded-xl border-2 transition-all flex items-center gap-3 ${theme === 'light'
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                 >
                   <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm">
@@ -415,8 +415,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <button
                   onClick={() => handleThemeChange('dark')}
                   className={`p-3 rounded-xl border-2 transition-all flex items-center gap-3 ${theme === 'dark'
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                 >
                   <div className="w-10 h-10 rounded-lg bg-gray-900 border border-gray-700 flex items-center justify-center shadow-sm">
@@ -434,11 +434,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 Preset Warna
               </label>
               <div className="grid grid-cols-3 gap-3">
-                {/* Pastel */}
+                {/* Pastel - Light Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#e8d5e0');
-                    handleOpacityChange(65);
+                    handleThemeChange('light');
+                    handleColorChange('#f8e8f0');
+                    handleOpacityChange(75);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-pink-400 transition-all flex flex-col items-center gap-2 group"
                 >
@@ -446,11 +447,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-pink-500">Pastel</p>
                 </button>
 
-                {/* Blue Sky */}
+                {/* Blue Sky - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#0a1628');
-                    handleOpacityChange(60);
+                    handleThemeChange('dark');
+                    handleColorChange('#0c1e3d');
+                    handleOpacityChange(65);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-sky-400 transition-all flex flex-col items-center gap-2 group"
                 >
@@ -458,11 +460,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-sky-500">Blue Sky</p>
                 </button>
 
-                {/* Pop Colors */}
+                {/* Pop Colors - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#1a0a2e');
-                    handleOpacityChange(55);
+                    handleThemeChange('dark');
+                    handleColorChange('#2a0a3e');
+                    handleOpacityChange(60);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-fuchsia-400 transition-all flex flex-col items-center gap-2 group"
                 >
@@ -470,75 +473,81 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-fuchsia-500">Pop</p>
                 </button>
 
-                {/* Sci-Fi */}
+                {/* Sci-Fi - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#0a0f1d');
-                    handleOpacityChange(75);
+                    handleThemeChange('dark');
+                    handleColorChange('#050a15');
+                    handleOpacityChange(70);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-cyan-400 transition-all flex flex-col items-center gap-2 group"
                 >
-                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-700"></div>
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600"></div>
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-cyan-500">Sci-Fi</p>
                 </button>
 
-                {/* Nature */}
+                {/* Nature - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#0a2010');
+                    handleThemeChange('dark');
+                    handleColorChange('#0a1f10');
                     handleOpacityChange(65);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-emerald-400 transition-all flex flex-col items-center gap-2 group"
                 >
-                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-emerald-400 via-green-500 to-teal-600"></div>
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-emerald-300 via-green-500 to-teal-600"></div>
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-emerald-500">Nature</p>
                 </button>
 
-                {/* Sunset */}
+                {/* Sunset - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#1a0a0a');
+                    handleThemeChange('dark');
+                    handleColorChange('#1f0505');
                     handleOpacityChange(60);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-orange-400 transition-all flex flex-col items-center gap-2 group"
                 >
-                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-orange-400 via-red-500 to-pink-600"></div>
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-amber-400 via-orange-500 to-rose-600"></div>
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-orange-500">Sunset</p>
                 </button>
 
-                {/* Midnight */}
+                {/* Midnight - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#0f0f23');
+                    handleThemeChange('dark');
+                    handleColorChange('#0a0a1a');
                     handleOpacityChange(80);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-400 transition-all flex flex-col items-center gap-2 group"
                 >
-                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900"></div>
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-indigo-800 via-purple-900 to-slate-900"></div>
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-indigo-500">Midnight</p>
                 </button>
 
-                {/* Ocean */}
+                {/* Ocean - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#0a1a2a');
-                    handleOpacityChange(70);
+                    handleThemeChange('dark');
+                    handleColorChange('#051520');
+                    handleOpacityChange(68);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-teal-400 transition-all flex flex-col items-center gap-2 group"
                 >
-                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-teal-400 via-cyan-600 to-blue-800"></div>
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-teal-300 via-cyan-500 to-blue-700"></div>
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-teal-500">Ocean</p>
                 </button>
 
-                {/* Monochrome */}
+                {/* Monochrome - Dark Theme */}
                 <button
                   onClick={() => {
-                    handleColorChange('#1a1a1a');
+                    handleThemeChange('dark');
+                    handleColorChange('#121212');
                     handleOpacityChange(75);
                   }}
                   className="p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-gray-400 transition-all flex flex-col items-center gap-2 group"
                 >
-                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-gray-300 via-gray-500 to-gray-800"></div>
+                  <div className="w-full h-8 rounded-lg bg-gradient-to-r from-gray-400 via-gray-600 to-gray-900"></div>
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-gray-500">Mono</p>
                 </button>
               </div>
@@ -627,9 +636,8 @@ const Footer: React.FC<{ theme: Theme; toggleTheme: () => void }> = ({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-400 uppercase tracking-wider">
-              Tampilan
+              Nusantara AI © 2025
             </span>
-            <ThemeToggle theme={theme} onToggle={toggleTheme} className="scale-75 origin-right" />
           </div>
         </div>
       </div>
@@ -816,7 +824,6 @@ export const Layout: React.FC<LayoutProps> = ({
               >
                 {hasApiKey ? <Key size={24} /> : <AlertTriangle size={24} />}
               </button>
-              <ThemeToggle theme={theme} onToggle={toggleTheme} className="scale-90" />
             </div>
           </div>
 
@@ -854,7 +861,6 @@ export const Layout: React.FC<LayoutProps> = ({
                     </div>
                   )}
                 </button>
-                <ThemeToggle theme={theme} onToggle={toggleTheme} />
               </div>
             </div>
           </div>
