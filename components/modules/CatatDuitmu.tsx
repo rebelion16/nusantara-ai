@@ -75,6 +75,7 @@ export const CatatDuitmuModule: React.FC = () => {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [showDevWarning, setShowDevWarning] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
 
     // Forms State
     const [walletForm, setWalletForm] = useState<Partial<WalletAccount>>({
@@ -296,23 +297,21 @@ export const CatatDuitmuModule: React.FC = () => {
         }
     };
 
-    // Reset all data for current user
-    const handleResetData = async () => {
+    // Show reset confirmation modal
+    const handleResetData = () => {
         if (!user) {
             alert('Error: User tidak ditemukan.');
             return;
         }
+        setShowResetConfirm(true);
+    };
 
-        // Double confirmation
-        if (!confirm('⚠️ PERINGATAN: Anda akan menghapus SEMUA data (dompet dan transaksi). Tindakan ini tidak dapat dibatalkan!\n\nApakah Anda yakin?')) {
-            return;
-        }
-
-        if (!confirm('🔴 KONFIRMASI AKHIR: Ketik OK untuk melanjutkan penghapusan semua data.')) {
-            return;
-        }
+    // Execute the actual reset
+    const confirmResetData = async () => {
+        if (!user) return;
 
         setSaving(true);
+        setShowResetConfirm(false);
 
         try {
             const batch = writeBatch(db);
@@ -330,8 +329,6 @@ export const CatatDuitmuModule: React.FC = () => {
             }
 
             await batch.commit();
-
-            alert('✅ Semua data berhasil dihapus! Anda bisa mulai dari awal.');
             console.log('All data reset successfully');
         } catch (error: any) {
             console.error("Error resetting data: ", error);
@@ -1307,6 +1304,91 @@ export const CatatDuitmuModule: React.FC = () => {
                             >
                                 Saya Mengerti
                             </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Reset Data Confirmation Modal */}
+            <AnimatePresence>
+                {showResetConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-gradient-to-br from-[#1a2333] to-[#0f1520] p-8 rounded-2xl border border-red-500/30 w-full max-w-md relative text-center shadow-2xl shadow-red-500/10"
+                        >
+                            {/* Animated Warning Icon */}
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", delay: 0.1 }}
+                                className="w-20 h-20 bg-gradient-to-br from-red-500/30 to-red-600/20 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-red-500/50"
+                            >
+                                <AlertTriangle className="w-10 h-10 text-red-400" />
+                            </motion.div>
+
+                            {/* Title */}
+                            <h3 className="text-2xl font-bold text-red-400 mb-3">Reset Semua Data?</h3>
+
+                            {/* Warning Text */}
+                            <p className="text-gray-300 mb-4 leading-relaxed">
+                                Tindakan ini akan <span className="font-semibold text-red-400">menghapus secara permanen</span>:
+                            </p>
+
+                            {/* Data Summary */}
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 text-left">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-gray-400">🏦 Dompet</span>
+                                    <span className="font-bold text-white">{wallets.length} item</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-400">💸 Transaksi</span>
+                                    <span className="font-bold text-white">{transactions.length} item</span>
+                                </div>
+                            </div>
+
+                            {/* Warning Notice */}
+                            <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-6 text-left">
+                                <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-sm text-amber-200">
+                                    Tindakan ini <span className="font-bold">tidak dapat dibatalkan</span>! Pastikan Anda sudah mem-backup data jika diperlukan.
+                                </p>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowResetConfirm(false)}
+                                    className="flex-1 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={confirmResetData}
+                                    disabled={saving}
+                                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white font-bold transition-all disabled:opacity-50 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                            >
+                                                <RotateCcw size={18} />
+                                            </motion.div>
+                                            Menghapus...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 size={18} />
+                                            Ya, Hapus Semua
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
