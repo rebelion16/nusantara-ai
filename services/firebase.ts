@@ -3,15 +3,20 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
+// Firebase config - uses environment variables
 const firebaseConfig = {
-    apiKey: "AIzaSyAPEZbIMw23gZO-A1aBd7zWELxKVOsSYWE",
-    authDomain: "nusantara-ai-18db6.firebaseapp.com",
-    projectId: "nusantara-ai-18db6",
-    storageBucket: "nusantara-ai-18db6.appspot.com",
-    messagingSenderId: "959578499658",
-    appId: "1:959578499658:web:c2d84cae28ff6bce2154b3",
-    measurementId: "G-82N7EN5L4D"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ""
 };
+
+if (!firebaseConfig.apiKey) {
+    console.error('Missing Firebase environment variables. Please set VITE_FIREBASE_* variables in .env.local');
+}
 
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
