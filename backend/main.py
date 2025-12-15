@@ -557,6 +557,11 @@ if __name__ == "__main__":
     print("="*60)
     print(f"📁 Temp directory: {TEMP_DIR}")
     print(f"🎤 Whisper model: {whisper_service.model_size}")
+    print("="*60)
+    print("🌐 Server running at: http://localhost:8000")
+    print("📖 API Docs: http://localhost:8000/docs")
     print("="*60 + "\n")
     
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    # Gunakan string import untuk enable reload, atau disable reload
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
