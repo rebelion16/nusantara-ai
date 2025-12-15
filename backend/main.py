@@ -78,7 +78,7 @@ class HighlightRequest(BaseModel):
     target_duration: int = 60
     num_highlights: int = 5
     content_type: str = "general"
-    api_key: str
+    api_key: Optional[str] = None  # Optional untuk versi offline
 
 class HighlightSegmentModel(BaseModel):
     start: float
@@ -247,11 +247,12 @@ async def transcribe_video(video_id: str, language: Optional[str] = None):
 @app.post("/detect-highlights", response_model=HighlightResponse)
 async def detect_highlights(request: HighlightRequest):
     """
-    Detect highlights dari transcript menggunakan Gemini AI.
+    Detect highlights dari transcript (versi offline dengan keyword scoring).
     """
     try:
-        # Set API key
-        highlight_service.set_api_key(request.api_key)
+        # Set API key jika ada (untuk kompatibilitas)
+        if request.api_key:
+            highlight_service.set_api_key(request.api_key)
         
         result = highlight_service.detect_highlights(
             transcript_segments=request.segments,

@@ -216,14 +216,11 @@ export const YTShortMakerModule: React.FC = () => {
   const handleDetectHighlights = async () => {
     if (!transcript.length) return;
 
-    const apiKey = localStorage.getItem('GEMINI_API_KEY');
-    if (!apiKey) {
-      setError('Gemini API Key tidak ditemukan. Silakan set di menu API Key.');
-      return;
-    }
+    // API key optional untuk versi offline
+    const apiKey = localStorage.getItem('GEMINI_API_KEY') || undefined;
 
     setIsLoading(true);
-    setLoadingMessage('AI sedang menganalisis transcript untuk menemukan momen viral...');
+    setLoadingMessage('Menganalisis transcript untuk menemukan momen menarik...');
     setError(null);
 
     try {
@@ -388,10 +385,10 @@ export const YTShortMakerModule: React.FC = () => {
               onClick={() => isPast && setCurrentStep(step.id)}
               disabled={!isPast}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive
-                  ? 'bg-red-500 text-white shadow-lg scale-105'
-                  : isPast
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-pointer hover:bg-green-200'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                ? 'bg-red-500 text-white shadow-lg scale-105'
+                : isPast
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-pointer hover:bg-green-200'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
                 }`}
             >
               {isPast ? <Check size={14} /> : step.icon}
@@ -408,10 +405,10 @@ export const YTShortMakerModule: React.FC = () => {
 
   const renderBackendStatus = () => (
     <div className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full ${backendOnline === null
-        ? 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-        : backendOnline
-          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+      ? 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+      : backendOnline
+        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
       }`}>
       <Server size={12} />
       {backendOnline === null ? 'Checking...' : backendOnline ? 'Backend Online' : 'Backend Offline'}
@@ -429,8 +426,8 @@ export const YTShortMakerModule: React.FC = () => {
 
       <div
         className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all ${videoFile
-            ? 'border-green-400 bg-green-50 dark:bg-green-900/10'
-            : 'border-gray-300 dark:border-gray-600 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
+          ? 'border-green-400 bg-green-50 dark:bg-green-900/10'
+          : 'border-gray-300 dark:border-gray-600 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
           }`}
       >
         <input
@@ -623,8 +620,8 @@ export const YTShortMakerModule: React.FC = () => {
                 key={idx}
                 onClick={() => setSelectedHighlight(h)}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${selectedHighlight === h
-                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
                   }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -829,8 +826,8 @@ export const YTShortMakerModule: React.FC = () => {
           <button
             onClick={() => { setSelectedTrackId(null); setCustomMusicFile(null); }}
             className={`p-3 rounded-lg border text-left transition-all ${!selectedTrackId && !customMusicFile
-                ? 'border-gray-400 bg-gray-100 dark:bg-gray-800'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
+              ? 'border-gray-400 bg-gray-100 dark:bg-gray-800'
+              : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
               }`}
           >
             <div className="flex items-center gap-2">
@@ -843,8 +840,8 @@ export const YTShortMakerModule: React.FC = () => {
               key={track.id}
               onClick={() => { setSelectedTrackId(track.id); setCustomMusicFile(null); }}
               className={`p-3 rounded-lg border text-left transition-all ${selectedTrackId === track.id
-                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
                 }`}
             >
               <div className="flex items-center justify-between">

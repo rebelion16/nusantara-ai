@@ -46,7 +46,7 @@ export interface HighlightSegment {
     score: number;
     title: string;
     reason: string;
-    category: 'funny' | 'informative' | 'emotional' | 'action' | 'dramatic' | 'general';
+    category: 'funny' | 'informative' | 'emotional' | 'action' | 'dramatic' | 'general' | 'excited' | 'important';
 }
 
 export interface HighlightResult {
@@ -164,11 +164,11 @@ export async function transcribeVideo(
 }
 
 /**
- * Detect highlights menggunakan Gemini AI
+ * Detect highlights (offline dengan keyword scoring)
  */
 export async function detectHighlights(
     segments: TranscriptSegment[],
-    apiKey: string,
+    apiKey?: string,
     options?: {
         targetDuration?: number;
         numHighlights?: number;
@@ -184,7 +184,7 @@ export async function detectHighlights(
                 end: s.end,
                 text: s.text,
             })),
-            api_key: apiKey,
+            api_key: apiKey || null,
             target_duration: options?.targetDuration || 60,
             num_highlights: options?.numHighlights || 5,
             content_type: options?.contentType || 'general',
@@ -402,6 +402,8 @@ export function getCategoryColor(category: string): string {
         action: '#FF6B35',
         dramatic: '#9B59B6',
         general: '#95A5A6',
+        excited: '#FF1493',
+        important: '#00CED1',
     };
     return colors[category] || colors.general;
 }
@@ -417,6 +419,8 @@ export function getCategoryEmoji(category: string): string {
         action: '🔥',
         dramatic: '🎭',
         general: '✨',
+        excited: '🤩',
+        important: '📌',
     };
     return emojis[category] || emojis.general;
 }
