@@ -89,14 +89,53 @@ export const generateCreativeImage = async (
   let identityInstruction = "";
   if (preserveFace) {
     identityInstruction = `
-    [FORCE MAJEURE: ABSOLUTE FACIAL IDENTITY PRESERVATION]
-    ⚠️ CRITICAL: The face in the output MUST BE AN EXACT COPY of the Reference Face(s).
+    ═══════════════════════════════════════════════════════════════════
+    ⚠️⚠️⚠️ EMERGENCY PRIORITY OVERRIDE: PERFECT FACE CLONING PROTOCOL ⚠️⚠️⚠️
+    ═══════════════════════════════════════════════════════════════════
     
-    1. **NO STRUCTURAL MODIFICATION:** STRICTLY PROHIBITED to change: bone structure, eye shape, nose shape, mouth shape, jawline, or head shape.
-    2. **100% LIKENESS:** The output must look EXACTLY like the person in the uploaded photo. Do not "idealize", "westernize", or "genericize" the face.
-    3. **IDENTITY PRIORITY:** The face is the anchor. If the prompt asks for a style that conflicts with the face structure, the FACE STRUCTURE WINS.
-    4. **MULTI-SUBJECT MAPPING:** If multiple faces are uploaded, map them accurately to the requested roles. Do not mix faces.
-    5. **ACCEPTABLE EDITS:** Only lighting, skin texture resolution (upscaling), and color grading may be adapted to the scene. NO MORPHING.
+    🚨 THE #1 ABSOLUTE REQUIREMENT: The output face MUST BE A PIXEL-PERFECT CLONE of the uploaded reference face(s).
+    
+    📋 MANDATORY FACIAL FEATURES TO PRESERVE (COPY EXACTLY FROM REFERENCE):
+    ────────────────────────────────────────────────────────────────────
+    ✦ BONE STRUCTURE: Skull shape, forehead size/shape, cheekbone prominence, jaw width, chin shape - MUST BE IDENTICAL
+    ✦ EYE REGION: Eye shape, eye size, eye spacing, eyelid type (mono/double), eye corner angles - MUST BE IDENTICAL  
+    ✦ NOSE: Bridge height, nose width, nostril shape, tip shape, overall nose length - MUST BE IDENTICAL
+    ✦ MOUTH/LIPS: Lip shape, lip thickness, mouth width, philtrum shape - MUST BE IDENTICAL
+    ✦ FACE PROPORTIONS: Distance between eyes, nose-to-mouth ratio, forehead-to-chin ratio - MUST BE IDENTICAL
+    ✦ SKIN CHARACTERISTICS: Skin tone, moles, birthmarks, freckles, unique facial marks - MUST BE PRESERVED
+    ✦ UNIQUE IDENTIFIERS: Any distinctive features (dimples, scars, asymmetry) - MUST BE PRESERVED
+    
+    🚫 STRICTLY FORBIDDEN MODIFICATIONS (ZERO TOLERANCE):
+    ────────────────────────────────────────────────────────────────────
+    ✗ DO NOT "beautify", "idealize", "enhance", or "perfect" the face
+    ✗ DO NOT westernize or change ethnic features
+    ✗ DO NOT smooth out or remove unique facial characteristics
+    ✗ DO NOT change face shape to fit beauty standards
+    ✗ DO NOT alter eye size or spacing
+    ✗ DO NOT change nose shape or size
+    ✗ DO NOT modify lip fullness or mouth shape
+    ✗ DO NOT create a "generic attractive face" - keep ALL unique features
+    ✗ DO NOT blend/morph with other faces
+    
+    ⚖️ CONFLICT RESOLUTION (FACE ALWAYS WINS):
+    ────────────────────────────────────────────────────────────────────
+    If ANY other instruction conflicts with face preservation:
+    → The FACE IDENTITY takes 100% priority
+    → Scene/pose/style must adapt to preserve face, not the other way around
+    → Better to have wrong lighting than wrong face
+    
+    🎯 SUCCESS CRITERIA:
+    ────────────────────────────────────────────────────────────────────
+    The generated image should pass a "family member recognition test" - 
+    Someone who knows the person in the reference photo should IMMEDIATELY 
+    recognize them in the generated image without any doubt.
+    
+    👥 MULTI-SUBJECT PROTOCOL:
+    ────────────────────────────────────────────────────────────────────
+    - Subject 1 (Base Image) = Face 1 → Map to first/main person in scene
+    - Subject 2+ (Extra Faces) = Face 2, 3, etc. → Map to secondary characters
+    - NEVER mix or swap faces between subjects
+    - Each face must maintain its OWN identity completely separate
     `;
   } else {
     identityInstruction = `
@@ -119,7 +158,7 @@ export const generateCreativeImage = async (
         mimeType: baseImage.type
       }
     });
-    fullPromptText += "\n\n(GAMBAR 1: WAJAH UTAMA / SUBJEK 1 - PERTAHANKAN IDENTITAS WAJAH INI)";
+    fullPromptText += "\n\n🎯 [GAMBAR 1 - WAJAH SUMBER UTAMA]: INI ADALAH WAJAH YANG HARUS DI-CLONE 100%. Salin SEMUA fitur wajah: bentuk mata, hidung, bibir, rahang, proporsi wajah. Orang yang mengenal wajah ini HARUS bisa mengenali hasilnya.";
   }
 
   // Handle Extra Faces (can be single File or Array of Files)
@@ -136,7 +175,7 @@ export const generateCreativeImage = async (
         }
       });
       // Image index starts at 2 (since Base is 1)
-      fullPromptText += `\n\n(GAMBAR ${i + 2}: WAJAH TAMBAHAN / SUBJEK ${i + 2} - PERTAHANKAN IDENTITAS WAJAH INI)`;
+      fullPromptText += `\n\n🎯 [GAMBAR ${i + 2} - WAJAH TAMBAHAN SUBJEK ${i + 2}]: Clone wajah ini 100%. Pertahankan SEMUA fitur unik: bentuk wajah, mata, hidung, bibir. JANGAN campur dengan wajah lain.`;
     }
   } else if (preserveFace && baseImage) {
     // FORCE SINGLE PERSON LOGIC if no extra faces
@@ -152,7 +191,7 @@ export const generateCreativeImage = async (
         mimeType: refImage.type
       }
     });
-    fullPromptText += "\n\n(GAMBAR REFERENSI TERAKHIR: GAYA/POSE/OUTFIT - Tiru pose, pakaian, atau gaya dari gambar ini. JANGAN AMBIL WAJAH DARI GAMBAR INI)";
+    fullPromptText += "\n\n⚠️ [GAMBAR REFERENSI - GAYA/POSE/OUTFIT SAJA]: Tiru HANYA pose, pakaian, dan gaya dari gambar ini. ⛔ DILARANG KERAS mengambil wajah dari gambar ini. Wajah HARUS dari gambar sebelumnya.";
   }
 
   // 4. Add Text Part LAST
