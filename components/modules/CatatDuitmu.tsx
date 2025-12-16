@@ -45,6 +45,16 @@ const MONTHS = [
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
 
+// Helper: Get current date in WIB timezone (UTC+7) as ISO string
+const getWIBDateISO = (): string => {
+    const now = new Date();
+    // Add 7 hours offset for WIB (UTC+7)
+    const wibOffset = 7 * 60; // minutes
+    const utcOffset = now.getTimezoneOffset(); // minutes from UTC (negative for east)
+    const wibTime = new Date(now.getTime() + (wibOffset + utcOffset) * 60000);
+    return wibTime.toISOString();
+};
+
 export const CatatDuitmuModule: React.FC = () => {
     const rawUser = authService.getCurrentUser();
     // Normalize email to lowercase to ensure consistent matching
@@ -414,7 +424,7 @@ export const CatatDuitmuModule: React.FC = () => {
                         wallet_id: transactionForm.walletId,
                         user_id: user.email,
                         amount: amount,
-                        date: new Date().toISOString()
+                        date: getWIBDateISO()
                     });
                 if (txError) throw txError;
 
@@ -597,21 +607,39 @@ export const CatatDuitmuModule: React.FC = () => {
             const parsed = await parseTransactionFromText(nlpInput.trim());
 
             if (!parsed) {
-                alert('❌ Tidak bisa memahami input. Coba format: "beli kopi 25rb" atau "gaji bulan ini 5jt"');
+                alert('❌ Tidak bisa memahami input. Coba format:\n• "-Makan 25rb BCA" (pengeluaran dari BCA)\n• "+Gaji 500rb Tunai" (pemasukan ke Tunai)\n• "beli kopi 25rb" (pengeluaran default)');
                 return;
             }
 
-            const defaultWallet = wallets[0];
+            // Find matching wallet by name (case-insensitive)
+            let targetWallet = wallets[0]; // Default to first wallet
+
+            if (parsed.wallet) {
+                const walletName = parsed.wallet.toLowerCase();
+                const foundWallet = wallets.find(w =>
+                    w.name.toLowerCase().includes(walletName) ||
+                    walletName.includes(w.name.toLowerCase())
+                );
+
+                if (foundWallet) {
+                    targetWallet = foundWallet;
+                } else {
+                    // Wallet not found - show available wallets
+                    const availableWallets = wallets.map(w => w.name).join(', ');
+                    alert(`⚠️ Dompet "${parsed.wallet}" tidak ditemukan.\nDompet tersedia: ${availableWallets}\n\nTransaksi akan dicatat ke: ${targetWallet.name}`);
+                }
+            }
+
             const { error: txError } = await supabase
                 .from('transactions')
                 .insert({
                     category: parsed.category,
                     type: parsed.type,
                     description: parsed.description || nlpInput.trim(),
-                    wallet_id: defaultWallet.id,
+                    wallet_id: targetWallet.id,
                     user_id: user.email,
                     amount: parsed.amount,
-                    date: new Date().toISOString()
+                    date: getWIBDateISO()
                 });
 
             if (txError) throw txError;
@@ -620,7 +648,7 @@ export const CatatDuitmuModule: React.FC = () => {
             const { data: wallet } = await supabase
                 .from('wallets')
                 .select('balance')
-                .eq('id', defaultWallet.id)
+                .eq('id', targetWallet.id)
                 .single();
 
             if (wallet) {
@@ -628,11 +656,12 @@ export const CatatDuitmuModule: React.FC = () => {
                 await supabase
                     .from('wallets')
                     .update({ balance: wallet.balance + balanceChange })
-                    .eq('id', defaultWallet.id);
+                    .eq('id', targetWallet.id);
             }
 
             const icon = parsed.type === 'income' ? '📈' : '📉';
-            alert(`${icon} ${parsed.type === 'income' ? 'Pemasukan' : 'Pengeluaran'} dicatat!\n\nKategori: ${parsed.category}\nJumlah: Rp ${parsed.amount.toLocaleString('id-ID')}\nDompet: ${defaultWallet.name}`);
+            const actionText = parsed.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+            alert(`${icon} ${actionText} dicatat!\n\nKategori: ${parsed.category}\nJumlah: Rp ${parsed.amount.toLocaleString('id-ID')}\nDompet: ${targetWallet.name}`);
             setNlpInput('');
         } catch (error: any) {
             console.error('NLP input error:', error);

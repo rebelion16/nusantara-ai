@@ -114,18 +114,41 @@ Berikan insight dan saran!`;
 
 /**
  * Parse natural language to transaction
+ * Supports formats like:
+ * - "-Makan 25rb BCA" (expense from BCA wallet)
+ * - "+Gaji 500rb Tunai" (income to Cash wallet)
+ * - "beli kopi 25rb" (expense, default wallet)
  */
 export async function parseTransactionFromText(text: string): Promise<{
     type: 'income' | 'expense';
     category: string;
     amount: number;
     description: string;
+    wallet?: string; // NEW: Optional wallet/account name
 } | null> {
     const systemPrompt = `Kamu adalah parser transaksi keuangan. Ekstrak informasi dari teks bahasa Indonesia.
+
+FORMAT INPUT YANG DIDUKUNG:
+1. "-Makan 25rb BCA" → expense 25000 dari rekening BCA, kategori Makanan
+2. "+Gaji 500rb Tunai" → income 500000 ke Tunai/Cash, kategori Gaji
+3. "-Transport 50rb Gopay" → expense 50000 dari Gopay, kategori Transportasi
+4. "beli kopi 25rb" → expense 25000, wallet null (gunakan default)
+
+ATURAN PARSING:
+- Prefix "-" atau kata negatif (beli, bayar, makan) = expense
+- Prefix "+" atau kata positif (gaji, bonus, terima, dapat) = income
+- Angka bisa format: 25rb, 25k, 25ribu, 25.000, 25000, 1jt, 1.5jt
+- Kata terakhir biasanya nama dompet/rekening (BCA, Mandiri, Gopay, OVO, Dana, Tunai, Cash, dll)
+
 Kembalikan HANYA JSON tanpa markdown atau penjelasan.
-Format: {"type":"income"|"expense","category":"string","amount":number,"description":"string"}
+Format: {"type":"income"|"expense","category":"string","amount":number,"description":"string","wallet":"string|null"}
+
 Kategori pemasukan: Gaji, Bonus, Penjualan, Investasi, Hadiah, Lainnya
 Kategori pengeluaran: Makanan, Transportasi, Belanja, Tagihan, Hiburan, Kesehatan, Pendidikan, Donasi, Lainnya
+
+Dompet/Rekening yang mungkin: BCA, Mandiri, BRI, BNI, CIMB, Gopay, OVO, Dana, ShopeePay, Tunai, Cash, LinkAja, dll.
+Jika nama dompet tidak disebutkan, set wallet = null
+
 Jika tidak bisa diparsing, kembalikan: null`;
 
     const result = await sendToGemini(text, systemPrompt);
@@ -134,7 +157,13 @@ Jika tidak bisa diparsing, kembalikan: null`;
         const cleaned = result.replace(/```json\n?|\n?```/g, '').trim();
         const parsed = JSON.parse(cleaned);
         if (parsed && parsed.type && parsed.category && parsed.amount) {
-            return parsed;
+            return {
+                type: parsed.type,
+                category: parsed.category,
+                amount: parsed.amount,
+                description: parsed.description || text,
+                wallet: parsed.wallet || null
+            };
         }
         return null;
     } catch {
