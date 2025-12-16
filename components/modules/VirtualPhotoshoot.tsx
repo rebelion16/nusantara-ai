@@ -407,44 +407,13 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     // Combine initialRefImage with clothing references for the reference parameter
     const combinedRefImage = clothingRefs.length > 0 ? clothingRefs[0] : initialRefImage;
 
-    // 4. Batch Logic Support with Progressive Gallery
-    if (isBatch) {
-      // Return BatchResultItem[] for progressive display in gallery
-      interface BatchResultItem {
-        url: string | null;
-        error?: string;
-        loading?: boolean;
-      }
+    // 4. Single Image Generation (GeneratorModule handles batch loop for progressive display)
+    // Add variation prompt for batch mode to ensure unique results
+    const variationPrompt = isBatch && artStyle !== 'Pas Foto (ID Photo)'
+      ? `${fullPrompt} \n\n[VARIASI UNIK: Hasilkan variasi pose dan ekspresi yang berbeda/acak. Random style.]`
+      : fullPrompt;
 
-      const results: BatchResultItem[] = [];
-
-      for (let i = 0; i < batchCount; i++) {
-        const batchPrompt = artStyle === 'Pas Foto (ID Photo)'
-          ? fullPrompt // No pose variation for Pas Foto
-          : `${fullPrompt} \n\n[VARIASI BATCH #${i + 1}: Hasilkan variasi pose dan ekspresi yang berbeda/acak untuk photobox ini.]`;
-
-        try {
-          const result = await generateCreativeImage(batchPrompt, mainImage, aspectRatio, imageSize, combinedRefImage, extraFaces, true);
-          results.push({ url: result, loading: false });
-        } catch (err: any) {
-          // Auto-continue to next image on failure
-          console.error(`Batch ${i + 1} failed:`, err);
-          results.push({ url: null, error: err.message || 'Gagal generate', loading: false });
-        }
-      }
-
-      // Return string[] for compatibility - only successful results
-      // The GeneratorModule will handle progressive display
-      const successfulResults = results.filter(r => r.url).map(r => r.url as string);
-
-      if (successfulResults.length === 0) {
-        throw new Error("Semua batch gagal dihasilkan. Silakan coba lagi.");
-      }
-
-      return successfulResults;
-    } else {
-      return await generateCreativeImage(fullPrompt, mainImage, aspectRatio, imageSize, combinedRefImage, extraFaces, true);
-    }
+    return await generateCreativeImage(variationPrompt, mainImage, aspectRatio, imageSize, combinedRefImage, extraFaces, true);
   };
 
   const renderSubjectControls = (subject: SubjectData, index: number) => (

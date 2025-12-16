@@ -341,25 +341,57 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
 
       // --- CUSTOM HANDLER LOGIC (e.g. for Virtual Photoshoot Multi-Face) ---
       if (customGenerateHandler) {
-        const result = await customGenerateHandler(prompt, aspectRatio, imageSize, isBatchMode, batchCount);
+        // Check if batch mode - handle progressively
+        if (isBatchMode && batchModeAvailable) {
+          // Initialize batch slots with loading state
+          const initialSlots: BatchResultItem[] = Array.from({ length: batchCount }, () => ({ url: null, loading: true }));
+          setBatchResults(initialSlots);
 
-        if (Array.isArray(result)) {
-          // Batch result - convert string[] to BatchResultItem[]
-          const batchItems: BatchResultItem[] = result.map(url => ({ url, loading: false }));
-          setBatchResults(batchItems);
-          setGeneratedImage(result[0]);
+          const finalResults: BatchResultItem[] = [...initialSlots];
+          let firstSuccess: string | null = null;
+
+          for (let i = 0; i < batchCount; i++) {
+            setLoadingMessage(`Mengenerate gambar ${i + 1} dari ${batchCount}...`);
+
+            try {
+              // Call handler for single image (isBatch=false, batchCount=1)
+              const result = await customGenerateHandler(prompt, aspectRatio, imageSize, false, 1);
+              const imageUrl = Array.isArray(result) ? result[0] : result;
+
+              finalResults[i] = { url: imageUrl, loading: false };
+              if (!firstSuccess) {
+                firstSuccess = imageUrl;
+                setGeneratedImage(imageUrl); // Show first successful image immediately
+              }
+            } catch (err: any) {
+              console.error(`Batch ${i + 1} failed`, err);
+              finalResults[i] = { url: null, error: err.message || 'Gagal', loading: false };
+            }
+
+            // Update state progressively after each image - THIS IS THE KEY!
+            setBatchResults([...finalResults]);
+          }
+
+          const successCount = finalResults.filter(r => r.url).length;
+          if (successCount === 0) throw new Error("Semua batch gagal dihasilkan.");
+
           saveToHistory({
             image: null, refImage, faceImage2: null, prompt,
-            generatedImage: result[0], batchResults: batchItems,
+            generatedImage: firstSuccess,
+            batchResults: finalResults,
             aspectRatio, imageSize, isBatchMode: true
           });
+
         } else {
-          // Single result
-          setGeneratedImage(result);
+          // Single image mode
+          const result = await customGenerateHandler(prompt, aspectRatio, imageSize, false, 1);
+          const imageUrl = Array.isArray(result) ? result[0] : result;
+
+          setGeneratedImage(imageUrl);
           setBatchResults([]);
           saveToHistory({
             image: null, refImage, faceImage2: null, prompt,
-            generatedImage: result, batchResults: null,
+            generatedImage: imageUrl, batchResults: null,
             aspectRatio, imageSize, isBatchMode: false
           });
         }
