@@ -15,12 +15,12 @@ const BODY_TYPES: Record<string, string[]> = {
 };
 
 const HAIR_STYLES: Record<string, string[]> = {
-  Wanita: ['Lurus Panjang', 'Bob Bergelombang', 'Potongan Pixie', 'Keriting Panjang', 'Kuncir Kuda', 'Kepang', 'Potongan Layer', 'Sanggul Berantakan', 'Hijab Modern', 'Hijab Syari'],
+  Wanita: ['Lurus Panjang', 'Panjang Bergelombang', 'Bob Bergelombang', 'Potongan Pixie', 'Keriting Panjang', 'Kuncir Kuda', 'Kepang', 'Potongan Layer', 'Sanggul Berantakan', 'Hijab Modern', 'Hijab Syari'],
   Pria: ['Fade Pendek', 'Buzz Cut', 'Undercut', 'Man Bun', 'Panjang Bergelombang', 'Slicked Back', 'Berantakan Bertekstur', 'Belah Samping']
 };
 
 const HAIR_COLORS = ['Hitam', 'Cokelat Tua', 'Pirang', 'Merah', 'Perak', 'Putih', 'Pink Pastel', 'Biru', 'Hijau', 'Ungu'];
-const CLOTHING_COLORS = ['✨ Sesuai Prompt', 'Putih', 'Hitam', 'Merah', 'Biru', 'Hijau', 'Emas', 'Perak', 'Pink', 'Kuning', 'Ungu', 'Navy', 'Krem'];
+const CLOTHING_MODELS = ['✨ Sesuai Prompt', 'Pakaian Santai', 'Casual', 'Formal / Kerja', 'Olahraga / Sporty', 'Pakaian Terbuka / Sexy', 'Gaun Pesta', 'Tradisional', 'Streetwear', 'Vintage', 'Minimalis'];
 const FABRIC_TYPES = ['✨ Sesuai Prompt', 'Katun', 'Sutra', 'Kulit', 'Denim', 'Beludru', 'Satin', 'Linen', 'Wol', 'Latex', 'Sifon', 'Renda'];
 const ACCESSORIES = ['Tidak Ada', 'Kacamata Hitam', 'Kalung Emas', 'Anting Berlian', 'Topi', 'Jam Tangan Mewah', 'Syal', 'Kacamata', 'Kalung Mutiara', 'Tas Tangan', 'Headphone'];
 
@@ -31,7 +31,7 @@ const EXPRESSIONS = [
   'Pose Konyol / Lucu', 'Pose Imut (Aegyo)', 'Menjulurkan Lidah'
 ];
 
-const HEIGHT_OPTIONS = ['✨ Auto', '150 cm (Petite)', '155 cm', '160 cm (Average)', '165 cm', '170 cm (Tall)', '175 cm', '180 cm (Model)', '185 cm', '190 cm', '✎ Input Manual (cm)'];
+// HEIGHT_OPTIONS removed - fitur tinggi badan dihapus
 
 const ART_STYLES = [
   'Foto Realistik',
@@ -164,18 +164,16 @@ const BG_EFFECTS = ['Bokeh (Blur)', 'Jelas / Tajam'];
 interface SubjectData {
   id: number;
   image: File | null;
+  clothingImage: File | null; // NEW: Pakaian referensi
   name: string;
   gender: string;
   bodyType: string;
   hairStyle: string;
   hairColor: string;
-  clothingColor: string;
+  clothingModel: string; // CHANGED: Model pakaian (bukan warna)
   fabricType: string;
   accessory: string;
   expression: string;
-  // New Fields
-  height: string;
-  customHeight: string;
 }
 
 interface VirtualPhotoshootProps {
@@ -188,17 +186,16 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     {
       id: 1,
       image: null,
+      clothingImage: null,
       name: '',
       gender: 'Wanita',
       bodyType: BODY_TYPES['Wanita'][0],
       hairStyle: HAIR_STYLES['Wanita'][0],
       hairColor: 'Hitam',
-      clothingColor: '✨ Sesuai Prompt',
+      clothingModel: '✨ Sesuai Prompt',
       fabricType: '✨ Sesuai Prompt',
       accessory: 'Tidak Ada',
-      expression: EXPRESSIONS[0],
-      height: HEIGHT_OPTIONS[0],
-      customHeight: ''
+      expression: EXPRESSIONS[0]
     }
   ]);
 
@@ -268,17 +265,16 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     setSubjects([...subjects, {
       id: newId,
       image: null,
+      clothingImage: null,
       name: '',
       gender: 'Wanita',
       bodyType: BODY_TYPES['Wanita'][0],
       hairStyle: HAIR_STYLES['Wanita'][0],
       hairColor: 'Hitam',
-      clothingColor: '✨ Sesuai Prompt',
+      clothingModel: '✨ Sesuai Prompt',
       fabricType: '✨ Sesuai Prompt',
       accessory: 'Tidak Ada',
-      expression: EXPRESSIONS[0],
-      height: HEIGHT_OPTIONS[0],
-      customHeight: ''
+      expression: EXPRESSIONS[0]
     }]);
   };
 
@@ -343,9 +339,10 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     // Build descriptions for each subject
     const subjectDescriptions = subjects.map((s, idx) => {
       const bodyDesc = getBodyPrompt(s.bodyType);
-      const finalHeight = s.height.includes('Input Manual') ? (s.customHeight || 'Average Height') : (s.height.includes('Auto') ? 'Average Height' : s.height);
+      const clothingDesc = s.clothingModel === '✨ Sesuai Prompt' ? 'sesuai tema prompt' : s.clothingModel;
+      const hasClothingRef = s.clothingImage ? ' (GUNAKAN REFERENSI PAKAIAN YANG DIUPLOAD)' : '';
 
-      return `SUBJEK ${idx + 1} (${s.name || `Orang ${idx + 1}`}): ${s.gender}, tubuh ${bodyDesc} (Tinggi: ${finalHeight}), rambut ${s.hairStyle} warna ${s.hairColor}, pakaian ${s.clothingColor === '✨ Sesuai Prompt' ? 'sesuai tema' : s.clothingColor} ${s.fabricType !== '✨ Sesuai Prompt' ? `bahan ${s.fabricType}` : ''} ${s.accessory !== 'Tidak Ada' ? `, aksesoris ${s.accessory}` : ''}, ekspresi ${s.expression}.`;
+      return `SUBJEK ${idx + 1} (${s.name || `Orang ${idx + 1}`}): ${s.gender}, tubuh ${bodyDesc}, rambut ${s.hairStyle} warna ${s.hairColor}, gaya pakaian: ${clothingDesc}${hasClothingRef} ${s.fabricType !== '✨ Sesuai Prompt' ? `bahan ${s.fabricType}` : ''} ${s.accessory !== 'Tidak Ada' ? `, aksesoris ${s.accessory}` : ''}, ekspresi ${s.expression}.`;
     }).join('\n');
 
     let fullPrompt = `Generasi KUALITAS TERTINGGI (8k resolution, Ultra-Sharp, Crystal Clear).
@@ -402,28 +399,57 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
 
     // 3. Prepare Images
     const mainImage = subjects[0].image;
-    // Collect extra images (Subject 2 to 5)
+    // Collect extra face images (Subject 2 to 5)
     const extraFaces = subjects.slice(1).map(s => s.image).filter((img): img is File => img !== null);
+    // Collect clothing reference images (all subjects)
+    const clothingRefs = subjects.map(s => s.clothingImage).filter((img): img is File => img !== null);
 
-    // 4. Batch Logic Support
+    // Combine initialRefImage with clothing references for the reference parameter
+    const combinedRefImage = clothingRefs.length > 0 ? clothingRefs[0] : initialRefImage;
+
+    // 4. Batch Logic Support with Progressive Gallery
     if (isBatch) {
-      const results: string[] = [];
+      // Return BatchResultItem[] for progressive display in gallery
+      interface BatchResultItem {
+        url: string | null;
+        error?: string;
+        loading?: boolean;
+      }
+
+      const results: BatchResultItem[] = [];
+
       for (let i = 0; i < batchCount; i++) {
         const batchPrompt = artStyle === 'Pas Foto (ID Photo)'
           ? fullPrompt // No pose variation for Pas Foto
           : `${fullPrompt} \n\n[VARIASI BATCH #${i + 1}: Hasilkan variasi pose dan ekspresi yang berbeda/acak untuk photobox ini.]`;
 
-        const result = await generateCreativeImage(batchPrompt, mainImage, aspectRatio, imageSize, initialRefImage, extraFaces, true);
-        results.push(result);
+        try {
+          const result = await generateCreativeImage(batchPrompt, mainImage, aspectRatio, imageSize, combinedRefImage, extraFaces, true);
+          results.push({ url: result, loading: false });
+        } catch (err: any) {
+          // Auto-continue to next image on failure
+          console.error(`Batch ${i + 1} failed:`, err);
+          results.push({ url: null, error: err.message || 'Gagal generate', loading: false });
+        }
       }
-      return results;
+
+      // Return string[] for compatibility - only successful results
+      // The GeneratorModule will handle progressive display
+      const successfulResults = results.filter(r => r.url).map(r => r.url as string);
+
+      if (successfulResults.length === 0) {
+        throw new Error("Semua batch gagal dihasilkan. Silakan coba lagi.");
+      }
+
+      return successfulResults;
     } else {
-      return await generateCreativeImage(fullPrompt, mainImage, aspectRatio, imageSize, initialRefImage, extraFaces, true);
+      return await generateCreativeImage(fullPrompt, mainImage, aspectRatio, imageSize, combinedRefImage, extraFaces, true);
     }
   };
 
   const renderSubjectControls = (subject: SubjectData, index: number) => (
-    <div key={subject.id} className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700 relative group">
+    <div key={subject.id} className="bg-gray-50 dark:bg-gray-800/50 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 relative group">
+      {/* Header */}
       <div className="flex justify-between items-center mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
           👤 Subjek {index + 1} {index === 0 ? '(Utama)' : ''}
@@ -439,114 +465,148 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
         )}
       </div>
 
-      <div className="flex gap-4 mb-4">
-        {/* Custom Mini Upload Box */}
-        <div className="w-24 h-32 flex-shrink-0 relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 transition-colors bg-white dark:bg-gray-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
-          <input
-            type="file"
-            accept="image/*"
-            className="absolute inset-0 opacity-0 cursor-pointer z-10"
-            onChange={(e) => e.target.files && updateSubject(subject.id, 'image', e.target.files[0])}
-          />
-          {subject.image ? (
-            <img src={URL.createObjectURL(subject.image)} alt="Subject" className="w-full h-full object-cover" />
-          ) : (
-            <div className="text-center text-gray-400 p-1">
-              <Upload size={16} className="mx-auto mb-1" />
-              <span className="text-[9px] block leading-tight">Upload Wajah</span>
-            </div>
-          )}
+      {/* Upload Section - Side by Side (stack on mobile) */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        {/* Face Upload Box */}
+        <div className="flex-1 min-w-0">
+          <label className="text-[10px] font-bold text-indigo-500 block mb-1 text-center">📷 Upload Wajah</label>
+          <div className="h-28 sm:h-32 relative border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-lg hover:border-indigo-500 transition-colors bg-white dark:bg-gray-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+            <input
+              type="file"
+              accept="image/*"
+              className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              onChange={(e) => e.target.files && updateSubject(subject.id, 'image', e.target.files[0])}
+            />
+            {subject.image ? (
+              <img src={URL.createObjectURL(subject.image)} alt="Face" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-gray-400 p-2">
+                <Upload size={20} className="mx-auto mb-1" />
+                <span className="text-[10px] block leading-tight">Klik untuk upload</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Basic Controls */}
-        <div className="flex-1 grid grid-cols-2 gap-2">
+        {/* Clothing Reference Upload Box */}
+        <div className="flex-1 min-w-0">
+          <label className="text-[10px] font-bold text-pink-500 block mb-1 text-center">👗 Pakaian Referensi</label>
+          <div className="h-28 sm:h-32 relative border-2 border-dashed border-pink-300 dark:border-pink-600 rounded-lg hover:border-pink-500 transition-colors bg-white dark:bg-gray-800 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+            <input
+              type="file"
+              accept="image/*"
+              className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              onChange={(e) => e.target.files && updateSubject(subject.id, 'clothingImage', e.target.files[0])}
+            />
+            {subject.clothingImage ? (
+              <img src={URL.createObjectURL(subject.clothingImage)} alt="Clothing" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-gray-400 p-2">
+                <Upload size={20} className="mx-auto mb-1" />
+                <span className="text-[10px] block leading-tight">Opsional</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Subject Details - Below Uploads */}
+      <div className="space-y-3">
+        {/* Row 1: Name & Gender */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label className="text-[9px] font-bold text-gray-400 block mb-0.5">Nama (Opsional)</label>
+            <label className="text-[10px] font-bold text-gray-500 block mb-0.5">Nama (Opsional)</label>
             <input
               type="text"
               value={subject.name}
               onChange={(e) => updateSubject(subject.id, 'name', e.target.value)}
-              className="w-full p-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white"
-              placeholder="Nama..."
+              className="w-full p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
+              placeholder="Nama subjek..."
             />
           </div>
           <div>
-            <label className="text-[9px] font-bold text-gray-400 block mb-0.5">Gender</label>
+            <label className="text-[10px] font-bold text-gray-500 block mb-0.5">Gender</label>
             <select
               value={subject.gender}
               onChange={(e) => updateSubject(subject.id, 'gender', e.target.value)}
-              className="w-full p-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white dark:bg-gray-700"
+              className="w-full p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
             >
               {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
+        </div>
+
+        {/* Row 2: Expression (full width on mobile) */}
+        <div>
+          <label className="text-[10px] font-bold text-gray-500 block mb-0.5">Ekspresi Wajah</label>
+          <select
+            value={subject.expression}
+            onChange={(e) => updateSubject(subject.id, 'expression', e.target.value)}
+            className="w-full p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
+          >
+            {EXPRESSIONS.map(ex => <option key={ex} value={ex}>{ex}</option>)}
+          </select>
+        </div>
+
+        {/* Row 3: Hair Style & Hair Color - Side by Side */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label className="text-[9px] font-bold text-gray-400 block mb-0.5">Rambut</label>
+            <label className="text-[10px] font-bold text-gray-500 block mb-0.5">Gaya Rambut</label>
             <select
               value={subject.hairStyle}
               onChange={(e) => updateSubject(subject.id, 'hairStyle', e.target.value)}
-              className="w-full p-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white dark:bg-gray-700"
+              className="w-full p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
             >
               {HAIR_STYLES[subject.gender].map(h => <option key={h} value={h}>{h}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[9px] font-bold text-gray-400 block mb-0.5">Ekspresi</label>
+            <label className="text-[10px] font-bold text-gray-500 block mb-0.5">Warna Rambut</label>
             <select
-              value={subject.expression}
-              onChange={(e) => updateSubject(subject.id, 'expression', e.target.value)}
-              className="w-full p-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white dark:bg-gray-700"
+              value={subject.hairColor}
+              onChange={(e) => updateSubject(subject.id, 'hairColor', e.target.value)}
+              className="w-full p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
             >
-              {EXPRESSIONS.map(ex => <option key={ex} value={ex}>{ex}</option>)}
+              {HAIR_COLORS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Physical Details (Height) */}
-      <div className="grid grid-cols-1 gap-3 mb-2 bg-white dark:bg-gray-900/50 p-2 rounded border border-dashed border-gray-200 dark:border-gray-700">
+      {/* Advanced Options - Collapsible Style Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
         <div>
-          <label className="text-[9px] font-bold text-indigo-500 block mb-0.5">Tinggi Badan</label>
+          <label className="text-[9px] text-gray-400 block mb-0.5">Model Pakaian</label>
           <select
-            value={subject.height} onChange={(e) => updateSubject(subject.id, 'height', e.target.value)}
-            className="w-full p-1 text-[10px] rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            value={subject.clothingModel} onChange={(e) => updateSubject(subject.id, 'clothingModel', e.target.value)}
+            className="w-full p-1.5 text-[11px] rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white"
           >
-            {HEIGHT_OPTIONS.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
-          {subject.height.includes('Input Manual') && (
-            <input
-              type="text" placeholder="Cth: 168 cm" value={subject.customHeight} onChange={(e) => updateSubject(subject.id, 'customHeight', e.target.value)}
-              className="mt-1 w-full p-1 text-[10px] rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Advanced Toggle Details */}
-      <div className="grid grid-cols-3 gap-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-        <div>
-          <label className="text-[9px] text-gray-400 block">Warna Baju</label>
-          <select
-            value={subject.clothingColor} onChange={(e) => updateSubject(subject.id, 'clothingColor', e.target.value)}
-            className="w-full p-1 text-[10px] rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600"
-          >
-            {CLOTHING_COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+            {CLOTHING_MODELS.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-[9px] text-gray-400 block">Tipe Tubuh</label>
+          <label className="text-[9px] text-gray-400 block mb-0.5">Bahan Kain</label>
+          <select
+            value={subject.fabricType} onChange={(e) => updateSubject(subject.id, 'fabricType', e.target.value)}
+            className="w-full p-1.5 text-[11px] rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white"
+          >
+            {FABRIC_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-[9px] text-gray-400 block mb-0.5">Tipe Tubuh</label>
           <select
             value={subject.bodyType} onChange={(e) => updateSubject(subject.id, 'bodyType', e.target.value)}
-            className="w-full p-1 text-[10px] rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600"
+            className="w-full p-1.5 text-[11px] rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white"
           >
             {BODY_TYPES[subject.gender].map(b => <option key={b} value={b}>{b}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-[9px] text-gray-400 block">Aksesoris</label>
+          <label className="text-[9px] text-gray-400 block mb-0.5">Aksesoris</label>
           <select
             value={subject.accessory} onChange={(e) => updateSubject(subject.id, 'accessory', e.target.value)}
-            className="w-full p-1 text-[10px] rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600"
+            className="w-full p-1.5 text-[11px] rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white"
           >
             {ACCESSORIES.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
