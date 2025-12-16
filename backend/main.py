@@ -18,6 +18,7 @@ from dataclasses import asdict
 from services.whisper_service import whisper_service, TranscriptSegment
 from services.ffmpeg_service import ffmpeg_service, CaptionStyle, CaptionSegment
 from services.highlight_service import highlight_service, HighlightSegment
+from services.youtube_service import youtube_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,7 +33,14 @@ app = FastAPI(
 # CORS middleware untuk komunikasi dengan frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -148,10 +156,23 @@ def save_upload_file(upload_file: UploadFile, video_id: str) -> str:
 
 def get_video_path(video_id: str) -> str:
     """Get video file path by ID"""
-    for ext in [".mp4", ".mov", ".avi", ".mkv", ".webm"]:
-        path = os.path.join(TEMP_DIR, f"{video_id}{ext}")
+    # Try different file patterns
+    prefixes = ["", "short_", "music_", "caption_"]
+    extensions = [".mp4", ".mov", ".avi", ".mkv", ".webm"]
+    
+    for prefix in prefixes:
+        for ext in extensions:
+            path = os.path.join(TEMP_DIR, f"{prefix}{video_id}{ext}")
+            if os.path.exists(path):
+                return path
+    
+    # Also check if video_id itself contains the full filename pattern
+    for ext in extensions:
+        # Check with _vertical suffix
+        path = os.path.join(TEMP_DIR, f"{video_id}_vertical{ext}")
         if os.path.exists(path):
             return path
+    
     raise HTTPException(status_code=404, detail=f"Video not found: {video_id}")
 
 
@@ -204,6 +225,72 @@ async def upload_video(file: UploadFile = File(...)):
         }
     except Exception as e:
         logger.error(f"Upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class YouTubeDownloadRequest(BaseModel):
+    url: str
+    max_height: int = 1080
+
+
+@app.post("/youtube/info")
+async def get_youtube_info(request: YouTubeDownloadRequest):
+    """
+    Get info video YouTube tanpa download.
+    """
+    try:
+        info = youtube_service.get_video_info(request.url)
+        return {
+            "id": info.id,
+            "title": info.title,
+            "duration": info.duration,
+            "thumbnail": info.thumbnail,
+            "channel": info.channel,
+            "view_count": info.view_count,
+            "upload_date": info.upload_date,
+            "description": info.description
+        }
+    except Exception as e:
+        logger.error(f"YouTube info error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/youtube/download")
+async def download_youtube_video(request: YouTubeDownloadRequest):
+    """
+    Download video dari YouTube.
+    Returns video_id untuk reference di endpoint lain.
+    """
+    try:
+        logger.info(f"Downloading YouTube video: {request.url}")
+        
+        result = youtube_service.download_video(
+            url=request.url,
+            max_height=request.max_height
+        )
+        
+        # Get video info
+        video_info = ffmpeg_service.get_video_info(result["file_path"])
+        
+        # Store in jobs
+        jobs[result["video_id"]] = {
+            "status": "downloaded",
+            "file_path": result["file_path"],
+            "original_name": result["title"],
+            "youtube_id": result["youtube_id"],
+            "info": video_info
+        }
+        
+        return {
+            "video_id": result["video_id"],
+            "youtube_id": result["youtube_id"],
+            "title": result["title"],
+            "channel": result["channel"],
+            "thumbnail": result["thumbnail"],
+            "info": video_info
+        }
+    except Exception as e:
+        logger.error(f"YouTube download error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -26,11 +26,15 @@ import {
   getCategoryColor,
   getCategoryEmoji,
   DEFAULT_CAPTION_STYLE,
+  getYouTubeInfo,
+  downloadYouTubeVideo,
+  isYouTubeUrl,
   type TranscriptSegment,
   type HighlightSegment,
   type CaptionStyle,
   type MusicTrack,
-  type VideoInfo
+  type VideoInfo,
+  type YouTubeVideoInfo
 } from '../../services/ytShortService';
 
 // ===== Types =====
@@ -87,6 +91,11 @@ export const YTShortMakerModule: React.FC = () => {
   const [videoId, setVideoId] = useState<string | null>(null);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+
+  // YouTube URL states
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeInfo, setYoutubeInfo] = useState<YouTubeVideoInfo | null>(null);
+  const [uploadMode, setUploadMode] = useState<'file' | 'youtube'>('file');
 
   // Transcript states
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
@@ -188,6 +197,44 @@ export const YTShortMakerModule: React.FC = () => {
       setCurrentStep('transcribe');
     } catch (err: any) {
       setError(err.message || 'Upload failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleYoutubeUrlChange = async (url: string) => {
+    setYoutubeUrl(url);
+    setYoutubeInfo(null);
+    setError(null);
+
+    if (url && isYouTubeUrl(url)) {
+      try {
+        setLoadingMessage('Memuat info video...');
+        const info = await getYouTubeInfo(url);
+        setYoutubeInfo(info);
+      } catch (err: any) {
+        // Silently fail - user will see error when trying to download
+        console.log('Could not fetch YouTube info:', err);
+      }
+    }
+  };
+
+  const handleYoutubeDownload = async () => {
+    if (!youtubeUrl) return;
+
+    setIsLoading(true);
+    setLoadingMessage('Mengunduh video dari YouTube... Ini mungkin memakan waktu beberapa menit.');
+    setError(null);
+
+    try {
+      const result = await downloadYouTubeVideo(youtubeUrl);
+      setVideoId(result.video_id);
+      setVideoInfo(result.info);
+      setCurrentVideoId(result.video_id);
+      setClipEnd(Math.min(60, result.info.duration));
+      setCurrentStep('transcribe');
+    } catch (err: any) {
+      setError(err.message || 'Download gagal');
     } finally {
       setIsLoading(false);
     }
@@ -420,54 +467,138 @@ export const YTShortMakerModule: React.FC = () => {
       <div className="text-center space-y-2">
         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Upload Video Panjang</h3>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          Upload video YouTube yang ingin dipotong menjadi Shorts
+          Upload video atau paste link YouTube yang ingin dipotong menjadi Shorts
         </p>
       </div>
 
-      <div
-        className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all ${videoFile
-          ? 'border-green-400 bg-green-50 dark:bg-green-900/10'
-          : 'border-gray-300 dark:border-gray-600 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
-          }`}
-      >
-        <input
-          type="file"
-          accept="video/*"
-          onChange={handleFileSelect}
-          className="hidden"
-          id="video-upload"
-        />
-        <label htmlFor="video-upload" className="cursor-pointer block">
-          {videoFile ? (
-            <div className="space-y-3">
-              <Video size={48} className="mx-auto text-green-500" />
-              <div>
-                <p className="font-bold text-gray-900 dark:text-white">{videoFile.name}</p>
-                <p className="text-sm text-gray-500">{formatFileSize(videoFile.size)}</p>
-              </div>
-              <p className="text-xs text-green-600">Click to change file</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <Upload size={48} className="mx-auto text-gray-400" />
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-bold text-red-500">Click to upload</span> atau drag & drop
-              </p>
-              <p className="text-xs text-gray-400">MP4, MOV, AVI, MKV (max 2GB)</p>
-            </div>
-          )}
-        </label>
+      {/* Mode Toggle */}
+      <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+        <button
+          onClick={() => setUploadMode('file')}
+          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${uploadMode === 'file'
+              ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+              : 'text-gray-500 hover:text-gray-700'
+            }`}
+        >
+          <Upload size={16} /> Upload File
+        </button>
+        <button
+          onClick={() => setUploadMode('youtube')}
+          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${uploadMode === 'youtube'
+              ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+              : 'text-gray-500 hover:text-gray-700'
+            }`}
+        >
+          <Video size={16} /> YouTube URL
+        </button>
       </div>
 
-      {videoFile && (
-        <button
-          onClick={handleUpload}
-          disabled={isLoading || !backendOnline}
-          className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
-          {isLoading ? loadingMessage : 'Upload Video'}
-        </button>
+      {uploadMode === 'file' ? (
+        /* File Upload Section */
+        <>
+          <div
+            className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all ${videoFile
+              ? 'border-green-400 bg-green-50 dark:bg-green-900/10'
+              : 'border-gray-300 dark:border-gray-600 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
+              }`}
+          >
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="video-upload"
+            />
+            <label htmlFor="video-upload" className="cursor-pointer block">
+              {videoFile ? (
+                <div className="space-y-3">
+                  <Video size={48} className="mx-auto text-green-500" />
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white">{videoFile.name}</p>
+                    <p className="text-sm text-gray-500">{formatFileSize(videoFile.size)}</p>
+                  </div>
+                  <p className="text-xs text-green-600">Click to change file</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Upload size={48} className="mx-auto text-gray-400" />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    <span className="font-bold text-red-500">Click to upload</span> atau drag & drop
+                  </p>
+                  <p className="text-xs text-gray-400">MP4, MOV, AVI, MKV (max 2GB)</p>
+                </div>
+              )}
+            </label>
+          </div>
+
+          {videoFile && (
+            <button
+              onClick={handleUpload}
+              disabled={isLoading || !backendOnline}
+              className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
+              {isLoading ? loadingMessage : 'Upload Video'}
+            </button>
+          )}
+        </>
+      ) : (
+        /* YouTube URL Section */
+        <>
+          <div className="space-y-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={youtubeUrl}
+                onChange={(e) => handleYoutubeUrlChange(e.target.value)}
+                placeholder="Paste YouTube URL (e.g., https://youtube.com/watch?v=...)"
+                className="w-full p-4 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+              />
+              {youtubeUrl && (
+                <button
+                  onClick={() => { setYoutubeUrl(''); setYoutubeInfo(null); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* YouTube Video Preview */}
+            {youtubeInfo && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex gap-4 animate-fade-in">
+                <img
+                  src={youtubeInfo.thumbnail}
+                  alt={youtubeInfo.title}
+                  className="w-32 h-20 object-cover rounded-lg"
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-gray-900 dark:text-white line-clamp-2">{youtubeInfo.title}</h4>
+                  <p className="text-sm text-gray-500">{youtubeInfo.channel}</p>
+                  <div className="flex gap-4 mt-1 text-xs text-gray-400">
+                    <span>⏱️ {formatTimeLong(youtubeInfo.duration)}</span>
+                    <span>👁️ {youtubeInfo.view_count.toLocaleString()} views</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {youtubeUrl && isYouTubeUrl(youtubeUrl) && (
+            <button
+              onClick={handleYoutubeDownload}
+              disabled={isLoading || !backendOnline}
+              className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+              {isLoading ? loadingMessage : 'Download dari YouTube'}
+            </button>
+          )}
+
+          <p className="text-xs text-center text-gray-400">
+            ⚠️ Pastikan video tidak memiliki copyright. Download membutuhkan waktu tergantung durasi video.
+          </p>
+        </>
       )}
     </div>
   );

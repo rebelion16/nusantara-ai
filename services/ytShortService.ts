@@ -129,6 +129,72 @@ export async function getBackendStatus(): Promise<{
     return handleResponse(response);
 }
 
+// ===== YouTube Types =====
+
+export interface YouTubeVideoInfo {
+    id: string;
+    title: string;
+    duration: number;
+    thumbnail: string;
+    channel: string;
+    view_count: number;
+    upload_date: string;
+    description: string;
+}
+
+export interface YouTubeDownloadResult {
+    video_id: string;
+    youtube_id: string;
+    title: string;
+    channel: string;
+    thumbnail: string;
+    info: VideoInfo;
+}
+
+// ===== YouTube API Functions =====
+
+/**
+ * Get info video YouTube tanpa download
+ */
+export async function getYouTubeInfo(url: string): Promise<YouTubeVideoInfo> {
+    const response = await fetch(`${BACKEND_URL}/youtube/info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+    });
+    return handleResponse(response);
+}
+
+/**
+ * Download video dari YouTube
+ */
+export async function downloadYouTubeVideo(
+    url: string,
+    maxHeight: number = 1080
+): Promise<YouTubeDownloadResult> {
+    const response = await fetch(`${BACKEND_URL}/youtube/download`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, max_height: maxHeight }),
+    });
+    return handleResponse(response);
+}
+
+/**
+ * Check if string is a valid YouTube URL
+ */
+export function isYouTubeUrl(url: string): boolean {
+    const patterns = [
+        /youtube\.com\/watch\?v=/,
+        /youtu\.be\//,
+        /youtube\.com\/embed\//,
+        /youtube\.com\/shorts\//,
+    ];
+    return patterns.some(pattern => pattern.test(url));
+}
+
+// ===== Upload Functions =====
+
 /**
  * Upload video file untuk processing
  */
