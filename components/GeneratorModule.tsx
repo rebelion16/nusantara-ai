@@ -318,6 +318,58 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
     }
   };
 
+  // Batch Send to Telegram Handler
+  const handleSendBatchToTelegram = async () => {
+    const successfulImages = batchResults.filter(item => item.url);
+
+    if (successfulImages.length === 0) {
+      alert('❌ Tidak ada gambar yang berhasil untuk dikirim.');
+      return;
+    }
+
+    if (!isTelegramConfigured()) {
+      setShowTelegramSettings(true);
+      return;
+    }
+
+    setTelegramSending(true);
+    let sentCount = 0;
+    let failCount = 0;
+
+    try {
+      for (let i = 0; i < successfulImages.length; i++) {
+        const item = successfulImages[i];
+        if (item.url) {
+          try {
+            const caption = `🎨 Batch ${i + 1}/${successfulImages.length} - Nusantara AI Studio\n📝 ${prompt.slice(0, 150)}...`;
+            const result = await sendImageToTelegram(item.url, caption);
+            if (result.success) {
+              sentCount++;
+            } else {
+              failCount++;
+            }
+            // Small delay between sends to avoid rate limiting
+            if (i < successfulImages.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          } catch (err) {
+            failCount++;
+          }
+        }
+      }
+
+      if (failCount === 0) {
+        alert(`✅ Berhasil mengirim ${sentCount} gambar ke Telegram!`);
+      } else {
+        alert(`📊 Hasil pengiriman:\n✅ Berhasil: ${sentCount}\n❌ Gagal: ${failCount}`);
+      }
+    } catch (error: any) {
+      alert(`❌ Gagal mengirim batch: ${error.message}`);
+    } finally {
+      setTelegramSending(false);
+    }
+  };
+
   const handleSaveTelegramSettings = async () => {
     if (!telegramBotToken.trim() || !telegramChatId.trim()) {
       alert('Bot Token dan Chat ID harus diisi!');
@@ -933,6 +985,33 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
                   <h3 className="font-bold text-gray-700 dark:text-gray-200">
                     Hasil Batch ({batchResults.filter(r => r.url).length}/{batchResults.length} Berhasil)
                   </h3>
+                  {/* Batch Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSendBatchToTelegram}
+                      disabled={telegramSending || batchResults.filter(r => r.url).length === 0}
+                      className={`px-3 py-1.5 bg-[#0088cc] hover:bg-[#006699] text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${telegramSending ? 'opacity-50 cursor-wait' : ''}`}
+                    >
+                      {telegramSending ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Mengirim...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send size={14} />
+                          <span>Kirim Semua ke Telegram</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowTelegramSettings(true)}
+                      className="p-1.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      title="Pengaturan Telegram"
+                    >
+                      <Settings size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 auto-rows-max">
                   {batchResults.map((item, idx) => (
@@ -948,7 +1027,7 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
                         <div className="relative group/item">
                           <img src={item.url} alt={`Result ${idx + 1}`} className="w-full h-auto object-cover" />
                           {/* Action Buttons Below Image */}
-                          <div className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-800 justify-center">
+                          <div className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-800 justify-center flex-wrap">
                             <button
                               onClick={() => setZoomedImage(item.url)}
                               className="px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-indigo-200 transition-colors"
@@ -968,6 +1047,14 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
                               </svg>
                               Unduh
                             </a>
+                            <button
+                              onClick={() => item.url && handleSendToTelegram(item.url)}
+                              disabled={telegramSending}
+                              className={`px-3 py-1.5 bg-[#0088cc]/10 text-[#0088cc] dark:bg-[#0088cc]/20 dark:text-[#5bc0eb] rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-[#0088cc]/20 transition-colors ${telegramSending ? 'opacity-50' : ''}`}
+                            >
+                              <Send size={12} />
+                              <span className="hidden sm:inline">Telegram</span>
+                            </button>
                           </div>
                         </div>
                       ) : (
