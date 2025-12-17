@@ -298,7 +298,8 @@ export const refineCharacterDescription = async (userInput: string): Promise<str
 
 export const analyzeImagePrompt = async (base64Image: string): Promise<string> => {
   const ai = getClient();
-  const data = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
+  // Handle both raw base64 and data URL formats
+  const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: {
@@ -313,7 +314,8 @@ export const analyzeImagePrompt = async (base64Image: string): Promise<string> =
 
 export const generateSocialCaption = async (base64Image: string, platform: string): Promise<string> => {
   const ai = getClient();
-  const data = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
+  // Handle both raw base64 and data URL formats
+  const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: {
@@ -337,7 +339,8 @@ export const generateCharacterDescription = async (charName: string, seriesName:
 
 export const generateStoryFromImage = async (base64Image: string, charName: string): Promise<string> => {
   const ai = getClient();
-  const data = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
+  // Handle both raw base64 and data URL formats
+  const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: {

@@ -221,6 +221,15 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
   const [pose, setPose] = useState(POSES[0]);
   const [bgEffect, setBgEffect] = useState(BG_EFFECTS[0]);
 
+  // Sync transferred image (from ContentCreator) to first subject's clothing reference
+  useEffect(() => {
+    if (initialRefImage) {
+      setSubjects(prev => prev.map((s, idx) =>
+        idx === 0 ? { ...s, clothingImage: initialRefImage } : s
+      ));
+    }
+  }, [initialRefImage]);
+
   // Update logic for Photobox & Pas Foto Mode
   useEffect(() => {
     if (artStyle === 'Photobox / Photobooth') {
