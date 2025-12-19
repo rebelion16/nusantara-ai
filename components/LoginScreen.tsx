@@ -17,13 +17,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     } catch (error: any) {
       console.error("Login failed", error);
       alert(
-        `Login gagal: ${error?.code || error?.message || "Terjadi kesalahan tak dikenal"
-        }`
+        `Login gagal: ${error?.code || error?.message || "Terjadi kesalahan tak dikenal"}`
       );
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0f1d] overflow-hidden font-sans">

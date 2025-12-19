@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { ModuleId } from './types';
 import { LoginScreen } from './components/LoginScreen';
 import { authService, UserProfile } from './services/authService';
+import { initDownloadInterceptor } from './lib/downloadInterceptor';
 
 // Import distinct modules
 import { HomeModule } from './components/modules/Home';
@@ -48,6 +49,9 @@ const App: React.FC = () => {
 
   // Check Auth on Mount + sekalian cek API key kalau user sudah login
   useEffect(() => {
+    // Initialize download interceptor for Android
+    initDownloadInterceptor();
+
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
 
@@ -58,6 +62,7 @@ const App: React.FC = () => {
 
     setIsAuthChecking(false);
   }, []);
+
 
   // Dipanggil ketika LoginScreen sukses login (user dari Firebase)
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
