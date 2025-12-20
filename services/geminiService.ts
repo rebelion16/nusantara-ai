@@ -77,7 +77,7 @@ export const generateCreativeImage = async (
   if (!isStylized) {
     strictRealismInstruction = `
     [GAYA VISUAL: FOTOGRAFI HYPER-REALISTIC & CRYSTAL CLEAR]
-    - KUALITAS GAMBAR: Wajib Ultra-Sharp, 8K Resolution, Masterpiece. Gambar harus terlihat "Crystal Clear" (Sangat Jernih).
+    - KUALITAS GAMBAR: Wajib Ultra-Sharp, 8K Resolution, Masterpiece. Gambar harus terlihat "Crystal Clear" (Sangat Jernih). Tidak ada boleh ada noise atau grain.
     - DETAIL: Fokus mikro-kontras tinggi. Tidak boleh ada noise atau grain yang mengganggu. Setiap detail (kulit, mata, kain) harus tajam.
     - KAMERA: Simulasikan output dari Phase One XF IQ4 150MP atau Sony A7R V. Gunakan lensa prime berkualitas tinggi. Fokus harus tajam pada subjek (Eye AF).
     - TEKSTUR: Wajib menampilkan pori-pori kulit asli (micro-details), tekstur kain yang nyata, dan helaian rambut individu.
