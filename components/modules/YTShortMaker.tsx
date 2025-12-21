@@ -29,13 +29,17 @@ import {
   getYouTubeInfo,
   downloadYouTubeVideo,
   isYouTubeUrl,
+  getYouTubeProgress,
   type TranscriptSegment,
   type HighlightSegment,
   type CaptionStyle,
   type MusicTrack,
   type VideoInfo,
-  type YouTubeVideoInfo
+  type YouTubeVideoInfo,
+  type DownloadProgress
 } from '../../services/ytShortService';
+
+import { GPUStatusComponent } from '../GPUStatus';
 
 // ===== Types =====
 
@@ -131,6 +135,9 @@ export const YTShortMakerModule: React.FC = () => {
   const [exportQuality, setExportQuality] = useState<'low' | 'medium' | 'high'>('high');
   const [exportedVideoId, setExportedVideoId] = useState<string | null>(null);
 
+  // Download progress state
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
+
   // Video player ref
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -223,17 +230,47 @@ export const YTShortMakerModule: React.FC = () => {
     if (!youtubeUrl) return;
 
     setIsLoading(true);
-    setLoadingMessage('Mengunduh video dari YouTube... Ini mungkin memakan waktu beberapa menit.');
+    setLoadingMessage('Memulai download...');
     setError(null);
+    setDownloadProgress(null);
+
+    // Start progress polling
+    let isDownloading = true;
+    const pollProgress = async () => {
+      while (isDownloading) {
+        try {
+          const progress = await getYouTubeProgress();
+          setDownloadProgress(progress);
+
+          if (progress.status === 'downloading') {
+            setLoadingMessage(
+              `Mengunduh: ${progress.percent.toFixed(1)}% | ${progress.speed} | ETA: ${progress.eta}`
+            );
+          } else if (progress.status === 'finished') {
+            setLoadingMessage('Download selesai, memproses video...');
+          }
+        } catch (e) {
+          // Ignore polling errors
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    };
+
+    // Start polling in background
+    pollProgress();
 
     try {
       const result = await downloadYouTubeVideo(youtubeUrl);
+      isDownloading = false; // Stop polling
       setVideoId(result.video_id);
       setVideoInfo(result.info);
       setCurrentVideoId(result.video_id);
       setClipEnd(Math.min(60, result.info.duration));
+      setDownloadProgress(null);
       setCurrentStep('transcribe');
     } catch (err: any) {
+      isDownloading = false; // Stop polling
+      setDownloadProgress(null);
       setError(err.message || 'Download gagal');
     } finally {
       setIsLoading(false);
@@ -476,8 +513,8 @@ export const YTShortMakerModule: React.FC = () => {
         <button
           onClick={() => setUploadMode('file')}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${uploadMode === 'file'
-              ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
-              : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+            : 'text-gray-500 hover:text-gray-700'
             }`}
         >
           <Upload size={16} /> Upload File
@@ -485,8 +522,8 @@ export const YTShortMakerModule: React.FC = () => {
         <button
           onClick={() => setUploadMode('youtube')}
           className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${uploadMode === 'youtube'
-              ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
-              : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+            : 'text-gray-500 hover:text-gray-700'
             }`}
         >
           <Video size={16} /> YouTube URL
@@ -585,14 +622,70 @@ export const YTShortMakerModule: React.FC = () => {
           </div>
 
           {youtubeUrl && isYouTubeUrl(youtubeUrl) && (
-            <button
-              onClick={handleYoutubeDownload}
-              disabled={isLoading || !backendOnline}
-              className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
-              {isLoading ? loadingMessage : 'Download dari YouTube'}
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={handleYoutubeDownload}
+                disabled={isLoading || !backendOnline}
+                className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                {isLoading ? 'Mengunduh dari YouTube...' : 'Download dari YouTube'}
+              </button>
+
+              {/* Download Progress Bar */}
+              {isLoading && (
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 space-y-3 animate-fade-in">
+                  {/* Progress Bar */}
+                  <div className="relative w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-300 ease-out rounded-full"
+                      style={{ width: `${downloadProgress?.percent || 0}%` }}
+                    />
+                    {downloadProgress && downloadProgress.percent > 0 ? (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-white drop-shadow">
+                          {downloadProgress.percent.toFixed(1)}%
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-500">Memulai download...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Progress Stats */}
+                  <div className="flex justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Download size={14} className="text-gray-500" />
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {downloadProgress?.downloaded || '0 B'} / {downloadProgress?.total || '...'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Zap size={14} className="text-yellow-500" />
+                        {downloadProgress?.speed || '-- KB/s'}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={14} className="text-blue-500" />
+                        ETA: {downloadProgress?.eta || '--:--'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Message */}
+                  <div className="text-xs text-center text-gray-500">
+                    {downloadProgress?.status === 'finished'
+                      ? '✅ Download selesai, memproses video...'
+                      : downloadProgress?.status === 'downloading'
+                        ? `📥 Mengunduh: ${downloadProgress.filename || 'video'}`
+                        : '⏳ Menunggu koneksi ke YouTube...'
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           <p className="text-xs text-center text-gray-400">
@@ -1188,7 +1281,10 @@ export const YTShortMakerModule: React.FC = () => {
             Ubah video panjang menjadi YouTube Shorts viral dengan AI
           </p>
         </div>
-        {renderBackendStatus()}
+        <div className="flex items-center gap-3">
+          {backendOnline && <GPUStatusComponent />}
+          {renderBackendStatus()}
+        </div>
       </div>
 
       {/* Backend offline warning */}
@@ -1196,14 +1292,36 @@ export const YTShortMakerModule: React.FC = () => {
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
-            <div>
+            <div className="flex-1">
               <h4 className="font-bold text-red-700 dark:text-red-400">Backend Offline</h4>
               <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-                Python backend tidak terdeteksi. Jalankan command berikut di terminal:
+                {typeof window !== 'undefined' && (window as any).isElectron
+                  ? 'Backend sedang starting atau mengalami masalah. Coba restart backend.'
+                  : 'Python backend tidak terdeteksi. Jalankan command berikut di terminal:'
+                }
               </p>
-              <pre className="mt-2 bg-red-100 dark:bg-red-900/40 p-2 rounded text-xs font-mono overflow-x-auto">
-                cd backend && python main.py
-              </pre>
+              {typeof window !== 'undefined' && (window as any).isElectron ? (
+                <button
+                  onClick={async () => {
+                    try {
+                      const result = await (window as any).electronAPI?.restartBackend();
+                      if (result?.success) {
+                        checkBackendStatus();
+                      }
+                    } catch (err) {
+                      console.error('Failed to restart backend:', err);
+                    }
+                  }}
+                  className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  <RefreshCw size={16} />
+                  Restart Backend
+                </button>
+              ) : (
+                <pre className="mt-2 bg-red-100 dark:bg-red-900/40 p-2 rounded text-xs font-mono overflow-x-auto">
+                  cd backend && python main.py
+                </pre>
+              )}
             </div>
           </div>
         </div>

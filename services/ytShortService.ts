@@ -193,6 +193,42 @@ export function isYouTubeUrl(url: string): boolean {
     return patterns.some(pattern => pattern.test(url));
 }
 
+/**
+ * Download progress information
+ */
+export interface DownloadProgress {
+    percent: number;
+    downloaded: string;
+    total: string;
+    speed: string;
+    eta: string;
+    status: 'idle' | 'downloading' | 'finished' | 'error';
+    filename: string;
+}
+
+/**
+ * Get current YouTube download progress
+ */
+export async function getYouTubeProgress(): Promise<DownloadProgress> {
+    try {
+        const response = await fetch(`${BACKEND_URL}/youtube/progress`);
+        if (response.ok) {
+            return response.json();
+        }
+    } catch {
+        // Ignore errors, return idle state
+    }
+    return {
+        percent: 0,
+        downloaded: '0 B',
+        total: '0 B',
+        speed: '-- KB/s',
+        eta: '--:--',
+        status: 'idle',
+        filename: ''
+    };
+}
+
 // ===== Upload Functions =====
 
 /**

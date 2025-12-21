@@ -19,6 +19,7 @@ from services.whisper_service import whisper_service, TranscriptSegment
 from services.ffmpeg_service import ffmpeg_service, CaptionStyle, CaptionSegment
 from services.highlight_service import highlight_service, HighlightSegment
 from services.youtube_service import youtube_service
+from services.gpu_service import gpu_service, EncoderType, GPUInfo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,6 +41,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
+        "file://",  # Electron file:// protocol
+        "*",  # Allow all for desktop app
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -190,13 +193,74 @@ async def root():
 @app.get("/status")
 async def status():
     """Get backend status and capabilities"""
+    gpu_status = gpu_service.get_status()
     return {
         "status": "running",
         "whisper_model": whisper_service.model_size,
         "whisper_loaded": whisper_service.model is not None,
         "ffmpeg_available": True,
-        "temp_dir": TEMP_DIR
+        "temp_dir": TEMP_DIR,
+        "gpu_available": gpu_status.available,
+        "current_encoder": gpu_status.current_encoder.value
     }
+
+
+class EncoderPreferenceRequest(BaseModel):
+    encoder: str  # "auto", "nvenc", "qsv", "amf", "cpu"
+
+
+@app.get("/gpu-status")
+async def get_gpu_status():
+    """Get detailed GPU status and available encoders"""
+    gpu_status = gpu_service.get_status()
+    return {
+        "available": gpu_status.available,
+        "gpus": [
+            {
+                "name": gpu.name,
+                "vendor": gpu.vendor,
+                "memory_mb": gpu.memory_mb,
+                "driver_version": gpu.driver_version
+            }
+            for gpu in gpu_status.gpus
+        ],
+        "recommended_encoder": gpu_status.recommended_encoder.value,
+        "available_encoders": [e.value for e in gpu_status.available_encoders],
+        "current_encoder": gpu_status.current_encoder.value,
+        "message": gpu_status.message
+    }
+
+
+@app.post("/set-encoder")
+async def set_encoder_preference(request: EncoderPreferenceRequest):
+    """
+    Set encoder preference (user can choose GPU or CPU).
+    Options: auto, nvenc, qsv, amf, cpu
+    """
+    try:
+        encoder_map = {
+            "auto": EncoderType.AUTO,
+            "nvenc": EncoderType.NVENC,
+            "qsv": EncoderType.QUICKSYNC,
+            "amf": EncoderType.AMF,
+            "cpu": EncoderType.CPU
+        }
+        
+        encoder = encoder_map.get(request.encoder.lower())
+        if not encoder:
+            raise HTTPException(status_code=400, detail=f"Invalid encoder: {request.encoder}")
+        
+        success = gpu_service.set_encoder(encoder)
+        current = gpu_service.get_current_encoder()
+        
+        return {
+            "success": success,
+            "encoder": current.value,
+            "message": f"Encoder set to {current.value.upper()}"
+        }
+    except Exception as e:
+        logger.error(f"Set encoder error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/upload")
@@ -292,6 +356,57 @@ async def download_youtube_video(request: YouTubeDownloadRequest):
     except Exception as e:
         logger.error(f"YouTube download error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/youtube/progress")
+async def get_download_progress():
+    """
+    Get current YouTube download progress.
+    Returns percentage, speed, ETA, etc.
+    """
+    progress = youtube_service.get_current_progress()
+    if progress:
+        return progress
+    return {
+        "percent": 0,
+        "downloaded": "0 B",
+        "total": "0 B",
+        "speed": "-- KB/s",
+        "eta": "--:--",
+        "status": "idle",
+        "filename": ""
+    }
+
+
+@app.get("/youtube/logs")
+async def get_download_logs(lines: int = 50):
+    """
+    Get recent download log entries.
+    
+    Args:
+        lines: Number of recent log lines to return (default 50)
+    """
+    log_file = youtube_service.get_log_file_path()
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                all_lines = f.readlines()
+                recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+                return {
+                    "log_file": log_file,
+                    "total_lines": len(all_lines),
+                    "showing": len(recent_lines),
+                    "logs": [line.strip() for line in recent_lines]
+                }
+        except Exception as e:
+            return {"error": str(e)}
+    return {
+        "log_file": log_file,
+        "total_lines": 0,
+        "showing": 0,
+        "logs": []
+    }
+
 
 
 @app.post("/transcribe/{video_id}", response_model=TranscriptResponse)
@@ -640,13 +755,14 @@ async def cleanup():
 if __name__ == "__main__":
     import uvicorn
     print("\n" + "="*60)
-    print("🎬 YTShortMaker Backend Starting...")
+    print("[*] YTShortMaker Backend Starting...")
     print("="*60)
-    print(f"📁 Temp directory: {TEMP_DIR}")
-    print(f"🎤 Whisper model: {whisper_service.model_size}")
+    print(f"[>] Temp directory: {TEMP_DIR}")
+    print(f"[>] Whisper model: {whisper_service.model_size}")
+    print(f"[>] GPU encoder: {gpu_service.get_current_encoder().value}")
     print("="*60)
-    print("🌐 Server running at: http://localhost:8000")
-    print("📖 API Docs: http://localhost:8000/docs")
+    print("[>] Server running at: http://localhost:8000")
+    print("[>] API Docs: http://localhost:8000/docs")
     print("="*60 + "\n")
     
     # Gunakan string import untuk enable reload, atau disable reload

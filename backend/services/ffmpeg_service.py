@@ -1,6 +1,7 @@
 """
 FFmpeg Video Processing Service
 Handles video cutting, caption burning, music overlay, and format conversion.
+Supports GPU acceleration via NVIDIA NVENC, Intel QuickSync, and AMD AMF.
 """
 
 import ffmpeg
@@ -11,6 +12,8 @@ from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 import logging
 import json
+
+from .gpu_service import gpu_service, EncoderType
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,10 +40,13 @@ class CaptionSegment:
 
 
 class FFmpegService:
-    """Service untuk video processing menggunakan FFmpeg"""
+    """Service untuk video processing menggunakan FFmpeg dengan GPU acceleration"""
     
     def __init__(self):
         self.check_ffmpeg()
+        # Initialize GPU service
+        gpu_service.initialize()
+        logger.info(f"FFmpeg using encoder: {gpu_service.get_current_encoder().value}")
     
     def check_ffmpeg(self):
         """Check if FFmpeg is installed"""
@@ -114,14 +120,24 @@ class FFmpegService:
         
         try:
             if reencode:
-                # Re-encode untuk precision cutting
-                (
-                    ffmpeg
-                    .input(input_path, ss=start_time, t=duration)
-                    .output(output_path, vcodec='libx264', acodec='aac', preset='fast')
-                    .overwrite_output()
-                    .run(capture_stdout=True, capture_stderr=True)
-                )
+                # Get GPU encoder args
+                encoder_args = gpu_service.get_ffmpeg_encoder_args()
+                encoder_name = encoder_args[1] if len(encoder_args) >= 2 else 'libx264'
+                
+                logger.info(f"Using encoder: {encoder_name}")
+                
+                # Re-encode dengan GPU acceleration jika tersedia
+                cmd = [
+                    'ffmpeg', '-y',
+                    '-ss', str(start_time),
+                    '-i', input_path,
+                    '-t', str(duration),
+                ] + encoder_args + [
+                    '-acodec', 'aac',
+                    output_path
+                ]
+                
+                subprocess.run(cmd, capture_output=True, check=True)
             else:
                 # Stream copy untuk speed (less precise on keyframes)
                 (
@@ -181,13 +197,22 @@ class FFmpegService:
             filter_str = f"crop={src_w}:{new_h}:0:{crop_y},scale={target_width}:{target_height}"
         
         try:
-            (
-                ffmpeg
-                .input(input_path)
-                .output(output_path, vf=filter_str, vcodec='libx264', acodec='aac', preset='fast')
-                .overwrite_output()
-                .run(capture_stdout=True, capture_stderr=True)
-            )
+            # Get GPU encoder args
+            encoder_args = gpu_service.get_ffmpeg_encoder_args()
+            encoder_name = encoder_args[1] if len(encoder_args) >= 2 else 'libx264'
+            
+            logger.info(f"Vertical conversion using encoder: {encoder_name}")
+            
+            cmd = [
+                'ffmpeg', '-y',
+                '-i', input_path,
+                '-vf', filter_str,
+            ] + encoder_args + [
+                '-acodec', 'aac',
+                output_path
+            ]
+            
+            subprocess.run(cmd, capture_output=True, check=True)
             
             logger.info(f"Vertical conversion complete: {output_path}")
             return output_path
