@@ -320,7 +320,8 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
     aspectRatio: string,
     imageSize: string,
     isBatch: boolean,
-    batchCount: number
+    batchCount: number,
+    selectedPoses?: string[] // NEW: Selected poses from batch mode
   ) => {
     // 1. Validate Images
     if (!subjects[0].image) {
@@ -334,6 +335,10 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
 
     const makeupText = getMakeupDescription(makeup);
 
+    // Determine the actual pose to use (from batch selection or dropdown)
+    const actualPose = (selectedPoses && selectedPoses.length > 0) ? selectedPoses[0] : pose;
+    const poseText = actualPose !== '✨ Otomatis' ? actualPose : '';
+
     // Default environment for standard modes
     let environmentDetails = [
       `Gaya Seni: ${artStyle}`,
@@ -341,7 +346,7 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
       (timeOfDay !== '✨ Otomatis' && artStyle !== 'Photobox / Photobooth') ? `Waktu: ${timeOfDay}` : '',
       lighting !== '✨ Otomatis' ? `Pencahayaan: ${lighting}` : '',
       angle !== '✨ Otomatis' ? `Sudut Kamera: ${angle}` : '',
-      pose !== '✨ Otomatis' ? `Pose: ${pose}` : '',
+      poseText ? `Pose: ${poseText}` : '',
       `Latar Belakang: ${bgEffect}`,
     ].filter(Boolean).join(', ');
 
@@ -837,6 +842,7 @@ export const VirtualPhotoshootModule: React.FC<VirtualPhotoshootProps> = ({ init
 
       // Enable Batch Mode
       batchModeAvailable={true}
+      availablePoses={POSES} // NEW: Pass available poses for batch selection
       initialRefImage={initialRefImage}
 
       // Pass the Custom Generator

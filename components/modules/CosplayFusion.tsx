@@ -773,6 +773,13 @@ const POSE_OPTIONS = [
   { value: "manual_pose", label: "✎ Input Manual" }
 ];
 
+// Flattened list of pose labels for batch mode selection
+const POSE_LABELS = POSE_OPTIONS.flatMap(opt =>
+  'options' in opt && opt.options
+    ? opt.options.map(o => o.label)
+    : opt.label !== "✎ Input Manual" && opt.value !== 'auto' ? [opt.label] : []
+);
+
 const VISUAL_EFFECT_OPTIONS = [
   { value: "auto", label: "✨ Auto (AI)" },
   { value: "none", label: "Tidak Ada Efek" },
@@ -1313,6 +1320,7 @@ export const CosplayFusionModule: React.FC<CosplayFusionProps> = ({ onNavigate, 
 
         extraControls={extraControls}
         batchModeAvailable={true}
+        availablePoses={POSE_LABELS} // NEW: Pass available poses for batch selection
 
         renderCustomResultActions={renderCustomResultActions}
 

@@ -553,6 +553,7 @@ export const BikiniPhotoshootModule: React.FC = () => {
       extraControls={extraControls}
       headerControls={headerControls}
       batchModeAvailable={true}
+      availablePoses={POSES} // NEW: Pass available poses for batch selection
       defaultAspectRatio="3:4"
     />
   );
