@@ -25,6 +25,9 @@ interface GeneratorModuleProps {
   batchModeAvailable?: boolean;
   initialRefImage?: File | null;
 
+  // Batch Pose Selection - NEW
+  availablePoses?: string[];
+
   // Name Inputs
   showNames?: boolean;
   name1?: string;
@@ -44,7 +47,8 @@ interface GeneratorModuleProps {
     aspectRatio: string,
     imageSize: string,
     isBatch: boolean,
-    batchCount: number
+    batchCount: number,
+    selectedPoses?: string[] // NEW: Selected poses for batch mode
   ) => Promise<string | string[]>;
 
   // NEW: External prompt control (for modules that build prompt dynamically)
@@ -104,6 +108,7 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
   mainImageLabel = "Subjek 1", // Default value
   batchModeAvailable = false,
   initialRefImage = null,
+  availablePoses = [], // NEW: Available poses for batch selection
   showNames = false,
   name1 = "", onName1Change,
   name2 = "", onName2Change,
@@ -137,6 +142,7 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchCount, setBatchCount] = useState(5);
   const [batchResults, setBatchResults] = useState<BatchResultItem[]>([]);
+  const [selectedBatchPoses, setSelectedBatchPoses] = useState<string[]>([]); // NEW: Selected poses for batch
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -475,11 +481,17 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
           let firstSuccess: string | null = null;
 
           for (let i = 0; i < batchCount; i++) {
-            setLoadingMessage(`Mengenerate gambar ${i + 1} dari ${batchCount}...`);
+            // Determine pose for this batch iteration
+            const poseForThisImage = selectedBatchPoses.length > 0
+              ? selectedBatchPoses[i % selectedBatchPoses.length]
+              : undefined;
+
+            const poseDisplay = poseForThisImage ? ` (${poseForThisImage.replace('✨ ', '').substring(0, 20)}...)` : '';
+            setLoadingMessage(`Mengenerate gambar ${i + 1} dari ${batchCount}${poseDisplay}...`);
 
             try {
-              // Call handler for single image (isBatch=false, batchCount=1)
-              const result = await customGenerateHandler(prompt, aspectRatio, imageSize, false, 1);
+              // Call handler for single image, pass the specific pose for this iteration
+              const result = await customGenerateHandler(prompt, aspectRatio, imageSize, true, 1, poseForThisImage ? [poseForThisImage] : undefined);
               const imageUrl = Array.isArray(result) ? result[0] : result;
 
               finalResults[i] = { url: imageUrl, loading: false };
@@ -879,38 +891,98 @@ export const GeneratorModule: React.FC<GeneratorModuleProps> = ({
 
           <div className="space-y-4">
             {batchModeAvailable && (
-              <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer duration-300 ease-in-out ${isBatchMode ? 'bg-green-500' : 'bg-red-500'}`} onClick={() => setIsBatchMode(!isBatchMode)}>
-                    <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${isBatchMode ? 'translate-x-4' : ''}`}></div>
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-200 block">Mode Batch (Banyak Gambar)</span>
-                    <span className="text-[10px] text-gray-500 dark:text-gray-400">Pose akan diacak otomatis untuk tiap gambar.</span>
-                  </div>
-                </div>
-                {isBatchMode && (
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jumlah (Max 15):</label>
-                    <div className="flex items-center bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 p-0.5">
-                      <button
-                        onClick={() => setBatchCount(prev => Math.max(1, prev - 1))}
-                        disabled={batchCount <= 1}
-                        className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-colors font-bold text-lg"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center text-sm font-bold text-gray-800 dark:text-white">
-                        {batchCount}
-                      </span>
-                      <button
-                        onClick={() => setBatchCount(prev => Math.min(15, prev + 1))}
-                        disabled={batchCount >= 15}
-                        className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-colors font-bold text-lg"
-                      >
-                        +
-                      </button>
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
+                {/* Batch Mode Toggle Row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer duration-300 ease-in-out ${isBatchMode ? 'bg-green-500' : 'bg-red-500'}`} onClick={() => setIsBatchMode(!isBatchMode)}>
+                      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${isBatchMode ? 'translate-x-4' : ''}`}></div>
                     </div>
+                    <div>
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-200 block">Mode Batch (Banyak Gambar)</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {availablePoses.length > 0 && selectedBatchPoses.length > 0
+                          ? `Pose yang dipilih akan digunakan bergantian (${selectedBatchPoses.length} pose)`
+                          : 'Pose akan diacak otomatis untuk tiap gambar.'}
+                      </span>
+                    </div>
+                  </div>
+                  {isBatchMode && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jumlah (Max 15):</label>
+                      <div className="flex items-center bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 p-0.5">
+                        <button
+                          onClick={() => setBatchCount(prev => Math.max(1, prev - 1))}
+                          disabled={batchCount <= 1}
+                          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-colors font-bold text-lg"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center text-sm font-bold text-gray-800 dark:text-white">
+                          {batchCount}
+                        </span>
+                        <button
+                          onClick={() => setBatchCount(prev => Math.min(15, prev + 1))}
+                          disabled={batchCount >= 15}
+                          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-colors font-bold text-lg"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pose Selection Grid - NEW */}
+                {isBatchMode && availablePoses.length > 0 && (
+                  <div className="animate-fade-in border-t border-gray-200 dark:border-gray-700 pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase">
+                        📸 Pilih Pose untuk Batch ({selectedBatchPoses.length}/{availablePoses.length})
+                      </label>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setSelectedBatchPoses([...availablePoses])}
+                          className="px-2 py-1 text-[10px] font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+                        >
+                          Pilih Semua
+                        </button>
+                        <button
+                          onClick={() => setSelectedBatchPoses([])}
+                          className="px-2 py-1 text-[10px] font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          Hapus Semua
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                      {availablePoses.map((poseOption) => (
+                        <label
+                          key={poseOption}
+                          className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer transition-all text-[11px] ${selectedBatchPoses.includes(poseOption)
+                            ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700'
+                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-700'
+                            }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBatchPoses.includes(poseOption)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedBatchPoses(prev => [...prev, poseOption]);
+                              } else {
+                                setSelectedBatchPoses(prev => prev.filter(p => p !== poseOption));
+                              }
+                            }}
+                            className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 flex-shrink-0"
+                          />
+                          <span className="truncate">{poseOption.replace('✨ ', '').replace('Otomatis', 'Auto').replace('Auto (', '(')}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-2 italic">
+                      💡 Jika tidak ada pose yang dipilih, AI akan memilih pose acak untuk setiap gambar.
+                    </p>
                   </div>
                 )}
               </div>
