@@ -39,7 +39,7 @@ import {
   type DownloadProgress
 } from '../../services/ytShortService';
 
-import { GPUStatusComponent } from '../../components/GPUStatus';
+import { GPUStatusComponent } from '../GPUStatus';
 
 // ===== Types =====
 
