@@ -381,6 +381,223 @@ export const generateStoryboardPlan = async (theme: string, panelCount: number =
   }
 };
 
+// --- STORY VIDEO GENERATOR TYPES & FUNCTIONS ---
+
+export type VideoTheme = 'education' | 'advertisement' | 'short_story' | 'tutorial' | 'documentary' | 'motivational';
+
+export type CameraMotion =
+  | 'static'
+  | 'pan_left'
+  | 'pan_right'
+  | 'zoom_in'
+  | 'zoom_out'
+  | 'dolly_in'
+  | 'dolly_out'
+  | 'crane_up'
+  | 'crane_down'
+  | 'tracking_shot'
+  | 'handheld';
+
+export interface StoryScene {
+  id: number;
+  narration: string;
+  visualDescription: string;
+  duration: number; // in seconds (8-10 per scene for VEO)
+}
+
+export interface StoryScript {
+  title: string;
+  synopsis: string;
+  scenes: StoryScene[];
+  totalDuration: number;
+  ctaScene?: {
+    text: string;
+    style: 'bold' | 'subtle' | 'animated';
+  };
+}
+
+export interface ScenePrompt {
+  sceneId: number;
+  prompt: string;
+  cameraMotion: CameraMotion;
+  duration: number;
+}
+
+const THEME_LABELS: Record<VideoTheme, string> = {
+  education: 'Edukasi (Tutorial, penjelasan konsep)',
+  advertisement: 'Iklan Produk (Promosi, commercial)',
+  short_story: 'Cerita Pendek (Narasi, drama)',
+  tutorial: 'Tutorial Langkah-demi-Langkah',
+  documentary: 'Dokumenter (Fakta, investigasi)',
+  motivational: 'Motivasi & Inspirasi'
+};
+
+const CAMERA_LABELS: Record<CameraMotion, string> = {
+  static: 'Statis (Diam)',
+  pan_left: 'Pan Kiri',
+  pan_right: 'Pan Kanan',
+  zoom_in: 'Zoom In',
+  zoom_out: 'Zoom Out',
+  dolly_in: 'Dolly In (Maju)',
+  dolly_out: 'Dolly Out (Mundur)',
+  crane_up: 'Crane Up',
+  crane_down: 'Crane Down',
+  tracking_shot: 'Tracking Shot',
+  handheld: 'Handheld (Realistik)'
+};
+
+export { THEME_LABELS, CAMERA_LABELS };
+
+/**
+ * Generate a complete story script based on theme and idea
+ */
+export const generateStoryScript = async (
+  storyIdea: string,
+  videoTheme: VideoTheme,
+  targetDuration: number = 60, // in seconds
+  ctaText?: string
+): Promise<StoryScript> => {
+  const ai = getClient();
+
+  // Calculate scenes (each VEO video is ~8-10 seconds)
+  const sceneCount = Math.max(4, Math.ceil(targetDuration / 10));
+  const sceneDuration = Math.floor(targetDuration / sceneCount);
+
+  const themeInstructions: Record<VideoTheme, string> = {
+    education: 'Fokus pada penjelasan konsep yang jelas, visual diagram, dan poin-poin pembelajaran.',
+    advertisement: 'Fokus pada keunggulan produk, visual menarik, dan call-to-action yang kuat.',
+    short_story: 'Fokus pada karakter, konflik, resolusi, dan emosi visual yang kuat.',
+    tutorial: 'Fokus pada langkah-langkah jelas, demonstrasi visual, dan instruksi praktis.',
+    documentary: 'Fokus pada fakta, narasi informatif, dan visual dokumenter sinematik.',
+    motivational: 'Fokus pada quotes inspirasi, visual yang membangkitkan semangat, dan pesan kuat.'
+  };
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: `Kamu adalah seorang sutradara video profesional dan penulis naskah kreatif.
+
+TUGAS: Buatkan naskah cerita video berdasarkan tema dan ide berikut:
+
+IDE CERITA: "${storyIdea}"
+TIPE VIDEO: ${THEME_LABELS[videoTheme]}
+TARGET DURASI: ${targetDuration} detik (${sceneCount} scene, masing-masing ~${sceneDuration} detik)
+${ctaText ? `CTA (Call-to-Action): "${ctaText}"` : ''}
+
+INSTRUKSI KHUSUS: ${themeInstructions[videoTheme]}
+
+OUTPUT STRICTLY sebagai JSON object dengan format:
+{
+  "title": "Judul video yang menarik",
+  "synopsis": "Ringkasan singkat cerita (1-2 kalimat)",
+  "scenes": [
+    {
+      "id": 1,
+      "narration": "Teks narasi/voice over untuk scene ini (dalam Bahasa Indonesia)",
+      "visualDescription": "Deskripsi visual sangat detail untuk AI video generator (dalam Bahasa Inggris untuk Veo)",
+      "duration": ${sceneDuration}
+    }
+  ],
+  "totalDuration": ${targetDuration}${ctaText ? `,
+  "ctaScene": {
+    "text": "${ctaText}",
+    "style": "animated"
+  }` : ''}
+}
+
+PENTING:
+- Jumlah scene HARUS ${sceneCount} scenes
+- visualDescription harus sangat detail dan cinematic (dalam Bahasa Inggris)
+- narration dalam Bahasa Indonesia yang natural
+- Setiap scene harus memiliki visual yang berbeda dan progresif`
+  });
+
+  const text = response.text || "{}";
+  try {
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanText);
+  } catch (e) {
+    // Fallback script
+    return {
+      title: storyIdea.substring(0, 50),
+      synopsis: `Video ${THEME_LABELS[videoTheme]} tentang: ${storyIdea}`,
+      scenes: Array(sceneCount).fill(null).map((_, i) => ({
+        id: i + 1,
+        narration: `Bagian ${i + 1} dari cerita...`,
+        visualDescription: `Scene ${i + 1}: Cinematic shot related to ${storyIdea}`,
+        duration: sceneDuration
+      })),
+      totalDuration: targetDuration,
+      ...(ctaText ? { ctaScene: { text: ctaText, style: 'animated' as const } } : {})
+    };
+  }
+};
+
+/**
+ * Generate detailed video prompts for each scene with camera motion
+ */
+export const generateScenePrompts = async (
+  script: StoryScript,
+  cameraMotions: CameraMotion[],
+  visualStyle: string = 'Cinematic'
+): Promise<ScenePrompt[]> => {
+  const ai = getClient();
+
+  // Use provided camera motions or cycle through defaults
+  const defaultMotions: CameraMotion[] = ['zoom_in', 'pan_right', 'dolly_in', 'tracking_shot', 'crane_up', 'static'];
+  const motionsToUse = cameraMotions.length > 0 ? cameraMotions : defaultMotions;
+
+  const prompts: ScenePrompt[] = [];
+
+  for (let i = 0; i < script.scenes.length; i++) {
+    const scene = script.scenes[i];
+    const cameraMotion = motionsToUse[i % motionsToUse.length];
+
+    const cameraInstruction = {
+      static: 'static locked camera, no movement',
+      pan_left: 'smooth pan from right to left',
+      pan_right: 'smooth pan from left to right',
+      zoom_in: 'slow cinematic zoom in towards subject',
+      zoom_out: 'gradual zoom out revealing the scene',
+      dolly_in: 'dolly forward movement approaching subject',
+      dolly_out: 'dolly backward movement away from subject',
+      crane_up: 'crane shot rising upward',
+      crane_down: 'crane shot descending downward',
+      tracking_shot: 'tracking shot following subject movement',
+      handheld: 'handheld realistic camera movement with slight shake'
+    }[cameraMotion];
+
+    // Enhance prompt with Veo-optimized instructions
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Enhance this video scene description for Veo 3 (Google's video AI):
+
+ORIGINAL VISUAL: ${scene.visualDescription}
+CAMERA MOTION: ${cameraInstruction}
+STYLE: ${visualStyle}
+
+Create a single, detailed prompt (max 200 words) in English that:
+1. Describes the visual scene in cinematic detail
+2. Includes the camera motion instruction
+3. Adds lighting, color grading, and mood
+4. Ensures coherent visual storytelling
+
+Output ONLY the prompt text, no explanations.`
+    });
+
+    const enhancedPrompt = response.text?.trim() ||
+      `${visualStyle} video: ${scene.visualDescription}. Camera: ${cameraInstruction}. High quality, cinematic lighting.`;
+
+    prompts.push({
+      sceneId: scene.id,
+      prompt: enhancedPrompt,
+      cameraMotion: cameraMotion,
+      duration: scene.duration
+    });
+  }
+
+  return prompts;
+};
+
 export const generateVeoVideo = async (
   prompt: string,
   aspectRatio: string = '16:9',
