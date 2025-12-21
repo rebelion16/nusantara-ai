@@ -615,6 +615,8 @@ export const generateVeoVideo = async (
       aspectRatio: aspectRatio as '16:9' | '9:16',
     };
 
+    console.log("[VEO] Starting video generation with prompt:", prompt.substring(0, 100) + "...");
+
     if (imageFile) {
       const base64Data = await fileToBase64(imageFile);
       operation = await ai.models.generateVideos({
@@ -628,25 +630,80 @@ export const generateVeoVideo = async (
       operation = await ai.models.generateVideos({ model, prompt, config });
     }
 
-    while (!operation.done) {
+    console.log("[VEO] Initial operation started:", operation?.name || 'unknown');
+
+    // Poll for completion with timeout
+    let attempts = 0;
+    const maxAttempts = 30; // 5 minutes max (30 * 10 seconds)
+
+    while (!operation.done && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 10000));
       operation = await ai.operations.getVideosOperation({ operation: operation });
+      attempts++;
+      console.log(`[VEO] Polling attempt ${attempts}/${maxAttempts}, done: ${operation.done}`);
     }
 
-    const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-    if (!downloadLink) throw new Error("Video generation completed but no video URI was returned.");
+    if (!operation.done) {
+      throw new Error("Video generation timeout - proses terlalu lama (lebih dari 5 menit).");
+    }
+
+    // Debug: Log full response structure
+    console.log("[VEO] Full operation response:", JSON.stringify(operation, null, 2));
+
+    // Check for error in response
+    if (operation.error) {
+      console.error("[VEO] Operation error:", operation.error);
+      throw new Error(operation.error.message || `VEO Error: ${JSON.stringify(operation.error)}`);
+    }
+
+    // Try to extract video URI from various possible response structures
+    const generatedVideos = operation.response?.generatedVideos || operation.result?.generatedVideos || [];
+    const firstVideo = generatedVideos[0];
+
+    if (!firstVideo) {
+      console.error("[VEO] No generated videos in response. Available keys:", Object.keys(operation.response || operation.result || {}));
+      throw new Error("Video generation completed but no video was returned. Coba lagi atau gunakan prompt yang berbeda.");
+    }
+
+    const downloadLink = firstVideo.video?.uri || firstVideo.uri || firstVideo.videoUri;
+
+    if (!downloadLink) {
+      console.error("[VEO] Video object structure:", JSON.stringify(firstVideo, null, 2));
+      throw new Error("Video generated but download link not found. Struktur response tidak sesuai.");
+    }
+
+    console.log("[VEO] Video URI obtained:", downloadLink.substring(0, 50) + "...");
 
     // Veo download link requires API key
     const videoUrl = `${downloadLink}&key=${apiKey}`;
     const videoRes = await fetch(videoUrl);
+
+    if (!videoRes.ok) {
+      throw new Error(`Gagal mengunduh video: ${videoRes.status} ${videoRes.statusText}`);
+    }
+
     const blob = await videoRes.blob();
+    console.log("[VEO] Video downloaded successfully, size:", blob.size);
     return URL.createObjectURL(blob);
 
   } catch (error: any) {
-    console.error("Veo Video Error:", error);
-    throw new Error(error.message || "Gagal membuat video.");
+    console.error("[VEO] Video Error:", error);
+
+    // Provide more specific error messages
+    if (error.message?.includes('quota') || error.message?.includes('limit')) {
+      throw new Error("API quota exceeded. Coba lagi nanti atau periksa quota API Anda.");
+    }
+    if (error.message?.includes('permission') || error.message?.includes('403')) {
+      throw new Error("API permission denied. Pastikan Veo API sudah diaktifkan di Google Cloud Console.");
+    }
+    if (error.message?.includes('model')) {
+      throw new Error("Model Veo tidak tersedia. Pastikan Anda memiliki akses ke Veo 3.");
+    }
+
+    throw new Error(error.message || "Gagal membuat video. Periksa console untuk detail.");
   }
 };
+
 
 const pcmToWav = (samples: Uint8Array, sampleRate: number = 24000, numChannels: number = 1): ArrayBuffer => {
   const buffer = new ArrayBuffer(44 + samples.length);

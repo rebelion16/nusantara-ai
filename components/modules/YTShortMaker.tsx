@@ -39,7 +39,7 @@ import {
   type DownloadProgress
 } from '../../services/ytShortService';
 
-import { GPUStatusComponent } from '../GPUStatus';
+import { GPUStatusComponent } from '../../components/GPUStatus';
 
 // ===== Types =====
 
@@ -1306,7 +1306,7 @@ export const YTShortMakerModule: React.FC = () => {
                     try {
                       const result = await (window as any).electronAPI?.restartBackend();
                       if (result?.success) {
-                        checkBackendStatus();
+                        checkBackendHealth();
                       }
                     } catch (err) {
                       console.error('Failed to restart backend:', err);
