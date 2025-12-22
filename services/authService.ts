@@ -28,12 +28,6 @@ const isNativePlatform = (): boolean => {
     }
 };
 
-// Check if running in Electron
-const isElectronPlatform = (): boolean => {
-    return typeof window !== 'undefined' &&
-        (window as any).isElectron === true;
-};
-
 // Initialize Google Auth for native platforms
 // Plugin reads config from capacitor.config.ts automatically
 const initGoogleAuth = async () => {
@@ -64,22 +58,7 @@ const mapFirebaseUserToProfile = (user: FirebaseUser): UserProfile => {
 export const authService = {
     loginWithGoogle: async (): Promise<UserProfile> => {
         try {
-            if (isElectronPlatform()) {
-                // Electron: Firebase popup auth doesn't work on file:// protocol
-                // Create a guest/desktop user profile
-                console.log("[AUTH] Electron detected - using desktop mode...");
-
-                const profile: UserProfile = {
-                    id: 'electron-user-' + Date.now(),
-                    name: 'Desktop User',
-                    email: 'desktop@nusantara-ai.local',
-                    avatar: '',
-                };
-
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-                console.log("[AUTH] Desktop login success");
-                return profile;
-            } else if (isNativePlatform()) {
+            if (isNativePlatform()) {
                 // Use native Google Sign-In for Android/iOS
                 console.log("[AUTH] Using native Google Sign-In...");
 

@@ -1295,33 +1295,11 @@ export const YTShortMakerModule: React.FC = () => {
             <div className="flex-1">
               <h4 className="font-bold text-red-700 dark:text-red-400">Backend Offline</h4>
               <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-                {typeof window !== 'undefined' && (window as any).isElectron
-                  ? 'Backend sedang starting atau mengalami masalah. Coba restart backend.'
-                  : 'Python backend tidak terdeteksi. Jalankan command berikut di terminal:'
-                }
+                Python backend tidak terdeteksi. Jalankan command berikut di terminal:
               </p>
-              {typeof window !== 'undefined' && (window as any).isElectron ? (
-                <button
-                  onClick={async () => {
-                    try {
-                      const result = await (window as any).electronAPI?.restartBackend();
-                      if (result?.success) {
-                        checkBackendHealth();
-                      }
-                    } catch (err) {
-                      console.error('Failed to restart backend:', err);
-                    }
-                  }}
-                  className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <RefreshCw size={16} />
-                  Restart Backend
-                </button>
-              ) : (
-                <pre className="mt-2 bg-red-100 dark:bg-red-900/40 p-2 rounded text-xs font-mono overflow-x-auto">
-                  cd backend && python main.py
-                </pre>
-              )}
+              <pre className="mt-2 bg-red-100 dark:bg-red-900/40 p-2 rounded text-xs font-mono overflow-x-auto">
+                cd backend && python main.py
+              </pre>
             </div>
           </div>
         </div>

@@ -97,7 +97,7 @@ export const PrewedVirtualModule: React.FC = () => {
   const [mood, setMood] = useState(MOODS[0]);
   const [grading, setGrading] = useState(COLOR_GRADING[0]);
   const [cameraAngle, setCameraAngle] = useState(CAMERA_ANGLES[0]);
-  
+
   // Custom manual inputs
   const [customTheme, setCustomTheme] = useState('');
   const [customOutfit, setCustomOutfit] = useState('');
@@ -136,8 +136,8 @@ export const PrewedVirtualModule: React.FC = () => {
   const renderDropdown = (label: string, value: string, setValue: (val: string) => void, options: string[]) => (
     <div className="space-y-1">
       <label className="text-[10px] font-semibold text-gray-500 uppercase">{label}</label>
-      <select 
-        value={value} 
+      <select
+        value={value}
         onChange={(e) => setValue(e.target.value)}
         className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm dark:text-white outline-none"
       >
@@ -148,51 +148,52 @@ export const PrewedVirtualModule: React.FC = () => {
 
   const extraControls = (
     <div className="space-y-6">
-       <div className="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/30">
-          <h3 className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2">
-             <span>💍</span> Konsep Prewedding
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             {renderDropdown("Tema Utama", theme, setTheme, THEMES)}
-             {renderDropdown("Lokasi", location, setLocation, LOCATIONS)}
-             {renderDropdown("Gaya Outfit", outfit, setOutfit, OUTFITS)}
-             {renderDropdown("Pose Pasangan", pose, setPose, POSES)}
-          </div>
-       </div>
+      <div className="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/30">
+        <h3 className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2">
+          <span>💍</span> Konsep Prewedding
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {renderDropdown("Tema Utama", theme, setTheme, THEMES)}
+          {renderDropdown("Lokasi", location, setLocation, LOCATIONS)}
+          {renderDropdown("Gaya Outfit", outfit, setOutfit, OUTFITS)}
+          {renderDropdown("Pose Pasangan", pose, setPose, POSES)}
+        </div>
+      </div>
 
-       <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Atmosfer & Kamera</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             {renderDropdown("Mood / Emosi", mood, setMood, MOODS)}
-             {renderDropdown("Angle Kamera", cameraAngle, setCameraAngle, CAMERA_ANGLES)}
-             {renderDropdown("Color Grading (Filter)", grading, setGrading, COLOR_GRADING)}
-          </div>
-       </div>
+      <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Atmosfer & Kamera</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {renderDropdown("Mood / Emosi", mood, setMood, MOODS)}
+          {renderDropdown("Angle Kamera", cameraAngle, setCameraAngle, CAMERA_ANGLES)}
+          {renderDropdown("Color Grading (Filter)", grading, setGrading, COLOR_GRADING)}
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <GeneratorModule 
+    <GeneratorModule
       moduleId="prewed-virtual"
       title="Prewed Virtual"
       description="Buat foto prewedding impian Anda tanpa perlu sewa studio mahal. Cukup upload foto Anda dan pasangan."
       promptPrefix={getPromptPrefix()}
-      
+
       // Enforce 2 Inputs
       requireImage={true}
       mainImageLabel="Pasangan 1"
-      
+
       allowAdditionalFaceImage={true}
       secondFaceLabel="Pasangan 2"
-      
+
       // Allow style reference if needed
       allowReferenceImage={true}
       referenceImageLabel="Referensi Gaya (Opsional)"
-      
+
       extraControls={extraControls}
       batchModeAvailable={true}
+      availablePoses={POSES} // NEW: Pass available poses for batch selection
       defaultAspectRatio="3:4"
-      
+
       // Name inputs
       showNames={true}
       name1={name1} onName1Change={setName1}

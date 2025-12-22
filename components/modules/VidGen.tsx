@@ -1,10 +1,11 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   generateVeoVideo,
   generateRandomPrompt,
   generateStoryScript,
   generateScenePrompts,
+  generateSpeech,
   type StoryScript,
   type ScenePrompt,
   type VideoTheme,
@@ -13,10 +14,16 @@ import {
   CAMERA_LABELS
 } from '../../services/geminiService';
 import {
+  initFFmpeg,
+  mergeVideoAudio,
+  isFFmpegLoaded
+} from '../../services/ffmpegService';
+import {
   Loader2, Plus, Trash2, Sparkles, Video, Film, MessageSquare,
   Image as ImageIcon, X, BookOpen, Clapperboard, Play, Download,
   CheckCircle2, Clock, AlertCircle, Settings2, Megaphone, Eye,
-  ChevronDown, ChevronUp, RefreshCw, Pause
+  ChevronDown, ChevronUp, RefreshCw, Pause, Mic, Volume2, Palette,
+  Merge, Zap
 } from 'lucide-react';
 import { ErrorPopup } from '../ErrorPopup';
 
@@ -54,6 +61,29 @@ const CTA_STYLES: Array<{ id: 'bold' | 'subtle' | 'animated'; label: string }> =
   { id: 'animated', label: 'Animated (Dinamis)' },
 ];
 
+// Voice options for Indonesian TTS
+const VOICE_OPTIONS = [
+  { id: 'Kore', label: 'Kore (Pria)', gender: 'male' },
+  { id: 'Puck', label: 'Puck (Pria)', gender: 'male' },
+  { id: 'Charon', label: 'Charon (Pria)', gender: 'male' },
+  { id: 'Fenrir', label: 'Fenrir (Pria)', gender: 'male' },
+  { id: 'Aoede', label: 'Aoede (Wanita)', gender: 'female' },
+  { id: 'Leda', label: 'Leda (Wanita)', gender: 'female' },
+  { id: 'Zephyr', label: 'Zephyr (Wanita)', gender: 'female' },
+];
+
+// Visual style options
+const VISUAL_STYLES = [
+  { id: 'Cinematic', label: '🎬 Cinematic', desc: 'Film-grade visuals' },
+  { id: 'Animation', label: '🎨 Animation', desc: '2D/3D animated' },
+  { id: 'Cyberpunk', label: '🌃 Cyberpunk', desc: 'Futuristic neon' },
+  { id: 'Nature', label: '🌿 Nature', desc: 'Natural landscapes' },
+  { id: 'Commercial', label: '📺 Commercial', desc: 'Professional ads' },
+  { id: 'Fantasy', label: '✨ Fantasy', desc: 'Magical worlds' },
+  { id: 'Documentary', label: '📹 Documentary', desc: 'Realistic footage' },
+  { id: 'Minimalist', label: '⬜ Minimalist', desc: 'Clean, simple' },
+];
+
 // ===== TYPES =====
 
 interface DialogueLine {
@@ -69,6 +99,8 @@ interface GeneratedScene {
   sceneId: number;
   status: SceneStatus;
   videoUrl?: string;
+  audioUrl?: string;
+  mergedUrl?: string;
   error?: string;
 }
 
@@ -114,6 +146,31 @@ export const VidGenModule: React.FC = () => {
   const [storyError, setStoryError] = useState<string | null>(null);
   const [expandedScene, setExpandedScene] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Voice Over State
+  const [enableVoiceOver, setEnableVoiceOver] = useState(true);
+  const [selectedVoice, setSelectedVoice] = useState('Kore');
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+
+  // Visual Style State
+  const [visualStyle, setVisualStyle] = useState('Cinematic');
+
+  // Auto-Merge State (FFmpeg.wasm)
+  const [autoMerge, setAutoMerge] = useState(true);
+  const [ffmpegReady, setFfmpegReady] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
+  const [mergeProgress, setMergeProgress] = useState(0);
+
+  // Pre-load FFmpeg when auto-merge is enabled
+  useEffect(() => {
+    if (autoMerge && enableVoiceOver && !ffmpegReady) {
+      initFFmpeg((progress) => setMergeProgress(progress))
+        .then(loaded => {
+          setFfmpegReady(loaded);
+          if (loaded) console.log('[VidGen] FFmpeg.wasm ready for auto-merge');
+        });
+    }
+  }, [autoMerge, enableVoiceOver, ffmpegReady]);
 
   // === Single Video Handlers ===
 
@@ -216,22 +273,41 @@ export const VidGenModule: React.FC = () => {
         storyIdea,
         videoTheme,
         targetDuration,
-        enableCTA ? ctaText : undefined
+        enableCTA && ctaText.trim() ? ctaText : undefined
       );
-      setStoryScript(script);
 
-      // Generate scene prompts with camera motions
+      // If CTA is enabled and has text, add a dedicated CTA scene
+      let finalScript = script;
+      if (enableCTA && ctaText.trim()) {
+        const ctaSceneId = script.scenes.length + 1;
+        const ctaScene = {
+          id: ctaSceneId,
+          narration: ctaText,
+          visualDescription: `${ctaStyle === 'animated' ? 'Animated dynamic' : ctaStyle === 'bold' ? 'Bold impactful' : 'Subtle elegant'} call-to-action scene with text overlay: "${ctaText}". ${visualStyle} style with motion graphics and professional branding elements.`,
+          duration: 8
+        };
+        finalScript = {
+          ...script,
+          scenes: [...script.scenes, ctaScene],
+          totalDuration: script.totalDuration + 8
+        };
+      }
+
+      setStoryScript(finalScript);
+
+      // Generate scene prompts with camera motions and visual style
       const prompts = await generateScenePrompts(
-        script,
+        finalScript,
         selectedMotions,
-        CATEGORIES[0] // Use first category as style
+        visualStyle
       );
       setScenePrompts(prompts);
 
-      // Initialize scene status
-      setGeneratedScenes(script.scenes.map(s => ({
+      // Initialize scene status (with audioUrl for voice over)
+      setGeneratedScenes(finalScript.scenes.map(s => ({
         sceneId: s.id,
-        status: 'pending' as SceneStatus
+        status: 'pending' as SceneStatus,
+        audioUrl: undefined
       })));
 
     } catch (err: any) {
@@ -239,6 +315,36 @@ export const VidGenModule: React.FC = () => {
     } finally {
       setIsGeneratingScript(false);
     }
+  };
+
+  // Generate voice over for all scenes
+  const handleGenerateVoiceOver = async () => {
+    if (!storyScript) return;
+
+    setIsGeneratingAudio(true);
+    setStoryError(null);
+
+    for (const scene of storyScript.scenes) {
+      try {
+        // Generate Indonesian voice over for narration
+        const audioUrl = await generateSpeech(
+          scene.narration,
+          selectedVoice,
+          'Indonesian narrator, clear and professional'
+        );
+
+        // Update scene with audio URL
+        setGeneratedScenes(prev => prev.map(s =>
+          s.sceneId === scene.id
+            ? { ...s, audioUrl }
+            : s
+        ));
+      } catch (err: any) {
+        console.error(`Failed to generate audio for scene ${scene.id}:`, err);
+      }
+    }
+
+    setIsGeneratingAudio(false);
   };
 
   const handleGenerateAllScenes = useCallback(async () => {
@@ -256,6 +362,7 @@ export const VidGenModule: React.FC = () => {
       }
 
       const scenePrompt = scenePrompts[i];
+      const scene = storyScript.scenes.find(s => s.id === scenePrompt.sceneId);
       setCurrentGeneratingScene(scenePrompt.sceneId);
 
       // Update status to generating
@@ -266,12 +373,52 @@ export const VidGenModule: React.FC = () => {
       ));
 
       try {
+        // Step 1: Generate video
         const videoUrl = await generateVeoVideo(scenePrompt.prompt, storyAspectRatio, null);
 
-        // Update status to completed
+        let audioUrl: string | undefined;
+        let mergedUrl: string | undefined;
+
+        // Step 2: Generate voice over if enabled
+        if (enableVoiceOver && scene) {
+          try {
+            audioUrl = await generateSpeech(
+              scene.narration,
+              selectedVoice,
+              'Indonesian narrator, clear and professional'
+            );
+
+            // Step 3: Auto-merge video + audio if enabled
+            if (autoMerge && ffmpegReady && audioUrl) {
+              setIsMerging(true);
+              try {
+                mergedUrl = await mergeVideoAudio(
+                  videoUrl,
+                  audioUrl,
+                  `scene-${scenePrompt.sceneId}-merged.mp4`,
+                  (p) => setMergeProgress(p)
+                );
+              } catch (mergeErr) {
+                console.error(`[VidGen] Merge failed for scene ${scenePrompt.sceneId}:`, mergeErr);
+                // Keep video + audio separate if merge fails
+              }
+              setIsMerging(false);
+            }
+          } catch (audioErr) {
+            console.error(`[VidGen] Audio failed for scene ${scenePrompt.sceneId}:`, audioErr);
+          }
+        }
+
+        // Update status to completed with all URLs
         setGeneratedScenes(prev => prev.map(s =>
           s.sceneId === scenePrompt.sceneId
-            ? { ...s, status: 'completed' as SceneStatus, videoUrl }
+            ? {
+              ...s,
+              status: 'completed' as SceneStatus,
+              videoUrl,
+              audioUrl,
+              mergedUrl
+            }
             : s
         ));
       } catch (err: any) {
@@ -286,7 +433,7 @@ export const VidGenModule: React.FC = () => {
 
     setIsGeneratingVideos(false);
     setCurrentGeneratingScene(null);
-  }, [storyScript, scenePrompts, storyAspectRatio, isPaused]);
+  }, [storyScript, scenePrompts, storyAspectRatio, isPaused, enableVoiceOver, selectedVoice, autoMerge, ffmpegReady]);
 
   const handleRegenerateScene = async (sceneId: number) => {
     const scenePrompt = scenePrompts.find(p => p.sceneId === sceneId);
@@ -460,8 +607,8 @@ export const VidGenModule: React.FC = () => {
           onClick={handleGenerate}
           disabled={isLoading}
           className={`w-full py-4 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${isLoading
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
-              : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
+            ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
+            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
             }`}
         >
           {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Video size={20} />}
@@ -579,6 +726,88 @@ export const VidGenModule: React.FC = () => {
             </select>
           </div>
 
+          {/* Visual Style Selector */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
+              <Palette size={14} /> Gaya Visual
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {VISUAL_STYLES.map(style => (
+                <button
+                  key={style.id}
+                  onClick={() => setVisualStyle(style.id)}
+                  className={`p-3 rounded-xl text-left transition-all ${visualStyle === style.id
+                    ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg scale-[1.02]'
+                    : 'bg-gray-50 dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-gray-200 dark:border-gray-700'
+                    }`}
+                >
+                  <span className="text-sm font-medium">{style.label}</span>
+                  <p className={`text-xs mt-0.5 ${visualStyle === style.id ? 'text-white/80' : 'text-gray-400'}`}>
+                    {style.desc}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Voice Over Section */}
+          <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enableVoiceOver}
+                onChange={(e) => setEnableVoiceOver(e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                <Mic size={16} className="text-indigo-500" /> Voice Over Bahasa Indonesia
+              </span>
+            </label>
+
+            {enableVoiceOver && (
+              <div className="pl-8 space-y-3 animate-fade-in">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Pilih Suara Narator</label>
+                  <select
+                    value={selectedVoice}
+                    onChange={(e) => setSelectedVoice(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm dark:text-white outline-none"
+                  >
+                    {VOICE_OPTIONS.map(v => (
+                      <option key={v.id} value={v.id}>{v.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Auto-Merge Toggle */}
+                <label className="flex items-center gap-3 cursor-pointer bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-3 rounded-lg">
+                  <input
+                    type="checkbox"
+                    checked={autoMerge}
+                    onChange={(e) => setAutoMerge(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                      <Zap size={14} className="text-green-500" /> Auto-Merge Video + Voice
+                    </span>
+                    <p className="text-xs text-gray-400">
+                      Otomatis gabungkan video dengan narasi (FFmpeg.wasm)
+                    </p>
+                  </div>
+                  {autoMerge && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${ffmpegReady
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400'
+                      }`}>
+                      {ffmpegReady ? '✓ Ready' : '⏳ Loading...'}
+                    </span>
+                  )}
+                </label>
+              </div>
+            )}
+          </div>
+
           {/* Camera Motion Selector */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
@@ -590,8 +819,8 @@ export const VidGenModule: React.FC = () => {
                   key={motion}
                   onClick={() => handleMotionToggle(motion)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${selectedMotions.includes(motion)
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30'
                     }`}
                 >
                   {CAMERA_LABELS[motion]}
@@ -629,8 +858,8 @@ export const VidGenModule: React.FC = () => {
                       key={s.id}
                       onClick={() => setCtaStyle(s.id)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${ctaStyle === s.id
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                         }`}
                     >
                       {s.label}
@@ -646,8 +875,8 @@ export const VidGenModule: React.FC = () => {
             onClick={handleGenerateScript}
             disabled={isGeneratingScript || !storyIdea.trim()}
             className={`w-full py-4 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${isGeneratingScript || !storyIdea.trim()
-                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
-                : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-wait'
+              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
               }`}
           >
             {isGeneratingScript ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
@@ -700,12 +929,12 @@ export const VidGenModule: React.FC = () => {
                   <div
                     key={scene.id}
                     className={`border rounded-xl overflow-hidden transition-all ${genScene?.status === 'completed'
-                        ? 'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10'
-                        : genScene?.status === 'generating'
-                          ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/10'
-                          : genScene?.status === 'error'
-                            ? 'border-red-300 dark:border-red-700 bg-red-50/50 dark:bg-red-900/10'
-                            : 'border-gray-200 dark:border-gray-700'
+                      ? 'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10'
+                      : genScene?.status === 'generating'
+                        ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/10'
+                        : genScene?.status === 'error'
+                          ? 'border-red-300 dark:border-red-700 bg-red-50/50 dark:bg-red-900/10'
+                          : 'border-gray-200 dark:border-gray-700'
                       }`}
                   >
                     <div
@@ -745,16 +974,34 @@ export const VidGenModule: React.FC = () => {
                             <span className="text-xs text-purple-500 mt-1 inline-block">📹 {CAMERA_LABELS[scenePrompt.cameraMotion]}</span>
                           </div>
                         )}
+                        {/* Voice Over Audio Player */}
+                        {genScene?.audioUrl && (
+                          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg space-y-2">
+                            <p className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                              <Volume2 size={12} /> Voice Over Audio
+                            </p>
+                            <audio src={genScene.audioUrl} controls className="w-full h-8" />
+                            <a
+                              href={genScene.audioUrl}
+                              download={`voiceover-scene-${scene.id}.wav`}
+                              className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
+                            >
+                              <Download size={12} /> Download Audio
+                            </a>
+                          </div>
+                        )}
                         {genScene?.status === 'completed' && genScene.videoUrl && (
                           <div className="space-y-2">
                             <video src={genScene.videoUrl} controls className="w-full rounded-lg" />
-                            <a
-                              href={genScene.videoUrl}
-                              download={`scene-${scene.id}.mp4`}
-                              className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
-                            >
-                              <Download size={12} /> Download Scene
-                            </a>
+                            <div className="flex gap-3">
+                              <a
+                                href={genScene.videoUrl}
+                                download={`scene-${scene.id}.mp4`}
+                                className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
+                              >
+                                <Download size={12} /> Download Video
+                              </a>
+                            </div>
                           </div>
                         )}
                         {genScene?.status === 'error' && (
@@ -780,8 +1027,8 @@ export const VidGenModule: React.FC = () => {
               onClick={isGeneratingVideos ? () => setIsPaused(true) : handleGenerateAllScenes}
               disabled={isGeneratingScript}
               className={`w-full py-4 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${isGeneratingVideos
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
+                ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'
                 }`}
             >
               {isGeneratingVideos ? (
@@ -794,6 +1041,28 @@ export const VidGenModule: React.FC = () => {
                 </>
               )}
             </button>
+
+            {/* Generate Voice Over Button */}
+            {enableVoiceOver && (
+              <button
+                onClick={handleGenerateVoiceOver}
+                disabled={isGeneratingAudio || isGeneratingVideos}
+                className={`w-full py-3 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${isGeneratingAudio
+                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 cursor-wait'
+                  : 'bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white'
+                  }`}
+              >
+                {isGeneratingAudio ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" /> Generating Voice Over...
+                  </>
+                ) : (
+                  <>
+                    <Mic size={18} /> Generate Voice Over Indonesia
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -898,8 +1167,8 @@ export const VidGenModule: React.FC = () => {
         <button
           onClick={() => setActiveTab('single')}
           className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'single'
-              ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+            ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
         >
           <Video size={18} /> Single Video
@@ -907,8 +1176,8 @@ export const VidGenModule: React.FC = () => {
         <button
           onClick={() => setActiveTab('story')}
           className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'story'
-              ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+            ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
+            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
         >
           <Clapperboard size={18} /> 🎬 Story Generator

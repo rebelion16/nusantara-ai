@@ -199,6 +199,7 @@ export const generateCreativeImage = async (
 
   try {
     const config: any = {
+      responseModalities: ['IMAGE'], // Tell model to respond with image
       imageConfig: {
         aspectRatio: aspectRatio,
       }

@@ -34,3 +34,52 @@ ios/
 *.apk
 *.aab
 *.keystore
+
+# ===== LARGE FILES TO IGNORE =====
+
+# Backend build files (Python EXE)
+backend-dist/
+backend/build/
+backend/dist/
+backend/__pycache__/
+backend/**/__pycache__/
+*.exe
+*.spec
+*.pyd
+
+# Electron build files
+dist-electron/
+release/
+out/
+*.blockmap
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.Python
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.ogg
+
+# Temp files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# Build artifacts
+*.tgz
+*.tar.gz
+*.zip
