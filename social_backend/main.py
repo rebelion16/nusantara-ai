@@ -268,11 +268,21 @@ async def youtube_download(request: YouTubeDownloadRequest):
     
     video_id = str(uuid.uuid4())[:8]
     opts = {
-        "format": f"bestvideo[height<={request.max_height}]+bestaudio/best",
+        "format": f"bestvideo[height<={request.max_height}]+bestaudio/best[height<={request.max_height}]/best",
         "outtmpl": str(UPLOAD_DIR / f"{video_id}_%(title).50s.%(ext)s"),
         "merge_output_format": "mp4",
         "progress_hooks": [yt_progress_hook],
-        "extractor_args": {"youtube": {"player_client": ["ios", "android"]}},
+        # Fix 403 Forbidden - use web client and add headers
+        "extractor_args": {"youtube": {"player_client": ["web", "android", "ios"]}},
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        },
+        "quiet": False,
+        "no_warnings": False,
+        "ignoreerrors": False,
+        "retries": 10,
+        "fragment_retries": 10,
     }
     
     try:
