@@ -3,56 +3,8 @@
  * Frontend service untuk komunikasi dengan Python backend
  */
 
-// LocalStorage key for custom backend URL
-const BACKEND_URL_KEY = 'SOCIAL_DOWNLOADER_BACKEND_URL';
-const DEFAULT_BACKEND_URL = import.meta.env.VITE_SOCIAL_BACKEND_URL || 'http://localhost:8000';
-
-/**
- * Get the current backend URL (from localStorage or default)
- */
-export function getBackendUrl(): string {
-  if (typeof window !== 'undefined') {
-    const customUrl = localStorage.getItem(BACKEND_URL_KEY);
-    if (customUrl && customUrl.trim()) {
-      return customUrl.trim();
-    }
-  }
-  return DEFAULT_BACKEND_URL;
-}
-
-/**
- * Set a custom backend URL (stored in localStorage)
- */
-export function setBackendUrl(url: string): void {
-  if (typeof window !== 'undefined') {
-    if (url && url.trim()) {
-      // Remove trailing slash
-      const cleanUrl = url.trim().replace(/\/+$/, '');
-      localStorage.setItem(BACKEND_URL_KEY, cleanUrl);
-    } else {
-      localStorage.removeItem(BACKEND_URL_KEY);
-    }
-  }
-}
-
-/**
- * Clear custom backend URL (revert to default)
- */
-export function clearBackendUrl(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(BACKEND_URL_KEY);
-  }
-}
-
-/**
- * Check if using custom backend URL
- */
-export function isUsingCustomBackendUrl(): boolean {
-  if (typeof window !== 'undefined') {
-    return !!localStorage.getItem(BACKEND_URL_KEY);
-  }
-  return false;
-}
+// Backend URL - change this if running on different port or using tunnel
+const BACKEND_URL = import.meta.env.VITE_SOCIAL_BACKEND_URL || 'http://localhost:8000';
 
 // ===== Types =====
 
@@ -216,7 +168,7 @@ export function formatNumber(num?: number): string {
  */
 export async function checkBackendHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${getBackendUrl()}/status`, {
+    const response = await fetch(`${BACKEND_URL}/status`, {
       method: 'GET',
       signal: AbortSignal.timeout(5000), // 5 second timeout
     });
@@ -230,7 +182,7 @@ export async function checkBackendHealth(): Promise<boolean> {
  * Get backend status info
  */
 export async function getBackendStatus(): Promise<BackendStatus> {
-  const response = await fetch(`${getBackendUrl()}/status`);
+  const response = await fetch(`${BACKEND_URL}/status`);
   return handleResponse(response);
 }
 
@@ -238,7 +190,7 @@ export async function getBackendStatus(): Promise<BackendStatus> {
  * Get media info from URL
  */
 export async function getMediaInfo(url: string): Promise<MediaInfo> {
-  const response = await fetch(`${getBackendUrl()}/info`, {
+  const response = await fetch(`${BACKEND_URL}/info`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
@@ -254,7 +206,7 @@ export async function startDownload(
   format: 'best' | 'audio' | 'video_only' = 'best',
   quality: '360' | '480' | '720' | '1080' | '4k' = '1080'
 ): Promise<{ task_id: string; message: string }> {
-  const response = await fetch(`${getBackendUrl()}/download`, {
+  const response = await fetch(`${BACKEND_URL}/download`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, format, quality }),
@@ -266,7 +218,7 @@ export async function startDownload(
  * Get download progress
  */
 export async function getDownloadProgress(taskId: string): Promise<DownloadProgress> {
-  const response = await fetch(`${getBackendUrl()}/progress/${taskId}`);
+  const response = await fetch(`${BACKEND_URL}/progress/${taskId}`);
   return handleResponse(response);
 }
 
@@ -274,14 +226,14 @@ export async function getDownloadProgress(taskId: string): Promise<DownloadProgr
  * Get file download URL
  */
 export function getFileUrl(filename: string): string {
-  return `${getBackendUrl()}/file/${encodeURIComponent(filename)}`;
+  return `${BACKEND_URL}/file/${encodeURIComponent(filename)}`;
 }
 
 /**
  * Delete downloaded file
  */
 export async function deleteFile(filename: string): Promise<void> {
-  const response = await fetch(`${getBackendUrl()}/file/${encodeURIComponent(filename)}`, {
+  const response = await fetch(`${BACKEND_URL}/file/${encodeURIComponent(filename)}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -294,7 +246,7 @@ export async function deleteFile(filename: string): Promise<void> {
  * List all downloaded files
  */
 export async function listFiles(): Promise<DownloadedFile[]> {
-  const response = await fetch(`${getBackendUrl()}/files`);
+  const response = await fetch(`${BACKEND_URL}/files`);
   const data = await handleResponse<{ files: DownloadedFile[] }>(response);
   return data.files;
 }
@@ -303,7 +255,7 @@ export async function listFiles(): Promise<DownloadedFile[]> {
  * Clear all downloaded files
  */
 export async function clearFiles(): Promise<{ message: string }> {
-  const response = await fetch(`${getBackendUrl()}/files`, {
+  const response = await fetch(`${BACKEND_URL}/files`, {
     method: 'DELETE',
   });
   return handleResponse(response);
