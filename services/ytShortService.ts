@@ -3,8 +3,8 @@
  * Frontend service untuk komunikasi dengan Python backend
  */
 
-// Backend URL - change this if running on different port
-const BACKEND_URL = 'http://localhost:8000';
+// Backend URL - change this if running on different port or using tunnel
+const BACKEND_URL = import.meta.env.VITE_YTSHORT_BACKEND_URL || 'http://localhost:8000';
 
 // ===== Types =====
 
