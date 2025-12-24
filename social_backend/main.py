@@ -574,10 +574,13 @@ JANGAN tambahkan penjelasan, HANYA output JSON."""
             result = json.loads(result_text)
             highlights = result.get("highlights", [])
             
+            # Sort by timestamp for chronological display
+            top_highlights = sorted(highlights[:request.num_highlights], key=lambda x: x.get("start", 0))
+            
             return {
-                "highlights": highlights[:request.num_highlights],
+                "highlights": top_highlights,
                 "summary": result.get("summary", "AI-detected highlights"),
-                "total_duration": sum(h.get("end", 0) - h.get("start", 0) for h in highlights[:request.num_highlights]),
+                "total_duration": sum(h.get("end", 0) - h.get("start", 0) for h in top_highlights),
                 "method": "gemini_ai"
             }
             
@@ -616,15 +619,19 @@ JANGAN tambahkan penjelasan, HANYA output JSON."""
                 "category": matched_categories[0] if matched_categories else "general"
             })
     
-    # Sort by score
+    # Sort by score first, then take top N, then sort by timestamp for display
     highlights.sort(key=lambda x: x["score"], reverse=True)
+    top_highlights = highlights[:request.num_highlights]
+    # Re-sort by timestamp for chronological display
+    top_highlights.sort(key=lambda x: x["start"])
     
     return {
-        "highlights": highlights[:request.num_highlights],
+        "highlights": top_highlights,
         "summary": "Highlights from keyword analysis",
-        "total_duration": sum(h["end"] - h["start"] for h in highlights[:request.num_highlights]),
+        "total_duration": sum(h["end"] - h["start"] for h in top_highlights),
         "method": "keyword_fallback"
     }
+
 
 @app.post("/cut")
 async def cut_video(request: CutRequest):
