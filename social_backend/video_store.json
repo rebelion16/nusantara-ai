@@ -1,6 +1,6 @@
 {
-  "8c46695b": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\8c46695b.mp4",
+  "f2d8141f": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\f2d8141f.mp4",
     "info": {
       "duration": 1842.015782,
       "width": 640,
@@ -12,132 +12,41 @@
       "audio_codec": "aac"
     }
   },
-  "aefe2811": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\aefe2811_cut.mp4",
+  "f10959dd": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\f10959dd_cut.mp4",
     "info": {
       "duration": 60.0,
       "width": 1080,
       "height": 1920,
       "fps": 25.0,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 3235002,
+      "size": 5611060,
       "video_codec": "h264",
       "audio_codec": "aac"
     }
   },
-  "f6ece0b9": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\f6ece0b9_final.mp4",
+  "5cc424d6": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\5cc424d6_final.mp4",
     "info": {
       "duration": 60.0,
       "width": 608,
       "height": 1080,
       "fps": 25.0,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 2557452,
+      "size": 4103927,
       "video_codec": "h264",
       "audio_codec": "aac"
     }
   },
-  "eacf25e8": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\eacf25e8_cut.mp4",
-    "info": {
-      "duration": 16.2,
-      "width": 1080,
-      "height": 1920,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 328211,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "e29e40c5": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\e29e40c5_cut.mp4",
-    "info": {
-      "duration": 27.2,
-      "width": 1080,
-      "height": 1920,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 1108647,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "dd58955c": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\dd58955c.mp4",
-    "info": {
-      "duration": 1842.015782,
-      "width": 640,
-      "height": 360,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 88596980,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "c55072b3": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\c55072b3_cut.mp4",
+  "a15e1388": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\a15e1388_cut.mp4",
     "info": {
       "duration": 60.0,
       "width": 1080,
       "height": 1920,
       "fps": 25.0,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 3563591,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "14283d65": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\14283d65_cut.mp4",
-    "info": {
-      "duration": 5.12,
-      "width": 1080,
-      "height": 1920,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 392785,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "164ddc34": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\164ddc34_cut.mp4",
-    "info": {
-      "duration": 5.12,
-      "width": 1080,
-      "height": 1920,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 392785,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "0edc30ce": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\0edc30ce_final.mp4",
-    "info": {
-      "duration": 5.12,
-      "width": 608,
-      "height": 1080,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 316298,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "32fc87eb": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\32fc87eb_cut.mp4",
-    "info": {
-      "duration": 60.0,
-      "width": 1080,
-      "height": 1920,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 3563591,
+      "size": 4641407,
       "video_codec": "h264",
       "audio_codec": "aac"
     }
