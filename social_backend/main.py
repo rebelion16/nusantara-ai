@@ -267,42 +267,71 @@ async def youtube_download(request: YouTubeDownloadRequest):
     yt_progress = {"percent": 0, "status": "downloading", "filename": ""}
     
     video_id = str(uuid.uuid4())[:8]
-    opts = {
-        "format": f"bestvideo[height<={request.max_height}]+bestaudio/best[height<={request.max_height}]/best",
+    
+    # Try different strategies to bypass 403
+    base_opts = {
         "outtmpl": str(UPLOAD_DIR / f"{video_id}_%(title).50s.%(ext)s"),
         "merge_output_format": "mp4",
         "progress_hooks": [yt_progress_hook],
-        # Fix 403 Forbidden - use web client and add headers
-        "extractor_args": {"youtube": {"player_client": ["web", "android", "ios"]}},
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-        },
-        "quiet": False,
-        "no_warnings": False,
-        "ignoreerrors": False,
-        "retries": 10,
-        "fragment_retries": 10,
+        "quiet": True,
+        "no_warnings": True,
+        "retries": 5,
+        "fragment_retries": 5,
     }
     
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(request.url, download=True)
-        
-        for f in UPLOAD_DIR.glob(f"{video_id}_*"):
-            video_store[video_id] = {"path": str(f), "info": get_video_info(f)}
-            save_video_store()  # Persist to file
-            return {
-                "video_id": video_id,
-                "youtube_id": info.get("id"),
-                "title": info.get("title"),
-                "channel": info.get("channel"),
-                "thumbnail": info.get("thumbnail"),
-                "info": video_store[video_id]["info"],
-            }
-        raise HTTPException(status_code=500, detail="Download gagal")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    # Strategy list - try each until one works
+    strategies = [
+        # Strategy 1: Simple format without separate streams
+        {
+            **base_opts,
+            "format": "best[height<=720]/best",
+        },
+        # Strategy 2: With cookies from Edge browser  
+        {
+            **base_opts,
+            "format": "best[height<=720]/best",
+            "cookiesfrombrowser": ("edge",),
+        },
+        # Strategy 3: With cookies from Chrome browser
+        {
+            **base_opts,
+            "format": "best[height<=720]/best",
+            "cookiesfrombrowser": ("chrome",),
+        },
+        # Strategy 4: Using android client
+        {
+            **base_opts,
+            "format": f"bestvideo[height<={request.max_height}]+bestaudio/best",
+            "extractor_args": {"youtube": {"player_client": ["android"]}},
+        },
+    ]
+    
+    last_error = None
+    for i, opts in enumerate(strategies):
+        try:
+            print(f"[INFO] Trying download strategy {i+1}/{len(strategies)}...")
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(request.url, download=True)
+            
+            for f in UPLOAD_DIR.glob(f"{video_id}_*"):
+                video_store[video_id] = {"path": str(f), "info": get_video_info(f)}
+                save_video_store()
+                print(f"[INFO] Download success with strategy {i+1}")
+                return {
+                    "video_id": video_id,
+                    "youtube_id": info.get("id"),
+                    "title": info.get("title"),
+                    "channel": info.get("channel"),
+                    "thumbnail": info.get("thumbnail"),
+                    "info": video_store[video_id]["info"],
+                }
+        except Exception as e:
+            last_error = str(e)
+            print(f"[WARNING] Strategy {i+1} failed: {last_error[:100]}")
+            continue
+    
+    raise HTTPException(status_code=400, detail=f"Download gagal setelah mencoba semua strategi. Error terakhir: {last_error}")
+
 
 @app.get("/youtube/progress")
 async def youtube_progress():
