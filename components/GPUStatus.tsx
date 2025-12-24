@@ -109,12 +109,8 @@ export const GPUStatusComponent: React.FC<GPUStatusProps> = ({
     }
 
     if (error || !status) {
-        return (
-            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                <Cpu size={14} className="text-red-500" />
-                <span className="text-xs text-red-600 dark:text-red-400">{error || 'Unknown error'}</span>
-            </div>
-        );
+        // Don't show error here - parent component handles backend status
+        return null;
     }
 
     const currentEncoder = status.current_encoder;
@@ -126,8 +122,8 @@ export const GPUStatusComponent: React.FC<GPUStatusProps> = ({
             <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${hasGPU
-                        ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
-                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
             >
                 {ENCODER_ICONS[currentEncoder] || <Cpu size={14} />}
