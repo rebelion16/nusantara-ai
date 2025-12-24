@@ -247,24 +247,29 @@ export async function uploadVideo(file: File): Promise<UploadResult> {
 }
 
 /**
- * Transcribe video menggunakan Gemini AI
+ * Transcribe video using selected engine
+ * @param engine - 'gemini' (cloud), 'gpu' (Whisper CUDA), or 'cpu' (Whisper CPU)
  */
 export async function transcribeVideo(
     videoId: string,
     language?: string,
-    apiKey?: string
-): Promise<TranscriptResult> {
+    apiKey?: string,
+    engine: 'gemini' | 'gpu' | 'cpu' = 'gemini'
+): Promise<TranscriptResult & { engine?: string }> {
     const url = new URL(`${BACKEND_URL}/transcribe/${videoId}`);
     if (language) {
         url.searchParams.set('language', language);
     }
+    url.searchParams.set('engine', engine);
 
     const headers: HeadersInit = {};
 
-    // Get API key from parameter, localStorage, or env
-    const key = apiKey || localStorage.getItem('GEMINI_API_KEY') || import.meta.env.VITE_GEMINI_API_KEY;
-    if (key) {
-        headers['X-API-Key'] = key;
+    // API key only needed for gemini engine
+    if (engine === 'gemini') {
+        const key = apiKey || localStorage.getItem('GEMINI_API_KEY') || import.meta.env.VITE_GEMINI_API_KEY;
+        if (key) {
+            headers['X-API-Key'] = key;
+        }
     }
 
     const response = await fetch(url.toString(), {

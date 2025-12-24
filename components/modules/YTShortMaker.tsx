@@ -138,20 +138,44 @@ export const YTShortMakerModule: React.FC = () => {
   // Download progress state
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
 
+  // Transcription engine state
+  type TranscriptionEngine = 'gemini' | 'gpu' | 'cpu';
+  const [selectedEngine, setSelectedEngine] = useState<TranscriptionEngine>('gemini');
+  const [availableEngines, setAvailableEngines] = useState<Array<{ id: string, name: string, available: boolean }>>([]);
+
   // Video player ref
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   // ----- Effects -----
 
-  // Check backend health on mount
+  // Check backend health on mount and load available engines
   useEffect(() => {
     const check = async () => {
       const online = await checkBackendHealth();
       setBackendOnline(online);
+
+      // Fetch available engines from status endpoint
+      if (online) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_YTSHORT_BACKEND_URL || 'http://localhost:8000'}/status`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.engines) {
+              setAvailableEngines(data.engines);
+              // Auto-select first available engine
+              if (data.engines.length > 0 && !data.engines.find((e: any) => e.id === selectedEngine)) {
+                setSelectedEngine(data.engines[0].id as TranscriptionEngine);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch engines:', e);
+        }
+      }
     };
     check();
-    const interval = setInterval(check, 10000);
+    const interval = setInterval(check, 30000); // Check every 30s
     return () => clearInterval(interval);
   }, []);
 
@@ -280,20 +304,30 @@ export const YTShortMakerModule: React.FC = () => {
   const handleTranscribe = async () => {
     if (!videoId) return;
 
-    // Get API key from localStorage or env
+    // API key only needed for Gemini engine
     const apiKey = localStorage.getItem('GEMINI_API_KEY') || import.meta.env.VITE_GEMINI_API_KEY;
 
-    if (!apiKey) {
-      setError('API Key Gemini diperlukan untuk transcription. Tambahkan di halaman Settings.');
+    if (selectedEngine === 'gemini' && !apiKey) {
+      setError('API Key Gemini diperlukan untuk engine Gemini. Tambahkan di halaman Settings atau pilih GPU/CPU.');
       return;
     }
 
     setIsLoading(true);
-    setLoadingMessage('Transcribing dengan Gemini AI... Ini mungkin memakan waktu beberapa menit.');
+    const engineNames: Record<string, string> = {
+      'gemini': 'Gemini AI (Cloud)',
+      'gpu': 'Whisper GPU (Local)',
+      'cpu': 'Whisper CPU (Local)'
+    };
+    setLoadingMessage(`Transcribing dengan ${engineNames[selectedEngine]}... Ini mungkin memakan waktu beberapa menit.`);
     setError(null);
 
     try {
-      const result = await transcribeVideo(videoId, selectedLanguage || undefined, apiKey);
+      const result = await transcribeVideo(
+        videoId,
+        selectedLanguage || undefined,
+        apiKey,
+        selectedEngine
+      );
       setTranscript(result.segments);
       setFullTranscript(result.text);
       setTranscriptLanguage(result.language);
@@ -754,17 +788,58 @@ export const YTShortMakerModule: React.FC = () => {
         </select>
       </div>
 
+      {/* Engine selection */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Transcription Engine
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {availableEngines.length > 0 ? (
+            availableEngines.map((eng) => (
+              <button
+                key={eng.id}
+                onClick={() => setSelectedEngine(eng.id as TranscriptionEngine)}
+                className={`p-4 rounded-xl border-2 transition-all text-left ${selectedEngine === eng.id
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                  }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${selectedEngine === eng.id ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`} />
+                  <span className="font-medium text-gray-900 dark:text-white text-sm">
+                    {eng.id === 'gemini' && '☁️ '}
+                    {eng.id === 'gpu' && '🚀 '}
+                    {eng.id === 'cpu' && '💻 '}
+                    {eng.name}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 ml-5">
+                  {eng.id === 'gemini' && 'Memerlukan API key'}
+                  {eng.id === 'gpu' && 'Tercepat, butuh NVIDIA GPU'}
+                  {eng.id === 'cpu' && 'Lebih lambat, tanpa GPU'}
+                </p>
+              </button>
+            ))
+          ) : (
+            <div className="col-span-3 text-center text-gray-500 text-sm py-4">
+              Loading available engines...
+            </div>
+          )}
+        </div>
+      </div>
+
       <button
         onClick={handleTranscribe}
-        disabled={isLoading}
+        disabled={isLoading || availableEngines.length === 0}
         className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Mic size={20} />}
-        {isLoading ? loadingMessage : 'Start Transcription (Whisper)'}
+        {isLoading ? loadingMessage : `Start Transcription (${selectedEngine.toUpperCase()})`}
       </button>
 
       <p className="text-xs text-center text-gray-400">
-        ⚠️ Proses transcription membutuhkan waktu 1-5 menit tergantung durasi video
+        ⚠️ Proses transcription membutuhkan waktu 1-5 menit tergantung durasi video dan engine
       </p>
     </div>
   );
