@@ -1,22 +1,32 @@
 """
 YT Short Maker Backend
-Video processing untuk membuat YouTube Shorts
-Berjalan di port 8000 (lokal)
+Video processing untuk membuat YouTube Shorts dengan Gemini AI
+Berjalan di port 8000 (lokal atau via Cloudflare Tunnel)
 """
 
 import os
 import uuid
 import subprocess
 import json
+import re
+import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import yt_dlp
+
+# Gemini AI
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("[WARNING] google-generativeai not installed. Run: pip install google-generativeai")
 
 # ===================== CONFIG =====================
 
@@ -87,6 +97,13 @@ class DetectHighlightsRequest(BaseModel):
     segments: List[TranscriptSegment]
     target_duration: Optional[int] = 60
     num_highlights: Optional[int] = 5
+    api_key: Optional[str] = None
+    content_type: Optional[str] = "general"
+
+class TranscribeRequest(BaseModel):
+    video_id: str
+    api_key: str
+    language: Optional[str] = None
 
 class ExportRequest(BaseModel):
     video_id: str
@@ -235,39 +252,225 @@ async def upload_video(file: UploadFile = File(...)):
     
     return {"video_id": video_id, "filename": file.filename, "info": info}
 
+def extract_audio(video_path: Path, output_path: Path) -> bool:
+    """Extract audio dari video untuk dianalisis Gemini"""
+    try:
+        cmd = [
+            FFMPEG_PATH, "-y", "-i", str(video_path),
+            "-vn", "-acodec", "libmp3lame", "-q:a", "4",
+            "-t", "600",  # Max 10 menit untuk API limits
+            str(output_path)
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+        return True
+    except Exception as e:
+        print(f"[ERROR] Audio extraction failed: {e}")
+        return False
+
+
 @app.post("/transcribe/{video_id}")
-async def transcribe_video(video_id: str, language: Optional[str] = None):
+async def transcribe_video(
+    video_id: str, 
+    language: Optional[str] = None,
+    x_api_key: Optional[str] = Header(None)
+):
+    """Transcribe video menggunakan Gemini AI"""
     if video_id not in video_store:
         raise HTTPException(status_code=404, detail="Video tidak ditemukan")
-    return {
-        "text": "Transcription requires Whisper. Install: pip install openai-whisper",
-        "language": language or "id",
-        "duration": video_store[video_id]["info"].get("duration", 0),
-        "segments": []
-    }
+    
+    api_key = x_api_key or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API Key Gemini diperlukan. Tambahkan di header X-API-Key")
+    
+    if not GEMINI_AVAILABLE:
+        raise HTTPException(status_code=500, detail="google-generativeai tidak terinstall")
+    
+    video_path = Path(video_store[video_id]["path"])
+    audio_path = OUTPUT_DIR / f"{video_id}_audio.mp3"
+    
+    # Extract audio
+    if not extract_audio(video_path, audio_path):
+        raise HTTPException(status_code=500, detail="Gagal mengekstrak audio dari video")
+    
+    try:
+        # Configure Gemini
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        
+        # Upload audio file
+        audio_file = genai.upload_file(str(audio_path), mime_type="audio/mp3")
+        
+        # Wait for file to be processed
+        while audio_file.state.name == "PROCESSING":
+            await asyncio.sleep(2)
+            audio_file = genai.get_file(audio_file.name)
+        
+        if audio_file.state.name == "FAILED":
+            raise HTTPException(status_code=500, detail="Gemini gagal memproses audio")
+        
+        # Transcribe with timestamps
+        lang_hint = f"Bahasa: {language}" if language else "Deteksi bahasa otomatis"
+        prompt = f"""Transcribe audio ini dengan detail. {lang_hint}.
+
+Format output HARUS dalam JSON seperti ini:
+{{
+    "language": "detected language code (id/en/etc)",
+    "text": "full transcript text",
+    "segments": [
+        {{
+            "id": 1,
+            "start": 0.0,
+            "end": 5.0,
+            "text": "text segment"
+        }}
+    ]
+}}
+
+Buatkan segments setiap 5-10 detik berdasarkan jeda natural dalam pembicaraan.
+Pastikan timestamps akurat dan text lengkap.
+JANGAN tambahkan penjelasan, HANYA output JSON."""
+        
+        response = model.generate_content([audio_file, prompt])
+        
+        # Parse JSON response
+        result_text = response.text.strip()
+        # Clean markdown code blocks if present
+        if result_text.startswith("```"):
+            result_text = re.sub(r'^```(?:json)?\n?', '', result_text)
+            result_text = re.sub(r'\n?```$', '', result_text)
+        
+        result = json.loads(result_text)
+        
+        # Cleanup audio file
+        audio_path.unlink(missing_ok=True)
+        genai.delete_file(audio_file.name)
+        
+        return {
+            "text": result.get("text", ""),
+            "language": result.get("language", language or "id"),
+            "duration": video_store[video_id]["info"].get("duration", 0),
+            "segments": result.get("segments", [])
+        }
+        
+    except json.JSONDecodeError as e:
+        audio_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail=f"Gagal parse response Gemini: {str(e)}")
+    except Exception as e:
+        audio_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail=f"Transcription error: {str(e)}")
+
 
 @app.post("/detect-highlights")
 async def detect_highlights(request: DetectHighlightsRequest):
+    """Detect viral moments menggunakan Gemini AI atau keyword fallback"""
+    
+    api_key = request.api_key or os.getenv("GEMINI_API_KEY")
+    
+    # Jika ada API key dan Gemini available, gunakan AI
+    if api_key and GEMINI_AVAILABLE and len(request.segments) > 0:
+        try:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-2.0-flash-exp")
+            
+            # Prepare transcript text with timestamps
+            transcript_text = "\n".join([
+                f"[{seg.start:.1f}s - {seg.end:.1f}s]: {seg.text}"
+                for seg in request.segments
+            ])
+            
+            prompt = f"""Analisis transcript video berikut dan temukan {request.num_highlights} momen paling VIRAL/MENARIK untuk dijadikan YouTube Shorts (durasi target: {request.target_duration} detik).
+
+Tipe konten: {request.content_type}
+
+Transcript:
+{transcript_text}
+
+TEMUKAN momen yang:
+1. Lucu/menghibur (reaction, jokes)
+2. Informatif (tips, facts yang menarik)
+3. Emotional (moments yang menyentuh)
+4. Dramatic (plot twist, reveal)
+5. Exciting (hype moments, achievements)
+
+Format output HARUS JSON:
+{{
+    "highlights": [
+        {{
+            "start": 10.0,
+            "end": 45.0,
+            "score": 95,
+            "title": "judul singkat momen ini",
+            "reason": "alasan mengapa ini viral",
+            "category": "funny/informative/emotional/action/dramatic/excited"
+        }}
+    ],
+    "summary": "ringkasan singkat video"
+}}
+
+Pastikan durasi setiap highlight sekitar {request.target_duration} detik.
+JANGAN tambahkan penjelasan, HANYA output JSON."""
+            
+            response = model.generate_content(prompt)
+            
+            # Parse response
+            result_text = response.text.strip()
+            if result_text.startswith("```"):
+                result_text = re.sub(r'^```(?:json)?\n?', '', result_text)
+                result_text = re.sub(r'\n?```$', '', result_text)
+            
+            result = json.loads(result_text)
+            highlights = result.get("highlights", [])
+            
+            return {
+                "highlights": highlights[:request.num_highlights],
+                "summary": result.get("summary", "AI-detected highlights"),
+                "total_duration": sum(h.get("end", 0) - h.get("start", 0) for h in highlights[:request.num_highlights]),
+                "method": "gemini_ai"
+            }
+            
+        except Exception as e:
+            print(f"[WARNING] Gemini highlight detection failed: {e}, falling back to keywords")
+    
+    # Fallback: Keyword-based detection
     keywords = {
-        "funny": ["haha", "lucu", "wkwk", "lol"],
-        "important": ["penting", "harus", "wajib"],
-        "excited": ["wow", "gila", "keren", "amazing"],
+        "funny": ["haha", "lucu", "wkwk", "lol", "ngakak", "kocak"],
+        "important": ["penting", "harus", "wajib", "tips", "rahasia", "cara"],
+        "excited": ["wow", "gila", "keren", "amazing", "mantap", "asik"],
+        "emotional": ["sedih", "terharu", "bahagia", "senang"],
+        "dramatic": ["ternyata", "plot twist", "gak nyangka", "shock"]
     }
     
     highlights = []
     for seg in request.segments:
         text_lower = seg.text.lower()
-        score = sum(1 for words in keywords.values() for w in words if w in text_lower)
+        matched_categories = []
+        score = 0
+        
+        for category, words in keywords.items():
+            for w in words:
+                if w in text_lower:
+                    matched_categories.append(category)
+                    score += 20
+                    break
+        
         if score > 0:
             highlights.append({
-                "start": seg.start, "end": seg.end, "score": min(score * 20 + 50, 100),
-                "title": seg.text[:50], "reason": "Keyword match", "category": "general"
+                "start": seg.start,
+                "end": min(seg.end, seg.start + request.target_duration),
+                "score": min(score + 40, 100),
+                "title": seg.text[:50],
+                "reason": "Keyword match",
+                "category": matched_categories[0] if matched_categories else "general"
             })
+    
+    # Sort by score
+    highlights.sort(key=lambda x: x["score"], reverse=True)
     
     return {
         "highlights": highlights[:request.num_highlights],
         "summary": "Highlights from keyword analysis",
         "total_duration": sum(h["end"] - h["start"] for h in highlights[:request.num_highlights]),
+        "method": "keyword_fallback"
     }
 
 @app.post("/cut")

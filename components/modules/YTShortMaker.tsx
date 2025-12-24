@@ -280,12 +280,20 @@ export const YTShortMakerModule: React.FC = () => {
   const handleTranscribe = async () => {
     if (!videoId) return;
 
+    // Get API key from localStorage or env
+    const apiKey = localStorage.getItem('GEMINI_API_KEY') || import.meta.env.VITE_GEMINI_API_KEY;
+
+    if (!apiKey) {
+      setError('API Key Gemini diperlukan untuk transcription. Tambahkan di halaman Settings.');
+      return;
+    }
+
     setIsLoading(true);
-    setLoadingMessage('Transcribing with Whisper AI... This may take a few minutes.');
+    setLoadingMessage('Transcribing dengan Gemini AI... Ini mungkin memakan waktu beberapa menit.');
     setError(null);
 
     try {
-      const result = await transcribeVideo(videoId, selectedLanguage || undefined);
+      const result = await transcribeVideo(videoId, selectedLanguage || undefined, apiKey);
       setTranscript(result.segments);
       setFullTranscript(result.text);
       setTranscriptLanguage(result.language);
