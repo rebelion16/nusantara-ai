@@ -205,7 +205,7 @@ export async function startDownload(
   url: string,
   format: 'best' | 'audio' | 'video_only' = 'best',
   quality: '360' | '480' | '720' | '1080' | '4k' = '1080'
-): Promise<{ task_id: string; message: string }> {
+): Promise<{ task_id: string; message: string; cached?: boolean; filename?: string; status?: string; progress?: number }> {
   const response = await fetch(`${BACKEND_URL}/download`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -213,6 +213,7 @@ export async function startDownload(
   });
   return handleResponse(response);
 }
+
 
 /**
  * Get download progress

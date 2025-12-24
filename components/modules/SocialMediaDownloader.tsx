@@ -238,6 +238,25 @@ export const SocialMediaDownloaderModule: React.FC = () => {
 
         try {
             const result = await startDownload(url, format, quality);
+
+            // If cached, immediately show completed and trigger download
+            if (result.cached && result.filename) {
+                setDownloadProgress({
+                    task_id: result.task_id || 'cached',
+                    status: 'completed',
+                    progress: 100,
+                    filename: result.filename,
+                });
+                // Auto-trigger download for cached file
+                const link = document.createElement('a');
+                link.href = getFileUrl(result.filename);
+                link.download = result.filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return;
+            }
+
             setIsPolling(true);
 
             // Start polling for progress

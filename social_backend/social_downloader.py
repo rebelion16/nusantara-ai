@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 import yt_dlp
 
@@ -314,9 +314,33 @@ async def get_progress(task_id: str):
 @app.get("/file/{filename}")
 async def get_file(filename: str):
     fp = DOWNLOAD_DIR / filename
-    if fp.exists():
-        return FileResponse(path=fp, filename=filename, media_type="application/octet-stream")
-    raise HTTPException(status_code=404, detail="File tidak ditemukan")
+    if not fp.exists():
+        raise HTTPException(status_code=404, detail="File tidak ditemukan")
+    
+    file_size = fp.stat().st_size
+    
+    # Generate ETag for browser caching
+    etag = f"\"{fp.stat().st_mtime}-{file_size}\""
+    
+    # Streaming for large files (>10MB)
+    def iterfile():
+        with open(fp, "rb") as f:
+            while chunk := f.read(1024 * 1024):  # 1MB chunks
+                yield chunk
+    
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Content-Length": str(file_size),
+        "ETag": etag,
+        "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
+        "Accept-Ranges": "bytes",
+    }
+    
+    return StreamingResponse(
+        iterfile(),
+        media_type="application/octet-stream",
+        headers=headers
+    )
 
 @app.delete("/file/{filename}")
 async def delete_file(filename: str):
