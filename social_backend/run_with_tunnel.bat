@@ -7,7 +7,6 @@ echo =============================================
 echo.
 
 set CLOUDFLARED="C:\Program Files (x86)\cloudflared\cloudflared.exe"
-set TUNNEL_NAME=nusantara-social-downloader
 
 :: Check if Python is installed
 python --version >nul 2>&1
@@ -54,29 +53,20 @@ timeout /t 4 /nobreak > nul
 echo [OK] Backend dijalankan!
 echo.
 
-:: Check if named tunnel exists
-%CLOUDFLARED% tunnel list 2>nul | findstr /C:"%TUNNEL_NAME%" >nul 2>&1
-if errorlevel 1 (
-    echo =============================================
-    echo   QUICK TUNNEL (URL akan berubah)
-    echo =============================================
-    echo.
-    echo [INFO] Named tunnel belum di-setup.
-    echo [INFO] Untuk URL permanen, jalankan: setup_permanent_tunnel.bat
-    echo.
-    echo [INFO] Menggunakan Quick Tunnel...
-    echo.
-    %CLOUDFLARED% tunnel --url http://localhost:8000
-) else (
-    echo =============================================
-    echo   NAMED TUNNEL (URL permanen)
-    echo =============================================
-    echo.
-    echo [INFO] Menggunakan Named Tunnel: %TUNNEL_NAME%
-    echo [INFO] URL Anda akan tetap sama setiap kali dijalankan.
-    echo.
-    %CLOUDFLARED% tunnel run --url http://localhost:8000 %TUNNEL_NAME%
-)
+echo =============================================
+echo   QUICK TUNNEL
+echo =============================================
+echo.
+echo [INFO] Memulai Cloudflare Quick Tunnel...
+echo [INFO] URL tunnel akan muncul di bawah ini.
+echo.
+echo [PENTING] Salin URL https://xxxx.trycloudflare.com
+echo [PENTING] Update di Vercel Environment Variables
+echo.
+echo =============================================
+echo.
+
+%CLOUDFLARED% tunnel --url http://localhost:8000
 
 :: Cleanup on exit
 echo.
