@@ -23,6 +23,9 @@ import {
     XCircle,
     Play,
     Server,
+    Settings,
+    Save,
+    ExternalLink,
 } from 'lucide-react';
 import {
     checkBackendHealth,
@@ -40,6 +43,10 @@ import {
     listFiles,
     deleteFile,
     clearFiles,
+    getBackendUrl,
+    setBackendUrl,
+    clearBackendUrl,
+    isUsingCustomBackendUrl,
     MediaInfo,
     DownloadProgress,
     DownloadedFile,
@@ -50,7 +57,7 @@ import {
 
 type DownloadFormat = 'best' | 'audio' | 'video_only';
 type QualityOption = '360' | '480' | '720' | '1080' | '4k';
-type TabId = 'download' | 'history';
+type TabId = 'download' | 'history' | 'settings';
 
 interface DownloadHistoryItem {
     id: string;
@@ -73,26 +80,66 @@ const PlatformBadge: React.FC<{ platform: Platform }> = ({ platform }) => (
     </div>
 );
 
-const BackendOfflineOverlay: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+interface BackendOfflineOverlayProps {
+    onRetry: () => void;
+    backendUrl: string;
+    onBackendUrlChange: (url: string) => void;
+    onSaveUrl: () => void;
+}
+
+const BackendOfflineOverlay: React.FC<BackendOfflineOverlayProps> = ({
+    onRetry,
+    backendUrl,
+    onBackendUrlChange,
+    onSaveUrl,
+}) => (
     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
-        <div className="text-center p-8 max-w-md">
+        <div className="text-center p-8 max-w-lg">
             <Server className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Backend Offline</h3>
             <p className="text-gray-300 mb-4">
-                Server backend tidak berjalan. Jalankan backend terlebih dahulu:
+                Server backend tidak terhubung. Masukkan URL tunnel atau jalankan backend lokal:
             </p>
-            <div className="bg-gray-900 rounded-lg p-4 text-left mb-4 font-mono text-sm text-green-400">
-                <p className="text-gray-500 mb-1"># Buka terminal baru, lalu:</p>
-                <p>cd social_backend</p>
-                <p>run.bat</p>
+
+            {/* Backend URL Input */}
+            <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-2 text-left">
+                    URL Backend (Cloudflare Tunnel)
+                </label>
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={backendUrl}
+                        onChange={(e) => onBackendUrlChange(e.target.value)}
+                        placeholder="https://xxxx.trycloudflare.com"
+                        className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 outline-none"
+                    />
+                    <button
+                        onClick={onSaveUrl}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                    >
+                        <Save className="w-4 h-4" />
+                        Simpan
+                    </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 text-left">
+                    Salin URL dari output run_with_tunnel.bat
+                </p>
             </div>
-            <button
-                onClick={onRetry}
-                className="inline-flex items-center gap-2 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-            >
-                <RefreshCw className="w-4 h-4" />
-                Coba Lagi
-            </button>
+
+            <div className="flex gap-3 justify-center">
+                <button
+                    onClick={onRetry}
+                    className="inline-flex items-center gap-2 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                >
+                    <RefreshCw className="w-4 h-4" />
+                    Coba Lagi
+                </button>
+            </div>
+
+            <div className="mt-4 text-xs text-gray-500">
+                Atau jalankan backend lokal: <code className="text-green-400">cd social_backend && run_with_tunnel.bat</code>
+            </div>
         </div>
     </div>
 );
@@ -166,6 +213,9 @@ export const SocialMediaDownloaderModule: React.FC = () => {
     const [downloadHistory, setDownloadHistory] = useState<DownloadedFile[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
+    // Backend URL state
+    const [backendUrlInput, setBackendUrlInput] = useState(getBackendUrl());
+
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
     // Detect platform from URL
@@ -175,6 +225,7 @@ export const SocialMediaDownloaderModule: React.FC = () => {
 
     // Check backend on mount
     useEffect(() => {
+        setBackendUrlInput(getBackendUrl());
         checkBackend();
     }, []);
 
@@ -199,6 +250,11 @@ export const SocialMediaDownloaderModule: React.FC = () => {
     const checkBackend = async () => {
         const online = await checkBackendHealth();
         setIsBackendOnline(online);
+    };
+
+    const handleSaveBackendUrl = () => {
+        setBackendUrl(backendUrlInput);
+        checkBackend();
     };
 
     const loadHistory = async () => {
@@ -303,7 +359,14 @@ export const SocialMediaDownloaderModule: React.FC = () => {
     return (
         <div className="relative min-h-[600px]">
             {/* Backend Offline Overlay */}
-            {isBackendOnline === false && <BackendOfflineOverlay onRetry={checkBackend} />}
+            {isBackendOnline === false && (
+                <BackendOfflineOverlay
+                    onRetry={checkBackend}
+                    backendUrl={backendUrlInput}
+                    onBackendUrlChange={setBackendUrlInput}
+                    onSaveUrl={handleSaveBackendUrl}
+                />
+            )}
 
             {/* Header */}
             <div className="text-center mb-8">
@@ -320,8 +383,8 @@ export const SocialMediaDownloaderModule: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('download')}
                     className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${activeTab === 'download'
-                            ? 'bg-primary-600 text-white shadow-lg'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-primary-600 text-white shadow-lg'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
                     <Download className="w-5 h-5 inline-block mr-2" />
@@ -330,8 +393,8 @@ export const SocialMediaDownloaderModule: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${activeTab === 'history'
-                            ? 'bg-primary-600 text-white shadow-lg'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-primary-600 text-white shadow-lg'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
                     <FileVideo className="w-5 h-5 inline-block mr-2" />
