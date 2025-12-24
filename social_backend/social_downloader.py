@@ -7,6 +7,8 @@ Berjalan di port 8001 dengan Cloudflare Tunnel
 import os
 import uuid
 import asyncio
+import hashlib
+import json
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -16,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import yt_dlp
+
 
 # ===================== CONFIG =====================
 
@@ -85,7 +88,44 @@ class DownloadProgress(BaseModel):
 
 download_tasks: Dict[str, DownloadProgress] = {}
 
+# ===================== CACHE =====================
+
+CACHE_FILE = Path(__file__).parent / "download_cache.json"
+
+def load_cache() -> Dict[str, dict]:
+    """Load URL -> file mapping from cache"""
+    if CACHE_FILE.exists():
+        try:
+            with open(CACHE_FILE, "r") as f:
+                cache = json.load(f)
+                # Validate cached files still exist
+                valid_cache = {}
+                for key, info in cache.items():
+                    if Path(DOWNLOAD_DIR / info.get("filename", "")).exists():
+                        valid_cache[key] = info
+                return valid_cache
+        except:
+            pass
+    return {}
+
+def save_cache(cache: Dict):
+    """Save cache to file"""
+    try:
+        with open(CACHE_FILE, "w") as f:
+            json.dump(cache, f, indent=2)
+    except Exception as e:
+        print(f"[WARNING] Failed to save cache: {e}")
+
+def get_url_hash(url: str) -> str:
+    """Generate hash key from URL"""
+    # Normalize URL (remove trailing slashes, etc)
+    normalized = url.strip().rstrip("/")
+    return hashlib.md5(normalized.encode()).hexdigest()[:12]
+
+download_cache: Dict[str, dict] = load_cache()
+
 # ===================== HELPERS =====================
+
 
 def detect_platform(url: str) -> str:
     url_lower = url.lower()
@@ -147,6 +187,7 @@ def progress_hook(task_id: str):
     return hook
 
 async def download_media_async(task_id: str, url: str, format_type: str, quality: str):
+    global download_cache
     try:
         download_tasks[task_id].status = "downloading"
         platform = detect_platform(url)
@@ -162,12 +203,26 @@ async def download_media_async(task_id: str, url: str, format_type: str, quality
         
         for f in DOWNLOAD_DIR.glob(f"{task_id}_*"):
             download_tasks[task_id].filename = f.name
+            
+            # Save to cache
+            url_hash = get_url_hash(url)
+            download_cache[url_hash] = {
+                "url": url,
+                "filename": f.name,
+                "task_id": task_id,
+                "platform": platform,
+                "created_at": datetime.now().isoformat()
+            }
+            save_cache(download_cache)
+            print(f"[CACHE SAVE] {url[:50]}... -> {f.name}")
             break
+            
         download_tasks[task_id].status = "completed"
         download_tasks[task_id].progress = 100
     except Exception as e:
         download_tasks[task_id].status = "error"
         download_tasks[task_id].error = str(e)
+
 
 # ===================== ENDPOINTS =====================
 
@@ -224,10 +279,31 @@ async def get_media_info(request: MediaInfoRequest):
 
 @app.post("/download")
 async def start_download(request: DownloadRequest, background_tasks: BackgroundTasks):
+    global download_cache
+    
+    # Check cache first
+    url_hash = get_url_hash(request.url)
+    if url_hash in download_cache:
+        cached = download_cache[url_hash]
+        cached_file = DOWNLOAD_DIR / cached["filename"]
+        if cached_file.exists():
+            # Return cached result immediately
+            print(f"[CACHE HIT] {request.url[:50]}... -> {cached['filename']}")
+            return {
+                "task_id": cached.get("task_id", "cached"),
+                "message": "File sudah ada di cache",
+                "cached": True,
+                "filename": cached["filename"],
+                "status": "completed",
+                "progress": 100
+            }
+    
+    # Not in cache, start new download
     task_id = str(uuid.uuid4())[:8]
     download_tasks[task_id] = DownloadProgress(task_id=task_id, status="pending", progress=0)
     background_tasks.add_task(download_media_async, task_id, request.url, request.format, request.quality)
-    return {"task_id": task_id, "message": "Download dimulai"}
+    return {"task_id": task_id, "message": "Download dimulai", "cached": False}
+
 
 @app.get("/progress/{task_id}")
 async def get_progress(task_id: str):
@@ -267,7 +343,44 @@ async def clear_files():
             count += 1
     return {"message": f"{count} file dihapus"}
 
+@app.get("/cache")
+async def list_cache():
+    """List semua URL yang ter-cache"""
+    return {
+        "count": len(download_cache),
+        "items": [
+            {
+                "hash": k,
+                "url": v.get("url", ""),
+                "filename": v.get("filename", ""),
+                "platform": v.get("platform", ""),
+                "created_at": v.get("created_at", "")
+            }
+            for k, v in download_cache.items()
+        ]
+    }
+
+@app.delete("/cache")
+async def clear_cache():
+    """Hapus semua cache (file tetap ada)"""
+    global download_cache
+    count = len(download_cache)
+    download_cache = {}
+    save_cache(download_cache)
+    return {"message": f"{count} cache entries dihapus"}
+
+@app.delete("/cache/{url_hash}")
+async def delete_cache_entry(url_hash: str):
+    """Hapus satu entry dari cache"""
+    global download_cache
+    if url_hash in download_cache:
+        del download_cache[url_hash]
+        save_cache(download_cache)
+        return {"message": "Cache entry dihapus"}
+    raise HTTPException(status_code=404, detail="Cache entry tidak ditemukan")
+
 # ===================== MAIN =====================
+
 
 if __name__ == "__main__":
     import uvicorn
