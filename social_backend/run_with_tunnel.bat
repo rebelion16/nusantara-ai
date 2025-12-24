@@ -6,14 +6,13 @@ echo   Social Media Downloader Backend + Tunnel
 echo =============================================
 echo.
 
-:: Set cloudflared path (dengan quotes yang benar)
 set CLOUDFLARED="C:\Program Files (x86)\cloudflared\cloudflared.exe"
+set TUNNEL_NAME=nusantara-social-downloader
 
 :: Check if Python is installed
 python --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python tidak ditemukan!
-    echo Silakan install Python dari https://www.python.org/downloads/
     pause
     exit /b 1
 )
@@ -21,7 +20,6 @@ if errorlevel 1 (
 :: Check if cloudflared exists
 if not exist %CLOUDFLARED% (
     echo [ERROR] cloudflared tidak ditemukan!
-    echo Silakan install via: winget install Cloudflare.cloudflared
     pause
     exit /b 1
 )
@@ -56,26 +54,29 @@ timeout /t 4 /nobreak > nul
 echo [OK] Backend dijalankan!
 echo.
 
-:: Start cloudflare tunnel
-echo =============================================
-echo   CLOUDFLARE TUNNEL
-echo =============================================
-echo.
-echo [INFO] Memulai Cloudflare Tunnel...
-echo [INFO] URL tunnel akan muncul di bawah ini.
-echo [INFO] Salin URL https://xxxx.trycloudflare.com untuk Vercel!
-echo.
-echo [TIP] Untuk menggunakan URL ini di Vercel:
-echo       1. Buka https://vercel.com/dashboard
-echo       2. Pilih proyek nusantara-ai-six
-echo       3. Settings - Environment Variables
-echo       4. Tambah: VITE_SOCIAL_BACKEND_URL = URL tunnel
-echo       5. Redeploy
-echo.
-echo =============================================
-echo.
-
-%CLOUDFLARED% tunnel --url http://localhost:8000
+:: Check if named tunnel exists
+%CLOUDFLARED% tunnel list 2>nul | findstr /C:"%TUNNEL_NAME%" >nul 2>&1
+if errorlevel 1 (
+    echo =============================================
+    echo   QUICK TUNNEL (URL akan berubah)
+    echo =============================================
+    echo.
+    echo [INFO] Named tunnel belum di-setup.
+    echo [INFO] Untuk URL permanen, jalankan: setup_permanent_tunnel.bat
+    echo.
+    echo [INFO] Menggunakan Quick Tunnel...
+    echo.
+    %CLOUDFLARED% tunnel --url http://localhost:8000
+) else (
+    echo =============================================
+    echo   NAMED TUNNEL (URL permanen)
+    echo =============================================
+    echo.
+    echo [INFO] Menggunakan Named Tunnel: %TUNNEL_NAME%
+    echo [INFO] URL Anda akan tetap sama setiap kali dijalankan.
+    echo.
+    %CLOUDFLARED% tunnel run --url http://localhost:8000 %TUNNEL_NAME%
+)
 
 :: Cleanup on exit
 echo.
