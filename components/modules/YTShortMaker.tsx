@@ -357,7 +357,10 @@ export const YTShortMakerModule: React.FC = () => {
       });
       setHighlights(result.highlights);
       if (result.highlights.length > 0) {
-        setSelectedHighlight(result.highlights[0]);
+        const firstHighlight = result.highlights[0];
+        setSelectedHighlight(firstHighlight);
+        setClipStart(firstHighlight.start);
+        setClipEnd(firstHighlight.end);
       }
       setCurrentStep('edit');
     } catch (err: any) {
@@ -800,8 +803,8 @@ export const YTShortMakerModule: React.FC = () => {
                 key={eng.id}
                 onClick={() => setSelectedEngine(eng.id as TranscriptionEngine)}
                 className={`p-4 rounded-xl border-2 transition-all text-left ${selectedEngine === eng.id
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
                   }`}
               >
                 <div className="flex items-center gap-2">
@@ -925,7 +928,11 @@ export const YTShortMakerModule: React.FC = () => {
             {highlights.map((h, idx) => (
               <button
                 key={idx}
-                onClick={() => setSelectedHighlight(h)}
+                onClick={() => {
+                  setSelectedHighlight(h);
+                  setClipStart(h.start);
+                  setClipEnd(h.end);
+                }}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${selectedHighlight === h
                   ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-400'
