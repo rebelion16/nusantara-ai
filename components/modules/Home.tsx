@@ -144,6 +144,14 @@ export const MODULES: ModuleDefinition[] = ([
     icon: <Wallet />,
     gradient: 'from-emerald-500 to-teal-500',
     category: 'Keuangan'
+  },
+  {
+    id: 'social-downloader',
+    title: 'Social Media Downloader',
+    description: 'Download video & gambar dari Instagram, TikTok, YouTube, Twitter, Facebook, dan lainnya.',
+    icon: '⬇️',
+    gradient: 'from-pink-500 via-purple-500 to-blue-500',
+    category: 'Utilitas'
   }
 ] as ModuleDefinition[]).sort((a, b) => a.title.localeCompare(b.title));
 

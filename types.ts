@@ -18,7 +18,8 @@ export type ModuleId =
   | 'rebel-fx'
   | 'ai-melukis'
   | 'wallpaper-generator'
-  | 'catat-duitmu';
+  | 'catat-duitmu'
+  | 'social-downloader';
 
 export interface ModuleDefinition {
   id: ModuleId;
