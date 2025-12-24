@@ -112,8 +112,8 @@ def format_duration(seconds: Optional[float]) -> str:
         return f"{hours}:{minutes:02d}:{secs:02d}"
     return f"{minutes}:{secs:02d}"
 
-def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080") -> dict:
-    """Build yt-dlp options berdasarkan format dan kualitas"""
+def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080", platform: str = "unknown") -> dict:
+    """Build yt-dlp options berdasarkan format, kualitas, dan platform"""
     
     base_opts = {
         "quiet": True,
@@ -121,7 +121,31 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080") -> dict:
         "extract_flat": False,
         "geo_bypass": True,
         "nocheckcertificate": True,
+        # Anti-bot bypass options
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"],
+            },
+        },
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Sec-Fetch-Mode": "navigate",
+        },
     }
+    
+    # Platform-specific options
+    if platform == "tiktok":
+        base_opts["extractor_args"]["tiktok:video"] = {"api_hostname": ["api22-normal-c-useast1a.tiktokv.com"]}
+        # Use simpler format for TikTok
+        base_opts["format"] = "best"
+        
+    elif platform == "instagram":
+        base_opts["extractor_args"]["instagram"] = {"include_ads": "false"}
+        
+    elif platform == "twitter":
+        base_opts["extractor_args"]["twitter"] = {"legacy_api": True}
     
     if format_type == "audio":
         base_opts.update({
@@ -136,9 +160,11 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080") -> dict:
         height = {"360": 360, "480": 480, "720": 720, "1080": 1080, "4k": 2160}.get(quality, 1080)
         base_opts["format"] = f"bestvideo[height<={height}]"
     else:  # best (video + audio)
-        height = {"360": 360, "480": 480, "720": 720, "1080": 1080, "4k": 2160}.get(quality, 1080)
-        base_opts["format"] = f"bestvideo[height<={height}]+bestaudio/best[height<={height}]/best"
-        base_opts["merge_output_format"] = "mp4"
+        # For TikTok, use simple format
+        if platform != "tiktok":
+            height = {"360": 360, "480": 480, "720": 720, "1080": 1080, "4k": 2160}.get(quality, 1080)
+            base_opts["format"] = f"bestvideo[height<={height}]+bestaudio/best[height<={height}]/best"
+            base_opts["merge_output_format"] = "mp4"
     
     return base_opts
 
@@ -175,7 +201,10 @@ async def download_media_async(task_id: str, url: str, format_type: str, quality
     try:
         download_tasks[task_id].status = "downloading"
         
-        opts = get_yt_dlp_opts(format_type, quality)
+        # Detect platform for platform-specific options
+        platform = detect_platform(url)
+        
+        opts = get_yt_dlp_opts(format_type, quality, platform)
         opts["outtmpl"] = str(DOWNLOAD_DIR / f"{task_id}_%(title).50s.%(ext)s")
         opts["progress_hooks"] = [progress_hook(task_id)]
         
@@ -219,14 +248,9 @@ async def get_media_info(request: MediaInfoRequest):
     try:
         platform = detect_platform(request.url)
         
-        opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "extract_flat": False,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "skip_download": True,
-        }
+        # Use platform-specific options
+        opts = get_yt_dlp_opts("best", "1080", platform)
+        opts["skip_download"] = True
         
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(request.url, download=False)
