@@ -13,7 +13,9 @@ import {
   transcribeVideo,
   detectHighlights,
   cutVideo,
+  cutAndMergeVideo,
   addCaptions,
+
   getMusicTracks,
   addMusicTrack,
   addCustomMusic,
@@ -396,7 +398,36 @@ export const YTShortMakerModule: React.FC = () => {
     }
   };
 
+  const handleCutAllMerge = async () => {
+    if (!videoId || highlights.length === 0) return;
+
+    setIsLoading(true);
+    setLoadingMessage(`Cutting ${highlights.length} highlights & merging...`);
+    setError(null);
+
+    try {
+      // Convert highlights to segments format
+      const segments = highlights.map(h => ({
+        start: h.start,
+        end: h.end
+      }));
+
+      const result = await cutAndMergeVideo(videoId, segments, convertVertical);
+      setCurrentVideoId(result.video_id);
+
+      // Clear captions since we're working with merged video
+      setCaptions([]);
+
+      setCurrentStep('captions');
+    } catch (err: any) {
+      setError(err.message || 'Cut & Merge failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAddCaptions = async () => {
+
     if (!currentVideoId || !captions.length) {
       setCurrentStep('music');
       return;
@@ -1017,15 +1048,32 @@ export const YTShortMakerModule: React.FC = () => {
         </div>
       </div>
 
-      <button
-        onClick={handleCutVideo}
-        disabled={isLoading || clipEnd <= clipStart}
-        className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Scissors size={20} />}
-        {isLoading ? loadingMessage : 'Cut Video'}
-      </button>
+      {/* Action buttons */}
+      <div className="space-y-3">
+        {/* Cut All & Merge button - shown when highlights exist */}
+        {highlights.length > 1 && (
+          <button
+            onClick={handleCutAllMerge}
+            disabled={isLoading}
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
+            {isLoading ? loadingMessage : `Cut All ${highlights.length} Highlights & Merge`}
+          </button>
+        )}
+
+        {/* Regular Cut Video button */}
+        <button
+          onClick={handleCutVideo}
+          disabled={isLoading || clipEnd <= clipStart}
+          className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Scissors size={20} />}
+          {isLoading ? loadingMessage : 'Cut Selected Range Only'}
+        </button>
+      </div>
     </div>
+
   );
 
   const renderCaptionsStep = () => (

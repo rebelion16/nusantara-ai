@@ -130,6 +130,15 @@ class ExportRequest(BaseModel):
     resolution: Optional[str] = "1080p"
     quality: Optional[str] = "high"
 
+class SegmentTime(BaseModel):
+    start: float
+    end: float
+
+class CutMergeRequest(BaseModel):
+    video_id: str
+    segments: List[SegmentTime]
+    convert_vertical: Optional[bool] = True
+
 # ===================== STATE =====================
 
 VIDEO_STORE_FILE = BASE_DIR / "video_store.json"
@@ -746,7 +755,94 @@ async def cut_video(request: CutRequest):
     save_video_store()  # Persist to file
     return {"video_id": output_id, "info": info}
 
+@app.post("/cut-merge")
+async def cut_and_merge_video(request: CutMergeRequest):
+    """Cut multiple segments and merge them into one video"""
+    if request.video_id not in video_store:
+        raise HTTPException(status_code=404, detail=f"Video tidak ditemukan. video_id: {request.video_id}")
+    
+    if not request.segments or len(request.segments) == 0:
+        raise HTTPException(status_code=400, detail="Minimal 1 segment diperlukan")
+    
+    input_path = Path(video_store[request.video_id]["path"])
+    if not input_path.exists():
+        raise HTTPException(status_code=404, detail=f"File video tidak ditemukan di disk")
+    
+    output_id = str(uuid.uuid4())[:8]
+    temp_files = []
+    concat_list_path = OUTPUT_DIR / f"{output_id}_concat.txt"
+    
+    try:
+        # Step 1: Cut each segment
+        for i, seg in enumerate(request.segments):
+            temp_path = OUTPUT_DIR / f"{output_id}_part{i}.mp4"
+            temp_files.append(temp_path)
+            
+            duration = seg.end - seg.start
+            cmd = [FFMPEG_PATH, "-y", "-ss", str(seg.start), "-i", str(input_path),
+                   "-t", str(duration), "-c:v", "libx264", "-c:a", "aac", "-preset", "fast"]
+            
+            if request.convert_vertical:
+                cmd.extend(["-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2"])
+            
+            cmd.append(str(temp_path))
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            if result.returncode != 0:
+                print(f"[ERROR] FFmpeg cut segment {i} failed: {result.stderr}")
+                raise HTTPException(status_code=500, detail=f"Gagal memotong segment {i+1}: {result.stderr[:200]}")
+        
+        # Step 2: Create concat list file
+        with open(concat_list_path, "w") as f:
+            for temp_path in temp_files:
+                f.write(f"file '{temp_path}'\n")
+        
+        # Step 3: Merge all segments
+        output_path = OUTPUT_DIR / f"{output_id}_merged.mp4"
+        merge_cmd = [FFMPEG_PATH, "-y", "-f", "concat", "-safe", "0", 
+                     "-i", str(concat_list_path), "-c", "copy", str(output_path)]
+        
+        result = subprocess.run(merge_cmd, capture_output=True, text=True, timeout=300)
+        if result.returncode != 0:
+            print(f"[ERROR] FFmpeg merge failed: {result.stderr}")
+            raise HTTPException(status_code=500, detail=f"Gagal menggabungkan video: {result.stderr[:200]}")
+        
+        # Cleanup temp files
+        for temp_path in temp_files:
+            temp_path.unlink(missing_ok=True)
+        concat_list_path.unlink(missing_ok=True)
+        
+        if not output_path.exists():
+            raise HTTPException(status_code=500, detail="FFmpeg gagal membuat output file")
+        
+        info = get_video_info(output_path)
+        video_store[output_id] = {"path": str(output_path), "info": info}
+        save_video_store()
+        
+        return {
+            "video_id": output_id, 
+            "info": info,
+            "segments_merged": len(request.segments),
+            "total_duration": info.get("duration", 0)
+        }
+        
+    except subprocess.TimeoutExpired:
+        # Cleanup on timeout
+        for temp_path in temp_files:
+            Path(temp_path).unlink(missing_ok=True)
+        concat_list_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail="Proses cut-merge timeout (> 5 menit)")
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Cleanup on error
+        for temp_path in temp_files:
+            Path(temp_path).unlink(missing_ok=True)
+        concat_list_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
 @app.post("/add-captions")
+
 async def add_captions(request: AddCaptionsRequest):
     if request.video_id not in video_store:
         raise HTTPException(status_code=404, detail="Video tidak ditemukan")

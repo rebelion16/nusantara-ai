@@ -335,7 +335,29 @@ export async function cutVideo(
 }
 
 /**
+ * Cut multiple segments and merge into one video
+ */
+export async function cutAndMergeVideo(
+    videoId: string,
+    segments: Array<{ start: number; end: number }>,
+    convertVertical: boolean = true
+): Promise<ProcessResult & { segments_merged: number; total_duration: number }> {
+    const response = await fetch(`${BACKEND_URL}/cut-merge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            video_id: videoId,
+            segments: segments,
+            convert_vertical: convertVertical,
+        }),
+    });
+
+    return handleResponse(response);
+}
+
+/**
  * Add captions to video
+
  */
 export async function addCaptions(
     videoId: string,
