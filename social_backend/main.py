@@ -204,15 +204,48 @@ def yt_progress_hook(d):
     global yt_progress
     if d["status"] == "downloading":
         yt_progress["status"] = "downloading"
-        yt_progress["percent"] = d.get("_percent_str", "0%").strip().replace("%", "")
-        yt_progress["downloaded"] = d.get("_downloaded_bytes_str", "0 B")
-        yt_progress["total"] = d.get("_total_bytes_str", "0 B")
-        yt_progress["speed"] = d.get("_speed_str", "-- KB/s")
-        yt_progress["eta"] = d.get("_eta_str", "--:--")
+        
+        # Handle both old and new yt-dlp key formats
+        # Percentage
+        if "_percent_str" in d:
+            yt_progress["percent"] = d["_percent_str"].strip().replace("%", "")
+        elif "downloaded_bytes" in d and "total_bytes" in d and d["total_bytes"]:
+            yt_progress["percent"] = str(round(d["downloaded_bytes"] / d["total_bytes"] * 100, 1))
+        elif "downloaded_bytes" in d and "total_bytes_estimate" in d and d["total_bytes_estimate"]:
+            yt_progress["percent"] = str(round(d["downloaded_bytes"] / d["total_bytes_estimate"] * 100, 1))
+        
+        # Downloaded bytes
+        if "_downloaded_bytes_str" in d:
+            yt_progress["downloaded"] = d["_downloaded_bytes_str"]
+        elif "downloaded_bytes" in d:
+            yt_progress["downloaded"] = f"{d['downloaded_bytes'] / 1024 / 1024:.1f} MB"
+        
+        # Total bytes
+        if "_total_bytes_str" in d:
+            yt_progress["total"] = d["_total_bytes_str"]
+        elif "total_bytes" in d and d["total_bytes"]:
+            yt_progress["total"] = f"{d['total_bytes'] / 1024 / 1024:.1f} MB"
+        elif "total_bytes_estimate" in d and d["total_bytes_estimate"]:
+            yt_progress["total"] = f"~{d['total_bytes_estimate'] / 1024 / 1024:.1f} MB"
+        
+        # Speed
+        if "_speed_str" in d:
+            yt_progress["speed"] = d["_speed_str"]
+        elif "speed" in d and d["speed"]:
+            yt_progress["speed"] = f"{d['speed'] / 1024:.1f} KB/s"
+        
+        # ETA
+        if "_eta_str" in d:
+            yt_progress["eta"] = d["_eta_str"]
+        elif "eta" in d and d["eta"]:
+            mins, secs = divmod(int(d["eta"]), 60)
+            yt_progress["eta"] = f"{mins}:{secs:02d}"
+            
     elif d["status"] == "finished":
         yt_progress["status"] = "finished"
         yt_progress["percent"] = 100
         yt_progress["filename"] = d.get("filename", "")
+
 
 # ===================== ENDPOINTS =====================
 
