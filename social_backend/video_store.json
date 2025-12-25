@@ -120,5 +120,18 @@
       "video_codec": "h264",
       "audio_codec": "aac"
     }
+  },
+  "2e76dbc6": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\2e76dbc6_Gampang Monet!! Saya Buat Konten Reupload dan bisa.mp4",
+    "info": {
+      "duration": 940.686803,
+      "width": 1280,
+      "height": 720,
+      "fps": 60.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 79730534,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
   }
 }
