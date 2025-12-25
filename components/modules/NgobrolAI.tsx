@@ -94,6 +94,11 @@ export const NgobrolAIModule: React.FC = () => {
     const [isListening, setIsListening] = useState(false);
     const [voiceEnabled, setVoiceEnabled] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(() => {
+        const saved = localStorage.getItem('NGOBROL_AI_VOICE_INDEX');
+        return saved ? parseInt(saved, 10) : 0;
+    });
     const recognitionRef = useRef<SpeechRecognition | null>(null);
     const synthRef = useRef<SpeechSynthesis | null>(null);
 
@@ -163,6 +168,14 @@ export const NgobrolAIModule: React.FC = () => {
         // Speech Synthesis
         synthRef.current = window.speechSynthesis;
 
+        // Load available voices
+        const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            setAvailableVoices(voices);
+        };
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+
         return () => {
             recognitionRef.current?.abort();
             synthRef.current?.cancel();
@@ -197,17 +210,23 @@ export const NgobrolAIModule: React.FC = () => {
         utterance.rate = 1.0;
         utterance.pitch = persona.gender === 'female' ? 1.2 : 0.9;
 
-        // Try to find Indonesian voice
-        const voices = synthRef.current.getVoices();
-        const idVoice = voices.find(v => v.lang.includes('id')) || voices.find(v => v.lang.includes('en'));
-        if (idVoice) utterance.voice = idVoice;
+        // Use selected voice or fallback
+        if (availableVoices.length > 0 && selectedVoiceIndex < availableVoices.length) {
+            utterance.voice = availableVoices[selectedVoiceIndex];
+        }
 
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
 
         synthRef.current.speak(utterance);
-    }, [voiceEnabled, persona.gender]);
+    }, [voiceEnabled, persona.gender, availableVoices, selectedVoiceIndex]);
+
+    // Handle voice change
+    const handleVoiceChange = (index: number) => {
+        setSelectedVoiceIndex(index);
+        localStorage.setItem('NGOBROL_AI_VOICE_INDEX', index.toString());
+    };
 
     // Stop speaking
     const stopSpeaking = useCallback(() => {
@@ -490,25 +509,41 @@ export const NgobrolAIModule: React.FC = () => {
 
             {/* Input Area */}
             <div className="flex-shrink-0 p-4 bg-slate-800 dark:bg-dark-card border-t border-slate-700 rounded-b-2xl">
-                {/* Voice Mode Toggle */}
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                {/* Voice Mode Toggle & Voice Selector */}
+                <div className="flex items-center justify-between mb-3 gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <button
                             onClick={() => setVoiceEnabled(!voiceEnabled)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${voiceEnabled
-                                    ? 'bg-violet-600 text-white'
-                                    : 'bg-slate-700 text-gray-400 hover:text-white'
+                                ? 'bg-violet-600 text-white'
+                                : 'bg-slate-700 text-gray-400 hover:text-white'
                                 }`}
                         >
                             {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
                             {voiceEnabled ? 'Suara Aktif' : 'Suara Mati'}
                         </button>
+
+                        {/* Voice Selector */}
+                        {voiceEnabled && availableVoices.length > 0 && (
+                            <select
+                                value={selectedVoiceIndex}
+                                onChange={(e) => handleVoiceChange(parseInt(e.target.value, 10))}
+                                className="bg-slate-700 text-white text-xs px-2 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-violet-500 max-w-[180px]"
+                            >
+                                {availableVoices.map((voice, index) => (
+                                    <option key={index} value={index}>
+                                        {voice.name} ({voice.lang})
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
                         {isSpeaking && (
                             <button
                                 onClick={stopSpeaking}
                                 className="px-3 py-1.5 rounded-full bg-red-500 text-white text-xs font-medium animate-pulse"
                             >
-                                Berhenti Bicara
+                                Berhenti
                             </button>
                         )}
                     </div>
@@ -526,8 +561,8 @@ export const NgobrolAIModule: React.FC = () => {
                         onClick={toggleVoiceInput}
                         disabled={isLoading}
                         className={`p-3 rounded-full transition-all flex-shrink-0 ${isListening
-                                ? 'bg-red-500 text-white animate-pulse'
-                                : 'bg-slate-700 text-gray-400 hover:text-white hover:bg-slate-600'
+                            ? 'bg-red-500 text-white animate-pulse'
+                            : 'bg-slate-700 text-gray-400 hover:text-white hover:bg-slate-600'
                             } disabled:opacity-50`}
                         title={isListening ? 'Hentikan rekaman' : 'Bicara ke AI'}
                     >
