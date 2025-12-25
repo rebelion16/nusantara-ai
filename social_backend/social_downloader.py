@@ -158,21 +158,15 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080", platform: 
         base_opts["format"] = "best"
         base_opts["extractor_args"] = {}
         base_opts["http_headers"] = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    elif platform in ["pinterest", "facebook", "instagram", "threads", "twitter"]:
-        # Pinterest/FB/IG/Twitter often have HLS streams or single files
-        # Using simple 'best' is safer than requiring specific codecs
-        base_opts["format"] = "best[ext=mp4]/best"
     elif format_type == "audio":
         base_opts["format"] = "bestaudio/best"
         base_opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}]
     else:
         height = {"360": 360, "480": 480, "720": 720, "1080": 1080, "4k": 2160}.get(quality, 1080)
-        # Add fallback to simple 'best' at the end
         base_opts["format"] = f"bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/best[height<={height}]/best"
         base_opts["merge_output_format"] = "mp4"
     
     return base_opts
-
 
 def progress_hook(task_id: str):
     def hook(d):
@@ -197,75 +191,16 @@ async def download_media_async(task_id: str, url: str, format_type: str, quality
     try:
         download_tasks[task_id].status = "downloading"
         platform = detect_platform(url)
+        opts = get_yt_dlp_opts(format_type, quality, platform)
+        opts["outtmpl"] = str(DOWNLOAD_DIR / f"{task_id}_%(title).50s.%(ext)s")
+        opts["progress_hooks"] = [progress_hook(task_id)]
         
-        # Base options
-        base_opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "outtmpl": str(DOWNLOAD_DIR / f"{task_id}_%(title).50s.%(ext)s"),
-            "progress_hooks": [progress_hook(task_id)],
-            "merge_output_format": "mp4",
-        }
-        
-        # Define strategies
-        strategies = []
-        
-        # Default strategy
-        default_opts = base_opts.copy()
-        default_opts.update(get_yt_dlp_opts(format_type, quality, platform))
-        strategies.append(("default", default_opts))
-        
-        # Cookies strategy (Edge)
-        edge_opts = default_opts.copy()
-        edge_opts["cookiesfrombrowser"] = ("edge",)
-        strategies.append(("cookies_edge", edge_opts))
-        
-        # Cookies strategy (Chrome)
-        chrome_opts = default_opts.copy()
-        chrome_opts["cookiesfrombrowser"] = ("chrome",)
-        strategies.append(("cookies_chrome", chrome_opts))
-        
-        # Mobile User-Agent strategy
-        mobile_opts = default_opts.copy()
-        mobile_opts["http_headers"] = {
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
-        }
-        strategies.append(("mobile_ua", mobile_opts))
-
-        # FB/Threads specific: Android Client
-        if platform in ["facebook", "threads", "instagram"]:
-             android_opts = default_opts.copy()
-             android_opts["extractor_args"] = {"instagram": {"player_client": ["android"]}}
-             strategies.append(("android_client", android_opts))
-
         loop = asyncio.get_event_loop()
-        success = False
-        last_error = None
+        def do_download():
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                ydl.download([url])
+        await loop.run_in_executor(None, do_download)
         
-        for name, opts in strategies:
-            try:
-                print(f"[INFO] Task {task_id}: Trying strategy '{name}' for {platform}...")
-                
-                def do_download():
-                    with yt_dlp.YoutubeDL(opts) as ydl:
-                        ydl.download([url])
-                        
-                await loop.run_in_executor(None, do_download)
-                success = True
-                print(f"[INFO] Task {task_id}: Success using strategy '{name}'")
-                break
-            except Exception as e:
-                print(f"[WARNING] Task {task_id}: Strategy '{name}' failed: {e}")
-                last_error = str(e)
-                continue
-        
-        if not success:
-            raise Exception(f"Download failed with all strategies. Last error: {last_error}")
-        
-        # Post-download processing (find file, cache, update status)
-        found_file = False
         for f in DOWNLOAD_DIR.glob(f"{task_id}_*"):
             download_tasks[task_id].filename = f.name
             
@@ -279,18 +214,14 @@ async def download_media_async(task_id: str, url: str, format_type: str, quality
                 "created_at": datetime.now().isoformat()
             }
             save_cache(download_cache)
-            found_file = True
+            print(f"[CACHE SAVE] {url[:50]}... -> {f.name}")
             break
             
-        if not found_file:
-             raise Exception("File downloaded but not found on disk")
-
         download_tasks[task_id].status = "completed"
         download_tasks[task_id].progress = 100
     except Exception as e:
         download_tasks[task_id].status = "error"
         download_tasks[task_id].error = str(e)
-
 
 
 # ===================== ENDPOINTS =====================
@@ -307,70 +238,44 @@ async def get_status():
 
 @app.post("/info", response_model=MediaInfo)
 async def get_media_info(request: MediaInfoRequest):
-    platform = detect_platform(request.url)
-    base_opts = get_yt_dlp_opts("best", "1080", platform)
-    base_opts["skip_download"] = True
-    
-    # Strategy list for extracting info
-    strategies = [
-        ("default", base_opts.copy()),
-    ]
-    
-    # Add cookies strategies for problematic platforms
-    if platform in ["twitter", "facebook", "instagram", "threads"]:
-        edge_opts = base_opts.copy()
-        edge_opts["cookiesfrombrowser"] = ("edge",)
-        strategies.append(("cookies_edge", edge_opts))
+    try:
+        platform = detect_platform(request.url)
+        opts = get_yt_dlp_opts("best", "1080", platform)
+        opts["skip_download"] = True
         
-        chrome_opts = base_opts.copy()
-        chrome_opts["cookiesfrombrowser"] = ("chrome",)
-        strategies.append(("cookies_chrome", chrome_opts))
-    
-    last_error = None
-    info = None
-    
-    for name, opts in strategies:
-        try:
-            print(f"[INFO] Fetching info with strategy '{name}' for {platform}...")
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(request.url, download=False)
-            if info:
-                print(f"[INFO] Success with strategy '{name}'")
-                break
-        except Exception as e:
-            last_error = str(e)
-            print(f"[WARNING] Strategy '{name}' failed: {last_error[:100]}")
-            continue
-    
-    if not info:
-        raise HTTPException(status_code=400, detail=f"Gagal mengambil info: {last_error or 'Unknown error'}")
-    
-    formats = []
-    if "formats" in info:
-        seen = set()
-        for f in info["formats"]:
-            h = f.get("height")
-            if h and h not in seen and f.get("vcodec") != "none":
-                seen.add(h)
-                formats.append({"quality": f"{h}p", "ext": f.get("ext", "mp4")})
-        formats.sort(key=lambda x: int(x["quality"].replace("p", "")), reverse=True)
-    
-    return MediaInfo(
-        id=info.get("id", str(uuid.uuid4())),
-        url=request.url,
-        title=info.get("title", "Untitled"),
-        description=info.get("description"),
-        thumbnail=info.get("thumbnail"),
-        duration=info.get("duration"),
-        platform=platform,
-        uploader=info.get("uploader") or info.get("channel"),
-        upload_date=info.get("upload_date"),
-        view_count=info.get("view_count"),
-        like_count=info.get("like_count"),
-        formats=formats[:5],
-        is_video=bool(info.get("duration")),
-    )
-
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(request.url, download=False)
+        
+        if not info:
+            raise HTTPException(status_code=404, detail="Media tidak ditemukan")
+        
+        formats = []
+        if "formats" in info:
+            seen = set()
+            for f in info["formats"]:
+                h = f.get("height")
+                if h and h not in seen and f.get("vcodec") != "none":
+                    seen.add(h)
+                    formats.append({"quality": f"{h}p", "ext": f.get("ext", "mp4")})
+            formats.sort(key=lambda x: int(x["quality"].replace("p", "")), reverse=True)
+        
+        return MediaInfo(
+            id=info.get("id", str(uuid.uuid4())),
+            url=request.url,
+            title=info.get("title", "Untitled"),
+            description=info.get("description"),
+            thumbnail=info.get("thumbnail"),
+            duration=info.get("duration"),
+            platform=platform,
+            uploader=info.get("uploader") or info.get("channel"),
+            upload_date=info.get("upload_date"),
+            view_count=info.get("view_count"),
+            like_count=info.get("like_count"),
+            formats=formats[:5],
+            is_video=bool(info.get("duration")),
+        )
+    except yt_dlp.utils.DownloadError as e:
+        raise HTTPException(status_code=400, detail=f"Gagal mengambil info: {str(e)}")
 
 @app.post("/download")
 async def start_download(request: DownloadRequest, background_tasks: BackgroundTasks):
