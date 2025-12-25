@@ -158,7 +158,22 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080", platform: 
         base_opts["format"] = "best"
         base_opts["extractor_args"] = {}
         base_opts["http_headers"] = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    elif platform == "twitter":
+        # Twitter/X requires cookies for most content
+        base_opts["format"] = "best"
+        base_opts["http_headers"] = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        # Try to use browser cookies
+        try:
+            base_opts["cookiesfrombrowser"] = ("chrome",)
+        except:
+            try:
+                base_opts["cookiesfrombrowser"] = ("edge",)
+            except:
+                pass
     elif format_type == "audio":
+
         base_opts["format"] = "bestaudio/best"
         base_opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}]
     else:
