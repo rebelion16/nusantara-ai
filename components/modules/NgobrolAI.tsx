@@ -22,6 +22,9 @@ import {
     createUserMessage,
     createAiMessage,
     createLoadingMessage,
+    GEMINI_VOICES,
+    GeminiVoice,
+    generateSpeech,
 } from '../../services/aiChatService';
 
 // === PERSONA OPTIONS ===
@@ -94,13 +97,13 @@ export const NgobrolAIModule: React.FC = () => {
     const [isListening, setIsListening] = useState(false);
     const [voiceEnabled, setVoiceEnabled] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
-    const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(() => {
-        const saved = localStorage.getItem('NGOBROL_AI_VOICE_INDEX');
-        return saved ? parseInt(saved, 10) : 0;
+    const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
+    const [selectedVoice, setSelectedVoice] = useState<GeminiVoice>(() => {
+        const saved = localStorage.getItem('NGOBROL_AI_GEMINI_VOICE');
+        return (saved as GeminiVoice) || 'Kore';
     });
     const recognitionRef = useRef<SpeechRecognition | null>(null);
-    const synthRef = useRef<SpeechSynthesis | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Refs
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -165,20 +168,17 @@ export const NgobrolAIModule: React.FC = () => {
             recognitionRef.current = recognition;
         }
 
-        // Speech Synthesis
-        synthRef.current = window.speechSynthesis;
-
-        // Load available voices
-        const loadVoices = () => {
-            const voices = window.speechSynthesis.getVoices();
-            setAvailableVoices(voices);
-        };
-        loadVoices();
-        window.speechSynthesis.onvoiceschanged = loadVoices;
+        // Create audio element for TTS playback
+        audioRef.current = new Audio();
+        audioRef.current.onended = () => setIsSpeaking(false);
+        audioRef.current.onerror = () => setIsSpeaking(false);
 
         return () => {
             recognitionRef.current?.abort();
-            synthRef.current?.cancel();
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
         };
     }, []);
 
@@ -198,39 +198,47 @@ export const NgobrolAIModule: React.FC = () => {
         }
     }, [isListening]);
 
-    // Speak text using TTS
-    const speakText = useCallback((text: string) => {
-        if (!synthRef.current || !voiceEnabled) return;
+    // Speak text using Gemini TTS
+    const speakText = useCallback(async (text: string) => {
+        if (!voiceEnabled || isGeneratingVoice) return;
 
-        // Cancel any ongoing speech
-        synthRef.current.cancel();
+        try {
+            setIsGeneratingVoice(true);
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        utterance.rate = 1.0;
-        utterance.pitch = persona.gender === 'female' ? 1.2 : 0.9;
+            // Stop any current playback
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
 
-        // Use selected voice or fallback
-        if (availableVoices.length > 0 && selectedVoiceIndex < availableVoices.length) {
-            utterance.voice = availableVoices[selectedVoiceIndex];
+            // Generate speech using Gemini
+            const audioUrl = await generateSpeech(text, selectedVoice);
+
+            if (audioRef.current) {
+                audioRef.current.src = audioUrl;
+                audioRef.current.play();
+                setIsSpeaking(true);
+            }
+        } catch (error: any) {
+            console.error('TTS Error:', error);
+            // Fallback message - don't show alert to avoid interruption
+        } finally {
+            setIsGeneratingVoice(false);
         }
-
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-        utterance.onerror = () => setIsSpeaking(false);
-
-        synthRef.current.speak(utterance);
-    }, [voiceEnabled, persona.gender, availableVoices, selectedVoiceIndex]);
+    }, [voiceEnabled, selectedVoice, isGeneratingVoice]);
 
     // Handle voice change
-    const handleVoiceChange = (index: number) => {
-        setSelectedVoiceIndex(index);
-        localStorage.setItem('NGOBROL_AI_VOICE_INDEX', index.toString());
+    const handleVoiceChange = (voice: GeminiVoice) => {
+        setSelectedVoice(voice);
+        localStorage.setItem('NGOBROL_AI_GEMINI_VOICE', voice);
     };
 
     // Stop speaking
     const stopSpeaking = useCallback(() => {
-        synthRef.current?.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
         setIsSpeaking(false);
     }, []);
 
@@ -523,19 +531,27 @@ export const NgobrolAIModule: React.FC = () => {
                             {voiceEnabled ? 'Suara Aktif' : 'Suara Mati'}
                         </button>
 
-                        {/* Voice Selector */}
-                        {voiceEnabled && availableVoices.length > 0 && (
+                        {/* Voice Selector - Gemini Voices */}
+                        {voiceEnabled && (
                             <select
-                                value={selectedVoiceIndex}
-                                onChange={(e) => handleVoiceChange(parseInt(e.target.value, 10))}
-                                className="bg-slate-700 text-white text-xs px-2 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-violet-500 max-w-[180px]"
+                                value={selectedVoice}
+                                onChange={(e) => handleVoiceChange(e.target.value as GeminiVoice)}
+                                className="bg-slate-700 text-white text-xs px-2 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-violet-500"
                             >
-                                {availableVoices.map((voice, index) => (
-                                    <option key={index} value={index}>
-                                        {voice.name} ({voice.lang})
+                                {GEMINI_VOICES.map((voice) => (
+                                    <option key={voice.id} value={voice.id}>
+                                        {voice.gender === 'female' ? '👩' : '👨'} {voice.name} - {voice.description}
                                     </option>
                                 ))}
                             </select>
+                        )}
+
+                        {/* Loading indicator for voice generation */}
+                        {isGeneratingVoice && (
+                            <span className="flex items-center gap-1 text-xs text-violet-400">
+                                <Loader2 size={12} className="animate-spin" />
+                                Generating...
+                            </span>
                         )}
 
                         {isSpeaking && (

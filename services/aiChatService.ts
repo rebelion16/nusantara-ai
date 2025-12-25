@@ -322,3 +322,56 @@ export const createLoadingMessage = (): ChatMessage => ({
     timestamp: Date.now(),
     isLoading: true,
 });
+
+// === GOOGLE GEMINI TTS ===
+
+export type GeminiVoice = 'Kore' | 'Puck' | 'Charon' | 'Fenrir' | 'Aoede' | 'Leda' | 'Orus' | 'Zephyr';
+
+export const GEMINI_VOICES: { id: GeminiVoice; name: string; gender: 'male' | 'female'; description: string }[] = [
+    { id: 'Kore', name: 'Kore', gender: 'female', description: 'Hangat & ramah' },
+    { id: 'Aoede', name: 'Aoede', gender: 'female', description: 'Profesional' },
+    { id: 'Leda', name: 'Leda', gender: 'female', description: 'Lembut & tenang' },
+    { id: 'Puck', name: 'Puck', gender: 'male', description: 'Energik & ceria' },
+    { id: 'Charon', name: 'Charon', gender: 'male', description: 'Dalam & tenang' },
+    { id: 'Fenrir', name: 'Fenrir', gender: 'male', description: 'Dewasa & serius' },
+    { id: 'Orus', name: 'Orus', gender: 'male', description: 'Tegas & jelas' },
+    { id: 'Zephyr', name: 'Zephyr', gender: 'male', description: 'Ringan & santai' },
+];
+
+export const generateSpeech = async (text: string, voiceId: GeminiVoice = 'Kore'): Promise<string> => {
+    try {
+        const client = getClient();
+
+        const response = await client.models.generateContent({
+            model: 'gemini-2.5-flash-preview-tts',
+            contents: [{ parts: [{ text }] }],
+            config: {
+                responseModalities: ['AUDIO'],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: {
+                            voiceName: voiceId,
+                        },
+                    },
+                },
+            },
+        });
+
+        // Extract audio data from response
+        const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+        if (!audioData) {
+            throw new Error('No audio data in response');
+        }
+
+        // Convert base64 to blob and create object URL
+        const audioBytes = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));
+        const audioBlob = new Blob([audioBytes], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        return audioUrl;
+    } catch (error: any) {
+        console.error('TTS Error:', error);
+        throw new Error('Gagal generate suara: ' + (error.message || 'Unknown error'));
+    }
+};
