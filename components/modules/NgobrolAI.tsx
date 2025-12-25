@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
     MessageCircle,
     Send,
@@ -6,6 +6,10 @@ import {
     Settings2,
     Trash2,
     Download,
+    Mic,
+    MicOff,
+    Volume2,
+    VolumeX,
 } from 'lucide-react';
 import {
     AiPersona,
@@ -86,6 +90,13 @@ export const NgobrolAIModule: React.FC = () => {
     });
     const [showPersonaSettings, setShowPersonaSettings] = useState(false);
 
+    // Voice State
+    const [isListening, setIsListening] = useState(false);
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const synthRef = useRef<SpeechSynthesis | null>(null);
+
     // Refs
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -121,6 +132,88 @@ export const NgobrolAIModule: React.FC = () => {
             inputRef.current.focus();
         }
     }, [isLoading]);
+
+    // Initialize Web Speech API
+    useEffect(() => {
+        // Speech Recognition
+        const SpeechRecognitionAPI = window.SpeechRecognition || (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+        if (SpeechRecognitionAPI) {
+            const recognition = new SpeechRecognitionAPI();
+            recognition.lang = 'id-ID';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = (event: SpeechRecognitionEvent) => {
+                const transcript = event.results[0][0].transcript;
+                setInputText(prev => prev + transcript);
+                setIsListening(false);
+            };
+
+            recognition.onerror = () => {
+                setIsListening(false);
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+            recognitionRef.current = recognition;
+        }
+
+        // Speech Synthesis
+        synthRef.current = window.speechSynthesis;
+
+        return () => {
+            recognitionRef.current?.abort();
+            synthRef.current?.cancel();
+        };
+    }, []);
+
+    // Toggle voice input
+    const toggleVoiceInput = useCallback(() => {
+        if (!recognitionRef.current) {
+            alert('Browser tidak mendukung voice input');
+            return;
+        }
+
+        if (isListening) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        } else {
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    }, [isListening]);
+
+    // Speak text using TTS
+    const speakText = useCallback((text: string) => {
+        if (!synthRef.current || !voiceEnabled) return;
+
+        // Cancel any ongoing speech
+        synthRef.current.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 1.0;
+        utterance.pitch = persona.gender === 'female' ? 1.2 : 0.9;
+
+        // Try to find Indonesian voice
+        const voices = synthRef.current.getVoices();
+        const idVoice = voices.find(v => v.lang.includes('id')) || voices.find(v => v.lang.includes('en'));
+        if (idVoice) utterance.voice = idVoice;
+
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+
+        synthRef.current.speak(utterance);
+    }, [voiceEnabled, persona.gender]);
+
+    // Stop speaking
+    const stopSpeaking = useCallback(() => {
+        synthRef.current?.cancel();
+        setIsSpeaking(false);
+    }, []);
 
     // Handle persona change
     const handlePersonaChange = (gender: AiGender, style: AiWritingStyle) => {
@@ -165,6 +258,11 @@ export const NgobrolAIModule: React.FC = () => {
                 const aiMsg = createAiMessage(response.text, response.imageUrl);
                 return [...filtered, aiMsg];
             });
+
+            // Speak AI response if voice is enabled
+            if (voiceEnabled && response.text) {
+                speakText(response.text);
+            }
         } catch (error: any) {
             // Remove loading and add error message
             setMessages(prev => {
@@ -392,7 +490,50 @@ export const NgobrolAIModule: React.FC = () => {
 
             {/* Input Area */}
             <div className="flex-shrink-0 p-4 bg-slate-800 dark:bg-dark-card border-t border-slate-700 rounded-b-2xl">
+                {/* Voice Mode Toggle */}
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setVoiceEnabled(!voiceEnabled)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${voiceEnabled
+                                    ? 'bg-violet-600 text-white'
+                                    : 'bg-slate-700 text-gray-400 hover:text-white'
+                                }`}
+                        >
+                            {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+                            {voiceEnabled ? 'Suara Aktif' : 'Suara Mati'}
+                        </button>
+                        {isSpeaking && (
+                            <button
+                                onClick={stopSpeaking}
+                                className="px-3 py-1.5 rounded-full bg-red-500 text-white text-xs font-medium animate-pulse"
+                            >
+                                Berhenti Bicara
+                            </button>
+                        )}
+                    </div>
+                    {isListening && (
+                        <span className="text-xs text-green-400 animate-pulse flex items-center gap-1">
+                            <span className="w-2 h-2 bg-green-400 rounded-full animate-ping"></span>
+                            Mendengarkan...
+                        </span>
+                    )}
+                </div>
+
                 <div className="flex items-end gap-2">
+                    {/* Voice Input Button */}
+                    <button
+                        onClick={toggleVoiceInput}
+                        disabled={isLoading}
+                        className={`p-3 rounded-full transition-all flex-shrink-0 ${isListening
+                                ? 'bg-red-500 text-white animate-pulse'
+                                : 'bg-slate-700 text-gray-400 hover:text-white hover:bg-slate-600'
+                            } disabled:opacity-50`}
+                        title={isListening ? 'Hentikan rekaman' : 'Bicara ke AI'}
+                    >
+                        {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                    </button>
+
                     {/* Text Input */}
                     <div className="flex-1 relative">
                         <textarea
@@ -400,7 +541,7 @@ export const NgobrolAIModule: React.FC = () => {
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Ketik pesan..."
+                            placeholder={isListening ? 'Bicara sekarang...' : 'Ketik pesan...'}
                             disabled={isLoading}
                             rows={1}
                             className="w-full bg-slate-700 border border-slate-600 rounded-2xl px-4 py-3 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none disabled:opacity-50"
