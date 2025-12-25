@@ -140,7 +140,7 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
         <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 rounded-3xl blur opacity-50 animate-pulse"></div>
 
         {/* Glass Card */}
-        <div className="relative bg-white/10 dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
+        <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
           {/* Close button */}
           <button
             onClick={onClose}
@@ -177,7 +177,7 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                 value={geminiKey}
                 onChange={(e) => setGeminiKey(e.target.value)}
                 placeholder="Paste API Key disini..."
-                className="w-full rounded-xl border border-white/20 bg-white/5 backdrop-blur p-3.5 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none pr-10 transition-all"
+                className="w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur p-3.5 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none pr-10 transition-all"
               />
               {geminiSaved && (
                 <span className="absolute right-3 top-3.5 text-green-400">
