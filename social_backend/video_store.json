@@ -50,5 +50,18 @@
       "video_codec": "h264",
       "audio_codec": "aac"
     }
+  },
+  "b83b1d33": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\b83b1d33_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
+    "info": {
+      "duration": 278.291156,
+      "width": 1280,
+      "height": 720,
+      "fps": 30.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 63960404,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
   }
 }
