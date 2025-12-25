@@ -1036,7 +1036,7 @@ export const CatatDuitmuModule: React.FC = () => {
 
                     {/* Telegram Bot Button */}
                     <a
-                        href="https://t.me/catat_duitmu_bot"
+                        href="https://t.me/catatduitmuya_bot"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-sky-500/30 hover:scale-105"
