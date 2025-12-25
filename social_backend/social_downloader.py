@@ -307,44 +307,70 @@ async def get_status():
 
 @app.post("/info", response_model=MediaInfo)
 async def get_media_info(request: MediaInfoRequest):
-    try:
-        platform = detect_platform(request.url)
-        opts = get_yt_dlp_opts("best", "1080", platform)
-        opts["skip_download"] = True
+    platform = detect_platform(request.url)
+    base_opts = get_yt_dlp_opts("best", "1080", platform)
+    base_opts["skip_download"] = True
+    
+    # Strategy list for extracting info
+    strategies = [
+        ("default", base_opts.copy()),
+    ]
+    
+    # Add cookies strategies for problematic platforms
+    if platform in ["twitter", "facebook", "instagram", "threads"]:
+        edge_opts = base_opts.copy()
+        edge_opts["cookiesfrombrowser"] = ("edge",)
+        strategies.append(("cookies_edge", edge_opts))
         
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(request.url, download=False)
-        
-        if not info:
-            raise HTTPException(status_code=404, detail="Media tidak ditemukan")
-        
-        formats = []
-        if "formats" in info:
-            seen = set()
-            for f in info["formats"]:
-                h = f.get("height")
-                if h and h not in seen and f.get("vcodec") != "none":
-                    seen.add(h)
-                    formats.append({"quality": f"{h}p", "ext": f.get("ext", "mp4")})
-            formats.sort(key=lambda x: int(x["quality"].replace("p", "")), reverse=True)
-        
-        return MediaInfo(
-            id=info.get("id", str(uuid.uuid4())),
-            url=request.url,
-            title=info.get("title", "Untitled"),
-            description=info.get("description"),
-            thumbnail=info.get("thumbnail"),
-            duration=info.get("duration"),
-            platform=platform,
-            uploader=info.get("uploader") or info.get("channel"),
-            upload_date=info.get("upload_date"),
-            view_count=info.get("view_count"),
-            like_count=info.get("like_count"),
-            formats=formats[:5],
-            is_video=bool(info.get("duration")),
-        )
-    except yt_dlp.utils.DownloadError as e:
-        raise HTTPException(status_code=400, detail=f"Gagal mengambil info: {str(e)}")
+        chrome_opts = base_opts.copy()
+        chrome_opts["cookiesfrombrowser"] = ("chrome",)
+        strategies.append(("cookies_chrome", chrome_opts))
+    
+    last_error = None
+    info = None
+    
+    for name, opts in strategies:
+        try:
+            print(f"[INFO] Fetching info with strategy '{name}' for {platform}...")
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(request.url, download=False)
+            if info:
+                print(f"[INFO] Success with strategy '{name}'")
+                break
+        except Exception as e:
+            last_error = str(e)
+            print(f"[WARNING] Strategy '{name}' failed: {last_error[:100]}")
+            continue
+    
+    if not info:
+        raise HTTPException(status_code=400, detail=f"Gagal mengambil info: {last_error or 'Unknown error'}")
+    
+    formats = []
+    if "formats" in info:
+        seen = set()
+        for f in info["formats"]:
+            h = f.get("height")
+            if h and h not in seen and f.get("vcodec") != "none":
+                seen.add(h)
+                formats.append({"quality": f"{h}p", "ext": f.get("ext", "mp4")})
+        formats.sort(key=lambda x: int(x["quality"].replace("p", "")), reverse=True)
+    
+    return MediaInfo(
+        id=info.get("id", str(uuid.uuid4())),
+        url=request.url,
+        title=info.get("title", "Untitled"),
+        description=info.get("description"),
+        thumbnail=info.get("thumbnail"),
+        duration=info.get("duration"),
+        platform=platform,
+        uploader=info.get("uploader") or info.get("channel"),
+        upload_date=info.get("upload_date"),
+        view_count=info.get("view_count"),
+        like_count=info.get("like_count"),
+        formats=formats[:5],
+        is_video=bool(info.get("duration")),
+    )
+
 
 @app.post("/download")
 async def start_download(request: DownloadRequest, background_tasks: BackgroundTasks):
