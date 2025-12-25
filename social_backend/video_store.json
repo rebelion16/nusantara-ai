@@ -1,58 +1,6 @@
 {
-  "0d32af80": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\0d32af80_Libur Akhir Tahun, Bali Benar Sepi Wisatawan\uff1f - [Z.mp4",
-    "info": {
-      "duration": 262.083628,
-      "width": 1280,
-      "height": 720,
-      "fps": 29.97002997002997,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 51788433,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "550a2e19": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\550a2e19_cut.mp4",
-    "info": {
-      "duration": 19.018633,
-      "width": 1080,
-      "height": 1920,
-      "fps": 29.97002997002997,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 1397292,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "0fe97880": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\0fe97880_final.mp4",
-    "info": {
-      "duration": 19.018633,
-      "width": 608,
-      "height": 1080,
-      "fps": 29.97002997002997,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 1069876,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "01c4fb57": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\01c4fb57_cut.mp4",
-    "info": {
-      "duration": 18.818433,
-      "width": 1080,
-      "height": 1920,
-      "fps": 29.97002997002997,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 3075695,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "e3012950": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\e3012950_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
+  "cd44a715": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\cd44a715_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
     "info": {
       "duration": 278.291156,
       "width": 1280,
@@ -64,15 +12,28 @@
       "audio_codec": "aac"
     }
   },
-  "a9d869c2": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\a9d869c2_cut.mp4",
+  "9a46032e": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\9a46032e.mp4",
     "info": {
-      "duration": 38.2,
+      "duration": 278.291156,
+      "width": 1280,
+      "height": 720,
+      "fps": 30.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 63960404,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
+  },
+  "066b27c6": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\066b27c6_merged.mp4",
+    "info": {
+      "duration": 32.62322,
       "width": 1080,
       "height": 1920,
       "fps": 30.0,
       "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 10992837,
+      "size": 8652585,
       "video_codec": "h264",
       "audio_codec": "aac"
     }

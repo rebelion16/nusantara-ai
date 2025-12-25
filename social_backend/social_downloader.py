@@ -191,16 +191,75 @@ async def download_media_async(task_id: str, url: str, format_type: str, quality
     try:
         download_tasks[task_id].status = "downloading"
         platform = detect_platform(url)
-        opts = get_yt_dlp_opts(format_type, quality, platform)
-        opts["outtmpl"] = str(DOWNLOAD_DIR / f"{task_id}_%(title).50s.%(ext)s")
-        opts["progress_hooks"] = [progress_hook(task_id)]
         
+        # Base options
+        base_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "outtmpl": str(DOWNLOAD_DIR / f"{task_id}_%(title).50s.%(ext)s"),
+            "progress_hooks": [progress_hook(task_id)],
+            "merge_output_format": "mp4",
+        }
+        
+        # Define strategies
+        strategies = []
+        
+        # Default strategy
+        default_opts = base_opts.copy()
+        default_opts.update(get_yt_dlp_opts(format_type, quality, platform))
+        strategies.append(("default", default_opts))
+        
+        # Cookies strategy (Edge)
+        edge_opts = default_opts.copy()
+        edge_opts["cookiesfrombrowser"] = ("edge",)
+        strategies.append(("cookies_edge", edge_opts))
+        
+        # Cookies strategy (Chrome)
+        chrome_opts = default_opts.copy()
+        chrome_opts["cookiesfrombrowser"] = ("chrome",)
+        strategies.append(("cookies_chrome", chrome_opts))
+        
+        # Mobile User-Agent strategy
+        mobile_opts = default_opts.copy()
+        mobile_opts["http_headers"] = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+        }
+        strategies.append(("mobile_ua", mobile_opts))
+
+        # FB/Threads specific: Android Client
+        if platform in ["facebook", "threads", "instagram"]:
+             android_opts = default_opts.copy()
+             android_opts["extractor_args"] = {"instagram": {"player_client": ["android"]}}
+             strategies.append(("android_client", android_opts))
+
         loop = asyncio.get_event_loop()
-        def do_download():
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([url])
-        await loop.run_in_executor(None, do_download)
+        success = False
+        last_error = None
         
+        for name, opts in strategies:
+            try:
+                print(f"[INFO] Task {task_id}: Trying strategy '{name}' for {platform}...")
+                
+                def do_download():
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        ydl.download([url])
+                        
+                await loop.run_in_executor(None, do_download)
+                success = True
+                print(f"[INFO] Task {task_id}: Success using strategy '{name}'")
+                break
+            except Exception as e:
+                print(f"[WARNING] Task {task_id}: Strategy '{name}' failed: {e}")
+                last_error = str(e)
+                continue
+        
+        if not success:
+            raise Exception(f"Download failed with all strategies. Last error: {last_error}")
+        
+        # Post-download processing (find file, cache, update status)
+        found_file = False
         for f in DOWNLOAD_DIR.glob(f"{task_id}_*"):
             download_tasks[task_id].filename = f.name
             
@@ -214,14 +273,18 @@ async def download_media_async(task_id: str, url: str, format_type: str, quality
                 "created_at": datetime.now().isoformat()
             }
             save_cache(download_cache)
-            print(f"[CACHE SAVE] {url[:50]}... -> {f.name}")
+            found_file = True
             break
             
+        if not found_file:
+             raise Exception("File downloaded but not found on disk")
+
         download_tasks[task_id].status = "completed"
         download_tasks[task_id].progress = 100
     except Exception as e:
         download_tasks[task_id].status = "error"
         download_tasks[task_id].error = str(e)
+
 
 
 # ===================== ENDPOINTS =====================
