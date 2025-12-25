@@ -158,8 +158,8 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080", platform: 
         base_opts["format"] = "best"
         base_opts["extractor_args"] = {}
         base_opts["http_headers"] = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    elif platform in ["pinterest", "facebook", "instagram", "threads"]:
-        # Pinterest/FB/IG often have HLS streams or single files
+    elif platform in ["pinterest", "facebook", "instagram", "threads", "twitter"]:
+        # Pinterest/FB/IG/Twitter often have HLS streams or single files
         # Using simple 'best' is safer than requiring specific codecs
         base_opts["format"] = "best[ext=mp4]/best"
     elif format_type == "audio":
