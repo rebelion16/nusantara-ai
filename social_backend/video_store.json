@@ -50,5 +50,31 @@
       "video_codec": "h264",
       "audio_codec": "aac"
     }
+  },
+  "e3012950": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\e3012950_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
+    "info": {
+      "duration": 278.291156,
+      "width": 1280,
+      "height": 720,
+      "fps": 30.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 63960404,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
+  },
+  "a9d869c2": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\a9d869c2_cut.mp4",
+    "info": {
+      "duration": 38.2,
+      "width": 1080,
+      "height": 1920,
+      "fps": 30.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 10992837,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
   }
 }

@@ -213,7 +213,12 @@ export async function getYouTubeProgress(): Promise<DownloadProgress> {
     try {
         const response = await fetch(`${BACKEND_URL}/youtube/progress`);
         if (response.ok) {
-            return response.json();
+            const data = await response.json();
+            // Parse percent to number since backend may return string
+            return {
+                ...data,
+                percent: typeof data.percent === 'string' ? parseFloat(data.percent) || 0 : data.percent || 0,
+            };
         }
     } catch {
         // Ignore errors, return idle state
@@ -228,6 +233,7 @@ export async function getYouTubeProgress(): Promise<DownloadProgress> {
         filename: ''
     };
 }
+
 
 // ===== Upload Functions =====
 

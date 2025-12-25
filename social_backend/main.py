@@ -215,13 +215,17 @@ def yt_progress_hook(d):
         yt_progress["status"] = "downloading"
         
         # Handle both old and new yt-dlp key formats
-        # Percentage
+        # Percentage - always as float
         if "_percent_str" in d:
-            yt_progress["percent"] = d["_percent_str"].strip().replace("%", "")
+            try:
+                yt_progress["percent"] = float(d["_percent_str"].strip().replace("%", ""))
+            except:
+                yt_progress["percent"] = 0
         elif "downloaded_bytes" in d and "total_bytes" in d and d["total_bytes"]:
-            yt_progress["percent"] = str(round(d["downloaded_bytes"] / d["total_bytes"] * 100, 1))
+            yt_progress["percent"] = round(d["downloaded_bytes"] / d["total_bytes"] * 100, 1)
         elif "downloaded_bytes" in d and "total_bytes_estimate" in d and d["total_bytes_estimate"]:
-            yt_progress["percent"] = str(round(d["downloaded_bytes"] / d["total_bytes_estimate"] * 100, 1))
+            yt_progress["percent"] = round(d["downloaded_bytes"] / d["total_bytes_estimate"] * 100, 1)
+
         
         # Downloaded bytes
         if "_downloaded_bytes_str" in d:
@@ -349,11 +353,18 @@ async def youtube_download(request: YouTubeDownloadRequest):
     ]
     
     last_error = None
+    loop = asyncio.get_event_loop()
+
     for i, opts in enumerate(strategies):
         try:
             print(f"[INFO] Trying download strategy {i+1}/{len(strategies)}...")
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(request.url, download=True)
+            
+            # Run download in executor to prevent blocking event loop
+            def do_download():
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    return ydl.extract_info(request.url, download=True)
+            
+            info = await loop.run_in_executor(None, do_download)
             
             for f in UPLOAD_DIR.glob(f"{video_id}_*"):
                 video_store[video_id] = {"path": str(f), "info": get_video_info(f)}
@@ -373,6 +384,7 @@ async def youtube_download(request: YouTubeDownloadRequest):
             continue
     
     raise HTTPException(status_code=400, detail=f"Download gagal setelah mencoba semua strategi. Error terakhir: {last_error}")
+
 
 
 @app.get("/youtube/progress")
