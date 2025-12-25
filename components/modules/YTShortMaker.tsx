@@ -151,7 +151,71 @@ export const YTShortMakerModule: React.FC = () => {
 
   // ----- Effects -----
 
+  // Load state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ytshort_workspace');
+      if (saved) {
+        const state = JSON.parse(saved);
+
+        // Restore states
+        if (state.currentStep) setCurrentStep(state.currentStep);
+        if (state.videoId) setVideoId(state.videoId);
+        if (state.videoInfo) setVideoInfo(state.videoInfo);
+        if (state.currentVideoId) setCurrentVideoId(state.currentVideoId);
+
+        if (state.youtubeUrl) setYoutubeUrl(state.youtubeUrl);
+        if (state.youtubeInfo) setYoutubeInfo(state.youtubeInfo);
+
+        if (state.transcript) setTranscript(state.transcript);
+        if (state.fullTranscript) setFullTranscript(state.fullTranscript);
+        if (state.transcriptLanguage) setTranscriptLanguage(state.transcriptLanguage);
+
+        if (state.highlights) setHighlights(state.highlights);
+
+        if (state.captions) setCaptions(state.captions);
+        if (state.captionStyle) setCaptionStyle(state.captionStyle);
+
+        console.log("Workspace restored from localStorage");
+      }
+    } catch (e) {
+      console.error("Failed to restore workspace", e);
+    }
+  }, []);
+
+  // Save state to localStorage whenever important state changes
+  useEffect(() => {
+    if (currentStep === 'upload' && !videoId && !youtubeUrl) {
+      // Don't save empty state, or maybe clear it?
+      // localStorage.removeItem('ytshort_workspace'); 
+      return;
+    }
+
+    const stateToSave = {
+      currentStep,
+      videoId,
+      videoInfo,
+      currentVideoId,
+      youtubeUrl,
+      youtubeInfo,
+      transcript,
+      fullTranscript,
+      transcriptLanguage,
+      highlights,
+      captions,
+      captionStyle,
+      lastUpdated: Date.now()
+    };
+
+    localStorage.setItem('ytshort_workspace', JSON.stringify(stateToSave));
+  }, [
+    currentStep, videoId, videoInfo, currentVideoId,
+    youtubeUrl, youtubeInfo, transcript, fullTranscript,
+    transcriptLanguage, highlights, captions, captionStyle
+  ]);
+
   // Check backend health on mount and load available engines
+
   useEffect(() => {
     const check = async () => {
       const online = await checkBackendHealth();
@@ -528,6 +592,14 @@ export const YTShortMakerModule: React.FC = () => {
         videoRef.current.play();
       }
       setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Clear workspace manually
+  const resetWorkspace = () => {
+    if (window.confirm('Yakin ingin mereset progress? Semua data yang belum disimpan akan hilang.')) {
+      localStorage.removeItem('ytshort_workspace');
+      window.location.reload(); // Reload to clear state cleanly
     }
   };
 
@@ -1420,9 +1492,20 @@ export const YTShortMakerModule: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {(videoId || youtubeUrl) && (
+            <button
+              onClick={resetWorkspace}
+              className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 rounded-full transition-colors"
+              title="Reset Workspace"
+            >
+              <RefreshCw size={12} />
+              Reset
+            </button>
+          )}
           {backendOnline && <GPUStatusComponent />}
           {renderBackendStatus()}
         </div>
+
       </div>
 
       {/* Backend offline warning */}
