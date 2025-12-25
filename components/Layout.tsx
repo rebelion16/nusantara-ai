@@ -194,7 +194,7 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <a
               href="https://console.cloud.google.com/"
               target="_blank"
@@ -203,15 +203,24 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             >
               <ExternalLink size={14} /> Dapatkan API Key Disini
             </a>
-            {isSaved && (
-              <button
-                onClick={handleClear}
-                className="py-2 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-              >
-                Hapus Key
-              </button>
-            )}
+            <a
+              href="https://bit.ly/nusantara-ai-studio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2 px-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+            >
+              <ExternalLink size={14} /> Dapatkan versi non-API disini
+            </a>
           </div>
+          {isSaved && (
+            <button
+              onClick={handleClear}
+              className="py-2 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+            >
+              Hapus Key
+            </button>
+          )}
+
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
             <button
