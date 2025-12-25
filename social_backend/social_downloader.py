@@ -158,15 +158,21 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080", platform: 
         base_opts["format"] = "best"
         base_opts["extractor_args"] = {}
         base_opts["http_headers"] = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    elif platform in ["pinterest", "facebook", "instagram", "threads"]:
+        # Pinterest/FB/IG often have HLS streams or single files
+        # Using simple 'best' is safer than requiring specific codecs
+        base_opts["format"] = "best[ext=mp4]/best"
     elif format_type == "audio":
         base_opts["format"] = "bestaudio/best"
         base_opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}]
     else:
         height = {"360": 360, "480": 480, "720": 720, "1080": 1080, "4k": 2160}.get(quality, 1080)
+        # Add fallback to simple 'best' at the end
         base_opts["format"] = f"bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/best[height<={height}]/best"
         base_opts["merge_output_format"] = "mp4"
     
     return base_opts
+
 
 def progress_hook(task_id: str):
     def hook(d):
