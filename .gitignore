@@ -85,3 +85,4 @@ pip-wheel-metadata/
 *.zip
 /social_backend/uploads
 social_backend/video_store.json
+/social_backend/downloads
