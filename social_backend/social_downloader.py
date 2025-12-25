@@ -158,21 +158,9 @@ def get_yt_dlp_opts(format_type: str = "best", quality: str = "1080", platform: 
         base_opts["format"] = "best"
         base_opts["extractor_args"] = {}
         base_opts["http_headers"] = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    elif platform == "twitter":
-        # Twitter/X requires cookies for most content
-        base_opts["format"] = "best"
-        base_opts["http_headers"] = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        # Try to use browser cookies
-        try:
-            base_opts["cookiesfrombrowser"] = ("chrome",)
-        except:
-            try:
-                base_opts["cookiesfrombrowser"] = ("edge",)
-            except:
-                pass
     elif format_type == "audio":
+
+
 
         base_opts["format"] = "bestaudio/best"
         base_opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}]
@@ -326,36 +314,51 @@ async def get_progress(task_id: str):
         raise HTTPException(status_code=404, detail="Task tidak ditemukan")
     return download_tasks[task_id]
 
-@app.get("/file/{filename}")
+@app.get("/file/{filename:path}")
 async def get_file(filename: str):
-    fp = DOWNLOAD_DIR / filename
+    from urllib.parse import unquote
+    
+    # URL decode the filename
+    decoded_filename = unquote(filename)
+    fp = DOWNLOAD_DIR / decoded_filename
+    
     if not fp.exists():
-        raise HTTPException(status_code=404, detail="File tidak ditemukan")
+        # Try original filename too
+        fp = DOWNLOAD_DIR / filename
+        if not fp.exists():
+            raise HTTPException(status_code=404, detail=f"File tidak ditemukan: {decoded_filename}")
     
-    file_size = fp.stat().st_size
-    
-    # Generate ETag for browser caching
-    etag = f"\"{fp.stat().st_mtime}-{file_size}\""
-    
-    # Streaming for large files (>10MB)
-    def iterfile():
-        with open(fp, "rb") as f:
-            while chunk := f.read(1024 * 1024):  # 1MB chunks
-                yield chunk
-    
-    headers = {
-        "Content-Disposition": f'attachment; filename="{filename}"',
-        "Content-Length": str(file_size),
-        "ETag": etag,
-        "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
-        "Accept-Ranges": "bytes",
-    }
-    
-    return StreamingResponse(
-        iterfile(),
-        media_type="application/octet-stream",
-        headers=headers
-    )
+    try:
+        file_size = fp.stat().st_size
+        
+        # Generate ETag for browser caching
+        etag = f"\"{fp.stat().st_mtime}-{file_size}\""
+        
+        # Streaming for large files (>10MB)
+        def iterfile():
+            with open(fp, "rb") as f:
+                while chunk := f.read(1024 * 1024):  # 1MB chunks
+                    yield chunk
+        
+        # Safe filename for Content-Disposition
+        safe_filename = fp.name.encode('ascii', 'ignore').decode('ascii') or "download.mp4"
+        
+        headers = {
+            "Content-Disposition": f'attachment; filename="{safe_filename}"',
+            "Content-Length": str(file_size),
+            "ETag": etag,
+            "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
+            "Accept-Ranges": "bytes",
+        }
+        
+        return StreamingResponse(
+            iterfile(),
+            media_type="application/octet-stream",
+            headers=headers
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+
 
 @app.delete("/file/{filename}")
 async def delete_file(filename: str):
