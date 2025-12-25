@@ -152,6 +152,14 @@ export const MODULES: ModuleDefinition[] = ([
     icon: '⬇️',
     gradient: 'from-pink-500 via-purple-500 to-blue-500',
     category: 'Utilitas'
+  },
+  {
+    id: 'ai-chat',
+    title: 'Ngobrol dengan AI',
+    description: 'Teman ngobrol AI yang santai & ceplas-ceplos. Bisa chat suara & minta dibuatkan gambar!',
+    icon: '💬',
+    gradient: 'from-violet-500 to-purple-600',
+    category: 'AI Assistant'
   }
 ] as ModuleDefinition[]).sort((a, b) => a.title.localeCompare(b.title));
 

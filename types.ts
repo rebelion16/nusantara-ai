@@ -19,7 +19,8 @@ export type ModuleId =
   | 'ai-melukis'
   | 'wallpaper-generator'
   | 'catat-duitmu'
-  | 'social-downloader';
+  | 'social-downloader'
+  | 'ai-chat';
 
 export interface ModuleDefinition {
   id: ModuleId;

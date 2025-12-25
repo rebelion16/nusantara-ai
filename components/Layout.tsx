@@ -13,6 +13,7 @@ import {
   Palette,
   Sun,
   Moon,
+  RefreshCw,
 } from 'lucide-react';
 import { MODULES } from './modules/Home';
 
@@ -97,141 +98,141 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   );
 };
 
-// API Key Modal Component
+// API Key Modal Component - Glassmorphism Style
 const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
   onClose,
 }) => {
-  const [key, setKey] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
+  const [geminiKey, setGeminiKey] = useState('');
+  const [geminiSaved, setGeminiSaved] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      const stored = localStorage.getItem('GEMINI_API_KEY') || '';
-      setKey(stored);
-      setIsSaved(!!stored);
+      const storedGemini = localStorage.getItem('GEMINI_API_KEY') || '';
+      setGeminiKey(storedGemini);
+      setGeminiSaved(!!storedGemini);
     }
   }, [isOpen]);
 
-  const handleSave = () => {
-    if (key.trim()) {
-      localStorage.setItem('GEMINI_API_KEY', key.trim());
-      setIsSaved(true);
-      alert('API Key berhasil disimpan! Aplikasi siap digunakan.');
+  const handleSaveGemini = () => {
+    if (geminiKey.trim()) {
+      localStorage.setItem('GEMINI_API_KEY', geminiKey.trim());
+      setGeminiSaved(true);
+      alert('API Key berhasil disimpan!');
       onClose();
     } else {
       alert('API Key tidak boleh kosong.');
     }
   };
 
-  const handleClear = () => {
+  const handleClearGemini = () => {
     localStorage.removeItem('GEMINI_API_KEY');
-    setKey('');
-    setIsSaved(false);
-    alert('API Key telah dihapus.');
+    setGeminiKey('');
+    setGeminiSaved(false);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-white dark:bg-dark-card w-full max-w-md rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-gray-700 transform scale-100 transition-transform relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+      <div className="relative w-full max-w-md">
+        {/* Gradient border glow effect */}
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 rounded-3xl blur opacity-50 animate-pulse"></div>
 
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 p-1.5 rounded-lg">
-              <Key size={20} />
-            </span>
-            Konfigurasi API Key
-          </h3>
+        {/* Glass Card */}
+        <div className="relative bg-white/10 dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
+          {/* Close button */}
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full"
           >
             <X size={20} />
           </button>
-        </div>
 
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-          Untuk menggunakan fitur AI canggih di aplikasi ini, Anda perlu memasukkan{' '}
-          <strong>Google Gemini API Key</strong>. Anda dapat menggunakan key pribadi atau dari
-          project Google Cloud teman.
-        </p>
+          {/* Centered Key Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <Key size={32} className="text-white" />
+            </div>
+          </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-              Google AI Cloud Key
+          {/* Title */}
+          <h3 className="text-xl font-bold text-white text-center mb-2">
+            Konfigurasi API Key
+          </h3>
+
+          {/* Description */}
+          <p className="text-sm text-gray-300 text-center leading-relaxed mb-6">
+            Masukkan <strong className="text-white">Google Gemini API Key</strong> untuk menggunakan semua fitur AI canggih di aplikasi ini.
+          </p>
+
+          {/* Input Section */}
+          <div className="mb-5">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+              GOOGLE AI CLOUD KEY
             </label>
             <div className="relative">
               <input
                 type="password"
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                placeholder="Paste Key (AIzaSy...)"
-                className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none dark:text-white pr-10 transition-all"
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="Paste API Key disini..."
+                className="w-full rounded-xl border border-white/20 bg-white/5 backdrop-blur p-3.5 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none pr-10 transition-all"
               />
-              {isSaved && (
-                <span className="absolute right-3 top-3.5 text-green-500 pointer-events-none">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                      clipRule="evenodd"
-                    />
+              {geminiSaved && (
+                <span className="absolute right-3 top-3.5 text-green-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
                   </svg>
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">
+            <p className="text-[11px] text-gray-500 mt-1.5">
               *Key disimpan aman di browser Anda (LocalStorage).
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
+          {/* Link Buttons */}
+          <div className="space-y-2 mb-5">
             <a
               href="https://console.cloud.google.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2 px-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all backdrop-blur"
             >
-              <ExternalLink size={14} /> Dapatkan API Key Disini
+              <RefreshCw size={16} /> Dapatkan API Key Disini
             </a>
             <a
               href="https://bit.ly/nusantara-ai-studio"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2 px-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+              className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all backdrop-blur"
             >
-              <ExternalLink size={14} /> Dapatkan versi non-API disini
+              <RefreshCw size={16} /> Dapatkan versi non-API disini
             </a>
           </div>
-          {isSaved && (
+
+          {/* Clear Key Button */}
+          {geminiSaved && (
             <button
-              onClick={handleClear}
-              className="py-2 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              onClick={handleClearGemini}
+              className="w-full text-red-400 text-sm font-medium hover:text-red-300 transition-colors mb-4 py-2 hover:bg-red-500/10 rounded-lg"
             >
               Hapus Key
             </button>
           )}
 
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+          {/* Footer Buttons */}
+          <div className="flex gap-3 pt-4 border-t border-white/10">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex-1 px-5 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-all"
             >
               Batal
             </button>
             <button
-              onClick={handleSave}
-              className="px-6 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-lg transition-transform active:scale-95"
+              onClick={handleSaveGemini}
+              className="flex-1 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl shadow-lg shadow-purple-500/25 transition-all active:scale-95"
             >
               Simpan & Gunakan
             </button>
@@ -241,6 +242,7 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     </div>
   );
 };
+
 
 // Settings Panel Component
 interface SettingsPanelProps {

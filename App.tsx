@@ -25,6 +25,7 @@ import { WallpaperGeneratorModule } from './components/modules/WallpaperGenerato
 import { YTShortMakerModule } from './components/modules/YTShortMaker';
 import { CatatDuitmuModule } from './components/modules/CatatDuitmu';
 import { SocialMediaDownloaderModule } from './components/modules/SocialMediaDownloader';
+import { NgobrolAIModule } from './components/modules/NgobrolAI';
 
 const App: React.FC = () => {
   const [activeModuleId, setActiveModuleId] = useState<ModuleId>('home');
@@ -131,6 +132,8 @@ const App: React.FC = () => {
         return <CatatDuitmuModule />;
       case 'social-downloader':
         return <SocialMediaDownloaderModule />;
+      case 'ai-chat':
+        return <NgobrolAIModule />;
       default:
         return <div>Module not found</div>;
     }

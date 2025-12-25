@@ -1,126 +1,4 @@
 {
-  "cd44a715": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\cd44a715_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
-    "info": {
-      "duration": 278.291156,
-      "width": 1280,
-      "height": 720,
-      "fps": 30.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 63960404,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "9a46032e": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\9a46032e.mp4",
-    "info": {
-      "duration": 278.291156,
-      "width": 1280,
-      "height": 720,
-      "fps": 30.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 63960404,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "066b27c6": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\output\\066b27c6_merged.mp4",
-    "info": {
-      "duration": 32.62322,
-      "width": 1080,
-      "height": 1920,
-      "fps": 30.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 8652585,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "7a6205dd": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\7a6205dd_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
-    "info": {
-      "duration": 278.291156,
-      "width": 1280,
-      "height": 720,
-      "fps": 30.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 63960404,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "b83b1d33": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\b83b1d33_Presiden Prabowo\u2013Menkeu Purbaya Lihat Tumpukan Uan.mp4",
-    "info": {
-      "duration": 278.291156,
-      "width": 1280,
-      "height": 720,
-      "fps": 30.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 63960404,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "c8100d19": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\c8100d19.mp4",
-    "info": {
-      "duration": 36.907,
-      "width": 720,
-      "height": 1280,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 9653758,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "6e82573c": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\6e82573c_\u2060SAMPAI BAWA LARI UANG 1,3T\u2049\ufe0fTRANSAKSI PALSU-PROYE.mp4",
-    "info": {
-      "error": "the JSON object must be str, bytes or bytearray, not NoneType"
-    }
-  },
-  "bcfa1b42": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\bcfa1b42_SERIUS! Komentar BCL Mengubah Suasana Natalia Anas.mp4",
-    "info": {
-      "duration": 539.492426,
-      "width": 1280,
-      "height": 720,
-      "fps": 25.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 41824659,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
-  "e01327f6": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\e01327f6_From Heartbreak to Beast Mode \ud83d\udc94\ud83e\udd8d #motivation #shor.mp4",
-    "info": {
-      "error": "the JSON object must be str, bytes or bytearray, not NoneType"
-    }
-  },
-  "bafed0cf": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\bafed0cf_From Heartbreak to Beast Mode \ud83d\udc94\ud83e\udd8d #motivation #shor.mp4",
-    "info": {
-      "error": "the JSON object must be str, bytes or bytearray, not NoneType"
-    }
-  },
-  "a2189c53": {
-    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\a2189c53.mp4",
-    "info": {
-      "duration": 61.766667,
-      "width": 576,
-      "height": 1024,
-      "fps": 30.0,
-      "format": "mov,mp4,m4a,3gp,3g2,mj2",
-      "size": 13942774,
-      "video_codec": "h264",
-      "audio_codec": "aac"
-    }
-  },
   "2e76dbc6": {
     "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\2e76dbc6_Gampang Monet!! Saya Buat Konten Reupload dan bisa.mp4",
     "info": {
@@ -132,6 +10,12 @@
       "size": 79730534,
       "video_codec": "h264",
       "audio_codec": "aac"
+    }
+  },
+  "1fe57a7a": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\1fe57a7a_MAMPUKAH SJAFRIE BERANTAS MAFIA TAMBANG \u2049\ufe0f - Selam.mp4",
+    "info": {
+      "error": "the JSON object must be str, bytes or bytearray, not NoneType"
     }
   }
 }
