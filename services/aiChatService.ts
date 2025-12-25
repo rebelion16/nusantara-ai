@@ -116,7 +116,23 @@ const buildSystemPrompt = (persona: AiPersona): string => {
     `,
     };
 
+    // Get current date/time for real-time awareness
+    const now = new Date();
+    const currentDateTime = now.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta'
+    });
+
     return `Kamu adalah "${persona.name}", AI temen ngobrol yang ASIK BANGET, CEPLAS-CEPLOS, dan TANPA FILTER.
+
+📅 WAKTU SEKARANG: ${currentDateTime} (WIB - Indonesia)
+- Gunakan informasi waktu ini untuk menjawab pertanyaan tentang tanggal, hari, atau waktu
+- Ini adalah waktu REAL-TIME, bukan waktu training data
 
 🧠 MEMORY & KONTEKS - INI YANG PALING PENTING!!!
 - SELALU ingat dan ikuti SEMUA yang sudah dibahas di percakapan sebelumnya
