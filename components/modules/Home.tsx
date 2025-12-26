@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wallet, Cloud, Sun, CloudRain, Sparkles, Calendar, Clock, ArrowRight, MapPin, Navigation, Search, Loader } from 'lucide-react';
+import { Wallet, Cloud, Sun, CloudRain, Sparkles, Calendar, Clock, ArrowRight, MapPin, Navigation, Search, Loader, X, ExternalLink, AlertTriangle, Info, Zap } from 'lucide-react';
 import { ModuleDefinition, ModuleId } from '../../types';
 
 interface HomeProps {
@@ -1036,9 +1036,168 @@ export const MODULES: ModuleDefinition[] = ([
   }
 ] as ModuleDefinition[]).sort((a, b) => a.title.localeCompare(b.title));
 
+// === INFO POPUP COMPONENT ===
+const INFO_POPUP_STORAGE_KEY = 'NUSANTARA_AI_INFO_DISMISSED';
+
+const InfoPopup: React.FC<{ onDismiss: () => void }> = ({ onDismiss }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Trigger entrance animation
+    setTimeout(() => setIsVisible(true), 100);
+  }, []);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    setTimeout(onDismiss, 300);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        onClick={handleDismiss}
+      />
+
+      {/* Popup Card */}
+      <div
+        className={`relative w-full max-w-lg transform transition-all duration-500 ease-out ${isVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}`}
+      >
+        {/* Outer Glow Effect */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-400 rounded-3xl blur-lg opacity-75 animate-pulse" />
+
+        {/* Card Content */}
+        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-white/10 overflow-hidden">
+          {/* Animated Background Pattern */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 left-0 w-40 h-40 bg-violet-500 rounded-full filter blur-3xl animate-blob" />
+            <div className="absolute top-0 right-0 w-40 h-40 bg-fuchsia-500 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+            <div className="absolute bottom-0 left-1/2 w-40 h-40 bg-cyan-500 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
+          </div>
+
+          {/* Header */}
+          <div className="relative px-6 pt-6 pb-4 border-b border-white/10">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Info className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    Informasi Penting
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      BACA INI
+                    </span>
+                  </h3>
+                  <p className="text-sm text-slate-400">Tentang API Key & Fitur Generate Gambar</p>
+                </div>
+              </div>
+              <button
+                onClick={handleDismiss}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="relative px-6 py-5 space-y-4">
+            {/* Warning Card */}
+            <div className="flex gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle className="flex-shrink-0 text-amber-400 mt-0.5" size={20} />
+              <div>
+                <p className="text-sm text-white leading-relaxed">
+                  <span className="font-semibold text-amber-300">API KEY dari AI Studio</span> hanya bisa digunakan untuk:
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-slate-300">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    Chat / Text biasa ✓
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    Text-to-Speech (TTS) ✓
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                    <span className="text-red-300">Generate Gambar ✗</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Solution Card */}
+            <div className="flex gap-3 p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-500/20">
+              <Zap className="flex-shrink-0 text-violet-400 mt-0.5" size={20} />
+              <div>
+                <p className="text-sm text-white font-medium mb-1">
+                  Mau fitur Generate Gambar?
+                </p>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  Klaim <span className="font-bold text-cyan-300">FREE TRIAL KREDIT $300</span> dari Google Cloud untuk menikmati API key yang support image generation.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="relative px-6 py-4 bg-white/5 border-t border-white/10 flex flex-col sm:flex-row gap-3">
+            <a
+              href="https://cloud.google.com/free"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <ExternalLink size={16} />
+              Klaim Free Trial $300
+            </a>
+            <button
+              onClick={handleDismiss}
+              className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-medium rounded-xl transition-all"
+            >
+              Mengerti, Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(20px, -30px) scale(1.1); }
+          50% { transform: translate(-20px, 20px) scale(0.9); }
+          75% { transform: translate(30px, 10px) scale(1.05); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite ease-in-out;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export const HomeModule: React.FC<HomeProps> = ({ onNavigate }) => {
   // Shared weather state for Hero background
   const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>('sunny');
+
+  // Info popup state - check localStorage
+  const [showInfoPopup, setShowInfoPopup] = useState(() => {
+    return localStorage.getItem(INFO_POPUP_STORAGE_KEY) !== 'true';
+  });
+
+  const handleDismissPopup = () => {
+    setShowInfoPopup(false);
+    localStorage.setItem(INFO_POPUP_STORAGE_KEY, 'true');
+  };
 
   // Determine weather condition from simulated data
   useEffect(() => {
@@ -1050,6 +1209,9 @@ export const HomeModule: React.FC<HomeProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Info Popup */}
+      {showInfoPopup && <InfoPopup onDismiss={handleDismissPopup} />}
+
       {/* Hero Section with dynamic background */}
       <HeroSection weather={weatherCondition} />
 
