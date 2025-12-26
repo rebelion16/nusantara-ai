@@ -441,11 +441,7 @@ export const NgobrolAIModule: React.FC = () => {
         const introMsg = createAiMessage(getIntroMessage(newPersona));
         setMessages(prev => [...prev, introMsg]);
 
-        // Close settings panel
-        setShowPersonaSettings(false);
-
-        // Focus back to input
-        setTimeout(() => inputRef.current?.focus(), 100);
+        // Keep settings panel open - user will close it manually
     };
 
     // Handle custom avatar upload
