@@ -105,41 +105,23 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 }) => {
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiSaved, setGeminiSaved] = useState(false);
-  const [bardCookie, setBardCookie] = useState('');
-  const [bardSaved, setBardSaved] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       const storedGemini = localStorage.getItem('GEMINI_API_KEY') || '';
       setGeminiKey(storedGemini);
       setGeminiSaved(!!storedGemini);
-
-      const storedBard = localStorage.getItem('BARD_PSID_COOKIE') || '';
-      setBardCookie(storedBard);
-      setBardSaved(!!storedBard);
     }
   }, [isOpen]);
 
-  const handleSaveAll = () => {
-    let saved = false;
-
+  const handleSaveGemini = () => {
     if (geminiKey.trim()) {
       localStorage.setItem('GEMINI_API_KEY', geminiKey.trim());
       setGeminiSaved(true);
-      saved = true;
-    }
-
-    if (bardCookie.trim()) {
-      localStorage.setItem('BARD_PSID_COOKIE', bardCookie.trim());
-      setBardSaved(true);
-      saved = true;
-    }
-
-    if (saved) {
-      alert('Konfigurasi berhasil disimpan!');
+      alert('API Key berhasil disimpan!');
       onClose();
     } else {
-      alert('Minimal isi salah satu kredensial.');
+      alert('API Key tidak boleh kosong.');
     }
   };
 
@@ -147,12 +129,6 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     localStorage.removeItem('GEMINI_API_KEY');
     setGeminiKey('');
     setGeminiSaved(false);
-  };
-
-  const handleClearBard = () => {
-    localStorage.removeItem('BARD_PSID_COOKIE');
-    setBardCookie('');
-    setBardSaved(false);
   };
 
   if (!isOpen) return null;
@@ -164,7 +140,7 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
         <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 rounded-3xl blur opacity-50 animate-pulse"></div>
 
         {/* Glass Card */}
-        <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
           {/* Close button */}
           <button
             onClick={onClose}
@@ -182,25 +158,25 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
           {/* Title */}
           <h3 className="text-xl font-bold text-white text-center mb-2">
-            Konfigurasi API & Cookie
+            Konfigurasi API Key
           </h3>
 
           {/* Description */}
           <p className="text-sm text-gray-300 text-center leading-relaxed mb-6">
-            Masukkan kredensial untuk menggunakan fitur AI di aplikasi ini.
+            Masukkan <strong className="text-white">Google Gemini API Key</strong> untuk menggunakan semua fitur AI canggih di aplikasi ini.
           </p>
 
-          {/* Gemini API Key Section */}
+          {/* Input Section */}
           <div className="mb-5">
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-              GOOGLE GEMINI API KEY
+              GOOGLE AI CLOUD KEY
             </label>
             <div className="relative">
               <input
                 type="password"
                 value={geminiKey}
                 onChange={(e) => setGeminiKey(e.target.value)}
-                placeholder="Paste Gemini API Key..."
+                placeholder="Paste API Key disini..."
                 className="w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur p-3.5 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none pr-10 transition-all"
               />
               {geminiSaved && (
@@ -211,53 +187,10 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                 </span>
               )}
             </div>
-            {geminiSaved && (
-              <button
-                onClick={handleClearGemini}
-                className="text-red-400 text-xs font-medium hover:text-red-300 transition-colors mt-1"
-              >
-                Hapus Key
-              </button>
-            )}
-          </div>
-
-          {/* Bard Cookie Section */}
-          <div className="mb-5 p-4 bg-gradient-to-r from-orange-500/10 to-yellow-500/10 rounded-xl border border-orange-500/20">
-            <label className="block text-xs font-bold text-orange-400 uppercase tracking-wider mb-2">
-              🔥 BARD COOKIE (OPSIONAL - UNTUK IMAGE GEN GRATIS)
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                value={bardCookie}
-                onChange={(e) => setBardCookie(e.target.value)}
-                placeholder="Paste __Secure-1PSID cookie..."
-                className="w-full rounded-xl border border-orange-500/30 bg-white/10 backdrop-blur p-3.5 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none pr-10 transition-all"
-              />
-              {bardSaved && (
-                <span className="absolute right-3 top-3.5 text-green-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-                  </svg>
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-orange-300/70 mt-2">
-              💡 Cara dapat: gemini.google.com → DevTools (F12) → Application → Cookies → Copy "__Secure-1PSID"
+            <p className="text-[11px] text-gray-500 mt-1.5">
+              *Key disimpan aman di browser Anda (LocalStorage).
             </p>
-            {bardSaved && (
-              <button
-                onClick={handleClearBard}
-                className="text-red-400 text-xs font-medium hover:text-red-300 transition-colors mt-1"
-              >
-                Hapus Cookie
-              </button>
-            )}
           </div>
-
-          <p className="text-[11px] text-gray-500 mb-4">
-            *Kredensial disimpan aman di browser Anda (LocalStorage).
-          </p>
 
           {/* Link Buttons */}
           <div className="space-y-2 mb-5">
@@ -267,17 +200,27 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               rel="noopener noreferrer"
               className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all backdrop-blur"
             >
-              <RefreshCw size={16} /> Dapatkan Gemini API Key
+              <RefreshCw size={16} /> Dapatkan API Key Disini
             </a>
             <a
-              href="https://gemini.google.com"
+              href="https://bit.ly/nusantara-ai-studio"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-2.5 px-4 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-300 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all backdrop-blur"
+              className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all backdrop-blur"
             >
-              <ExternalLink size={16} /> Buka Gemini untuk Cookie
+              <RefreshCw size={16} /> Dapatkan versi non-API disini
             </a>
           </div>
+
+          {/* Clear Key Button */}
+          {geminiSaved && (
+            <button
+              onClick={handleClearGemini}
+              className="w-full text-red-400 text-sm font-medium hover:text-red-300 transition-colors mb-4 py-2 hover:bg-red-500/10 rounded-lg"
+            >
+              Hapus Key
+            </button>
+          )}
 
           {/* Footer Buttons */}
           <div className="flex gap-3 pt-4 border-t border-white/10">
@@ -288,10 +231,10 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               Batal
             </button>
             <button
-              onClick={handleSaveAll}
+              onClick={handleSaveGemini}
               className="flex-1 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl shadow-lg shadow-purple-500/25 transition-all active:scale-95"
             >
-              Simpan Semua
+              Simpan & Gunakan
             </button>
           </div>
         </div>
@@ -299,7 +242,6 @@ const ApiKeyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     </div>
   );
 };
-
 
 
 // Settings Panel Component
