@@ -323,50 +323,42 @@ export const createLoadingMessage = (): ChatMessage => ({
     isLoading: true,
 });
 
-// === GOOGLE GEMINI TTS ===
+// === ELEVENLABS TTS ===
 
-export type GeminiVoice = 'Kore' | 'Puck' | 'Charon' | 'Fenrir' | 'Aoede' | 'Leda' | 'Orus' | 'Zephyr';
+export type ElevenLabsVoice = 'Rachel' | 'Bella' | 'Antoni' | 'Josh' | 'Arnold' | 'Sam' | 'Elli' | 'Domi';
 
-export const GEMINI_VOICES: { id: GeminiVoice; name: string; gender: 'male' | 'female'; description: string }[] = [
-    { id: 'Kore', name: 'Kore', gender: 'female', description: 'Hangat & ramah' },
-    { id: 'Aoede', name: 'Aoede', gender: 'female', description: 'Profesional' },
-    { id: 'Leda', name: 'Leda', gender: 'female', description: 'Lembut & tenang' },
-    { id: 'Puck', name: 'Puck', gender: 'male', description: 'Energik & ceria' },
-    { id: 'Charon', name: 'Charon', gender: 'male', description: 'Dalam & tenang' },
-    { id: 'Fenrir', name: 'Fenrir', gender: 'male', description: 'Dewasa & serius' },
-    { id: 'Orus', name: 'Orus', gender: 'male', description: 'Tegas & jelas' },
-    { id: 'Zephyr', name: 'Zephyr', gender: 'male', description: 'Ringan & santai' },
+export const ELEVENLABS_VOICES: { id: string; name: ElevenLabsVoice; gender: 'male' | 'female'; description: string }[] = [
+    { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', gender: 'female', description: 'Hangat & tenang' },
+    { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', gender: 'female', description: 'Lembut & ramah' },
+    { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', gender: 'female', description: 'Muda & ceria' },
+    { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Domi', gender: 'female', description: 'Energik & tegas' },
+    { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', gender: 'male', description: 'Profesional & jelas' },
+    { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', gender: 'male', description: 'Dalam & serius' },
+    { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', gender: 'male', description: 'Kuat & tegas' },
+    { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', gender: 'male', description: 'Santai & friendly' },
 ];
 
-export const generateSpeech = async (text: string, voiceId: GeminiVoice = 'Kore'): Promise<string> => {
+export const generateSpeech = async (text: string, voiceId: string = '21m00Tcm4TlvDq8ikWAM'): Promise<string> => {
     try {
-        const client = getClient();
-
-        const response = await client.models.generateContent({
-            model: 'gemini-2.5-flash-preview-tts',
-            contents: [{ parts: [{ text }] }],
-            config: {
-                responseModalities: ['AUDIO'],
-                speechConfig: {
-                    voiceConfig: {
-                        prebuiltVoiceConfig: {
-                            voiceName: voiceId,
-                        },
-                    },
-                },
+        // Call our secure backend API route
+        const response = await fetch('/api/tts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+                text: text,
+                voiceId: voiceId,
+            }),
         });
 
-        // Extract audio data from response
-        const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-        if (!audioData) {
-            throw new Error('No audio data in response');
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || `HTTP ${response.status}`);
         }
 
-        // Convert base64 to blob and create object URL
-        const audioBytes = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));
-        const audioBlob = new Blob([audioBytes], { type: 'audio/mp3' });
+        // Convert response to blob and create URL
+        const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
 
         return audioUrl;

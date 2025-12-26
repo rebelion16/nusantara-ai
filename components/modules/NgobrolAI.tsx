@@ -22,8 +22,7 @@ import {
     createUserMessage,
     createAiMessage,
     createLoadingMessage,
-    GEMINI_VOICES,
-    GeminiVoice,
+    ELEVENLABS_VOICES,
     generateSpeech,
 } from '../../services/aiChatService';
 
@@ -98,9 +97,9 @@ export const NgobrolAIModule: React.FC = () => {
     const [voiceEnabled, setVoiceEnabled] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
-    const [selectedVoice, setSelectedVoice] = useState<GeminiVoice>(() => {
-        const saved = localStorage.getItem('NGOBROL_AI_GEMINI_VOICE');
-        return (saved as GeminiVoice) || 'Kore';
+    const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
+        const saved = localStorage.getItem('NGOBROL_AI_ELEVENLABS_VOICE');
+        return saved || '21m00Tcm4TlvDq8ikWAM'; // Default to Rachel
     });
     const recognitionRef = useRef<SpeechRecognition | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -198,7 +197,7 @@ export const NgobrolAIModule: React.FC = () => {
         }
     }, [isListening]);
 
-    // Speak text using Gemini TTS
+    // Speak text using ElevenLabs TTS
     const speakText = useCallback(async (text: string) => {
         if (!voiceEnabled || isGeneratingVoice) return;
 
@@ -211,8 +210,8 @@ export const NgobrolAIModule: React.FC = () => {
                 audioRef.current.currentTime = 0;
             }
 
-            // Generate speech using Gemini
-            const audioUrl = await generateSpeech(text, selectedVoice);
+            // Generate speech using ElevenLabs
+            const audioUrl = await generateSpeech(text, selectedVoiceId);
 
             if (audioRef.current) {
                 audioRef.current.src = audioUrl;
@@ -220,17 +219,17 @@ export const NgobrolAIModule: React.FC = () => {
                 setIsSpeaking(true);
             }
         } catch (error: any) {
-            console.error('TTS Error:', error);
+            console.error('ElevenLabs TTS Error:', error);
             // Fallback message - don't show alert to avoid interruption
         } finally {
             setIsGeneratingVoice(false);
         }
-    }, [voiceEnabled, selectedVoice, isGeneratingVoice]);
+    }, [voiceEnabled, selectedVoiceId, isGeneratingVoice]);
 
     // Handle voice change
-    const handleVoiceChange = (voice: GeminiVoice) => {
-        setSelectedVoice(voice);
-        localStorage.setItem('NGOBROL_AI_GEMINI_VOICE', voice);
+    const handleVoiceChange = (voiceId: string) => {
+        setSelectedVoiceId(voiceId);
+        localStorage.setItem('NGOBROL_AI_ELEVENLABS_VOICE', voiceId);
     };
 
     // Stop speaking
@@ -531,14 +530,14 @@ export const NgobrolAIModule: React.FC = () => {
                             {voiceEnabled ? 'Suara Aktif' : 'Suara Mati'}
                         </button>
 
-                        {/* Voice Selector - Gemini Voices */}
+                        {/* Voice Selector - ElevenLabs Voices */}
                         {voiceEnabled && (
                             <select
-                                value={selectedVoice}
-                                onChange={(e) => handleVoiceChange(e.target.value as GeminiVoice)}
+                                value={selectedVoiceId}
+                                onChange={(e) => handleVoiceChange(e.target.value)}
                                 className="bg-slate-700 text-white text-xs px-2 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-violet-500"
                             >
-                                {GEMINI_VOICES.map((voice) => (
+                                {ELEVENLABS_VOICES.map((voice) => (
                                     <option key={voice.id} value={voice.id}>
                                         {voice.gender === 'female' ? '👩' : '👨'} {voice.name} - {voice.description}
                                     </option>

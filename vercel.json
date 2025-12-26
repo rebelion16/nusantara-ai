@@ -27,6 +27,10 @@
             "dest": "/api/telegram/callback.ts"
         },
         {
+            "src": "/api/tts",
+            "dest": "/api/tts.ts"
+        },
+        {
             "src": "/(.*)",
             "dest": "/$1"
         }
