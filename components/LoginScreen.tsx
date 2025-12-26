@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { Loader2, ShieldCheck, Sparkles, Instagram } from "lucide-react";
 import { authService, UserProfile } from "../services/authService";
 
 interface LoginScreenProps {
@@ -25,12 +25,115 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0f1d] overflow-hidden font-sans">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-900/20 via-[#0a0f1d] to-black" />
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse delay-700" />
+      {/* STUNNING BACKGROUND WITH AURORA & SNOW */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1a] via-[#0d1033] to-[#020618]" />
+
+        {/* Aurora Borealis Effect */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-gradient-to-r from-emerald-500/30 via-cyan-400/20 to-transparent rounded-full blur-[100px] animate-aurora1" />
+          <div className="absolute top-[10%] right-1/4 w-[500px] h-[350px] bg-gradient-to-l from-purple-500/25 via-pink-400/15 to-transparent rounded-full blur-[100px] animate-aurora2" />
+          <div className="absolute top-[5%] left-1/2 w-[400px] h-[300px] bg-gradient-to-b from-blue-400/20 via-indigo-500/15 to-transparent rounded-full blur-[80px] animate-aurora3" />
+        </div>
+
+        {/* Floating orbs */}
+        <div className="absolute top-[20%] left-[15%] w-3 h-3 bg-cyan-400/60 rounded-full blur-[2px] animate-float1" />
+        <div className="absolute top-[30%] right-[20%] w-2 h-2 bg-purple-400/60 rounded-full blur-[1px] animate-float2" />
+        <div className="absolute top-[50%] left-[30%] w-4 h-4 bg-emerald-400/40 rounded-full blur-[3px] animate-float3" />
+        <div className="absolute top-[60%] right-[35%] w-2 h-2 bg-pink-400/50 rounded-full blur-[1px] animate-float1" />
+        <div className="absolute top-[40%] left-[60%] w-3 h-3 bg-blue-400/50 rounded-full blur-[2px] animate-float2" />
+
+        {/* Stars */}
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={`star-${i}`}
+            className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
+            style={{
+              top: `${Math.random() * 60}%`,
+              left: `${Math.random() * 100}%`,
+              opacity: Math.random() * 0.7 + 0.3,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+
+        {/* SNOW PARTICLES */}
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={`snow-${i}`}
+            className="absolute bg-white rounded-full animate-snowfall"
+            style={{
+              width: `${Math.random() * 4 + 2}px`,
+              height: `${Math.random() * 4 + 2}px`,
+              left: `${Math.random() * 100}%`,
+              top: `-${Math.random() * 20}%`,
+              opacity: Math.random() * 0.6 + 0.4,
+              animationDuration: `${8 + Math.random() * 10}s`,
+              animationDelay: `${Math.random() * 8}s`,
+            }}
+          />
+        ))}
+
+        {/* Ground glow */}
+        <div className="absolute bottom-0 left-0 right-0 h-[200px] bg-gradient-to-t from-indigo-900/30 to-transparent" />
       </div>
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes aurora1 {
+          0%, 100% { transform: translateX(0) translateY(0) scale(1); opacity: 0.3; }
+          25% { transform: translateX(50px) translateY(-30px) scale(1.1); opacity: 0.4; }
+          50% { transform: translateX(-30px) translateY(20px) scale(0.9); opacity: 0.25; }
+          75% { transform: translateX(20px) translateY(-10px) scale(1.05); opacity: 0.35; }
+        }
+        @keyframes aurora2 {
+          0%, 100% { transform: translateX(0) translateY(0) scale(1); opacity: 0.25; }
+          33% { transform: translateX(-40px) translateY(20px) scale(1.15); opacity: 0.35; }
+          66% { transform: translateX(30px) translateY(-15px) scale(0.95); opacity: 0.2; }
+        }
+        @keyframes aurora3 {
+          0%, 100% { transform: translateX(0) scale(1); opacity: 0.2; }
+          50% { transform: translateX(-20px) scale(1.1); opacity: 0.3; }
+        }
+        @keyframes float1 {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(-30px) translateX(15px); }
+        }
+        @keyframes float2 {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(-20px) translateX(-10px); }
+        }
+        @keyframes float3 {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(-25px) translateX(20px); }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes snowfall {
+          0% { 
+            transform: translateY(0) translateX(0) rotate(0deg); 
+            opacity: 0;
+          }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { 
+            transform: translateY(100vh) translateX(100px) rotate(360deg); 
+            opacity: 0;
+          }
+        }
+        .animate-aurora1 { animation: aurora1 12s ease-in-out infinite; }
+        .animate-aurora2 { animation: aurora2 15s ease-in-out infinite; }
+        .animate-aurora3 { animation: aurora3 10s ease-in-out infinite; }
+        .animate-float1 { animation: float1 6s ease-in-out infinite; }
+        .animate-float2 { animation: float2 8s ease-in-out infinite; }
+        .animate-float3 { animation: float3 7s ease-in-out infinite; }
+        .animate-twinkle { animation: twinkle 2s ease-in-out infinite; }
+        .animate-snowfall { animation: snowfall linear infinite; }
+      `}</style>
 
       <div className="relative z-10 w-full max-w-md p-8 animate-fade-in-up">
         {/* Glass Card */}
@@ -52,10 +155,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </h1>
             <p className="text-gray-400 text-sm">
               Creative AI Superapp by Rebelion16
-              <br />
-              Instagram: @lukmandian17
-              <br />
             </p>
+            <a
+              href="https://www.instagram.com/lukmandian17/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 rounded-full text-white font-bold text-sm hover:scale-105 transition-transform shadow-lg"
+            >
+              <Instagram size={18} />
+              @lukmandian17
+            </a>
           </div>
 
           {/* Login Button */}
