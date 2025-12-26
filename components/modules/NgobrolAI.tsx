@@ -10,6 +10,16 @@ import {
     MicOff,
     Volume2,
     VolumeX,
+    Paperclip,
+    X,
+    Image as ImageIcon,
+    Check,
+    CheckCheck,
+    MoreVertical,
+    Phone,
+    Video,
+    Camera,
+    Edit3,
 } from 'lucide-react';
 import {
     AiPersona,
@@ -67,6 +77,131 @@ const STORAGE_KEYS = {
     PERSONA: 'NGOBROL_AI_PERSONA',
 };
 
+// === WHATSAPP PATTERN BACKGROUND ===
+const WhatsAppPattern = () => (
+    <svg className="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="wa-pattern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                <circle cx="30" cy="10" r="1" fill="currentColor" />
+                <circle cx="50" cy="10" r="1.5" fill="currentColor" />
+                <circle cx="20" cy="30" r="1" fill="currentColor" />
+                <circle cx="40" cy="30" r="1.5" fill="currentColor" />
+                <circle cx="10" cy="50" r="1" fill="currentColor" />
+                <circle cx="30" cy="50" r="1.5" fill="currentColor" />
+                <circle cx="50" cy="50" r="1" fill="currentColor" />
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#wa-pattern)" />
+    </svg>
+);
+
+// === CHAT BUBBLE COMPONENT ===
+interface ChatBubbleProps {
+    message: ChatMessage;
+    onDownloadImage: (url: string) => void;
+}
+
+const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onDownloadImage }) => {
+    const isUser = message.role === 'user';
+    const time = new Date(message.timestamp).toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    if (message.isLoading) {
+        return (
+            <div className="flex justify-start mb-2">
+                <div className="relative max-w-[75%] bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
+                    {/* Tail */}
+                    <div className="absolute -left-2 bottom-0 w-4 h-4 overflow-hidden">
+                        <div className="absolute right-0 bottom-0 w-4 h-8 bg-white dark:bg-slate-700 rounded-br-[16px]"></div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`}>
+            <div
+                className={`relative max-w-[75%] shadow-sm ${isUser
+                    ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-slate-800 dark:text-white rounded-2xl rounded-br-sm'
+                    : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-2xl rounded-bl-sm'
+                    }`}
+            >
+                {/* Bubble Tail */}
+                {isUser ? (
+                    <div className="absolute -right-2 bottom-0 w-4 h-4 overflow-hidden">
+                        <div className="absolute left-0 bottom-0 w-4 h-8 bg-[#d9fdd3] dark:bg-[#005c4b] rounded-bl-[16px]"></div>
+                    </div>
+                ) : (
+                    <div className="absolute -left-2 bottom-0 w-4 h-4 overflow-hidden">
+                        <div className="absolute right-0 bottom-0 w-4 h-8 bg-white dark:bg-slate-700 rounded-br-[16px]"></div>
+                    </div>
+                )}
+
+                {/* Content */}
+                <div className="px-3 py-2">
+                    {/* User Uploaded Image */}
+                    {message.userImageUrl && (
+                        <div className="mb-2 -mx-1 -mt-1">
+                            <img
+                                src={message.userImageUrl}
+                                alt="Uploaded"
+                                className="rounded-xl max-w-full"
+                                style={{ maxHeight: '250px' }}
+                            />
+                        </div>
+                    )}
+
+                    {/* AI Generated Image */}
+                    {message.imageUrl && (
+                        <div className="mb-2 -mx-1 -mt-1">
+                            <img
+                                src={message.imageUrl}
+                                alt="AI Generated"
+                                className="rounded-xl max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+                                style={{ maxHeight: '250px' }}
+                                onClick={() => onDownloadImage(message.imageUrl!)}
+                            />
+                            <button
+                                onClick={() => onDownloadImage(message.imageUrl!)}
+                                className="mt-1 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                            >
+                                <Download size={12} />
+                                Download
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Text Content */}
+                    {message.content && (
+                        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed pr-14">
+                            {message.content}
+                        </p>
+                    )}
+
+                    {/* Timestamp & Status */}
+                    <div className={`flex items-center gap-1 justify-end -mb-1 ${message.content ? '-mt-4' : 'mt-1'}`}>
+                        <span className={`text-[11px] ${isUser ? 'text-slate-500 dark:text-slate-300' : 'text-slate-400 dark:text-slate-400'}`}>
+                            {time}
+                        </span>
+                        {isUser && (
+                            <CheckCheck size={16} className="text-blue-500" />
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // === MAIN COMPONENT ===
 export const NgobrolAIModule: React.FC = () => {
     // Chat State - Load from localStorage on init
@@ -103,6 +238,17 @@ export const NgobrolAIModule: React.FC = () => {
     });
     const recognitionRef = useRef<SpeechRecognition | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Image Upload State
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageBase64, setImageBase64] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Custom Profile State
+    const [customName, setCustomName] = useState<string>(persona.name);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
     // Refs
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -181,6 +327,51 @@ export const NgobrolAIModule: React.FC = () => {
         };
     }, []);
 
+    // Handle image selection
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Image size must be less than 10MB');
+                return;
+            }
+
+            setSelectedImage(file);
+
+            // Create preview URL
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
+
+            // Convert to base64 for API
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64 = (reader.result as string).split(',')[1];
+                setImageBase64(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Clear selected image
+    const clearSelectedImage = () => {
+        setSelectedImage(null);
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        setImagePreview(null);
+        setImageBase64(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     // Toggle voice input
     const toggleVoiceInput = useCallback(() => {
         if (!recognitionRef.current) {
@@ -243,7 +434,7 @@ export const NgobrolAIModule: React.FC = () => {
 
     // Handle persona change
     const handlePersonaChange = (gender: AiGender, style: AiWritingStyle) => {
-        const newPersona = getPersonaConfig(gender, style);
+        const newPersona = getPersonaConfig(gender, style, persona.name, persona.customAvatarUrl);
         setPersona(newPersona);
 
         // Always add intro message when persona changes
@@ -257,15 +448,65 @@ export const NgobrolAIModule: React.FC = () => {
         setTimeout(() => inputRef.current?.focus(), 100);
     };
 
+    // Handle custom avatar upload
+    const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Pilih file gambar');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran gambar maksimal 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const avatarUrl = reader.result as string;
+                const newPersona = { ...persona, customAvatarUrl: avatarUrl };
+                setPersona(newPersona);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Handle custom name save
+    const handleSaveCustomName = () => {
+        if (customName.trim()) {
+            const newPersona = { ...persona, name: customName.trim() };
+            setPersona(newPersona);
+            setIsEditingName(false);
+        }
+    };
+
+    // Reset avatar to default
+    const handleResetAvatar = () => {
+        const newPersona = { ...persona, customAvatarUrl: undefined };
+        setPersona(newPersona);
+    };
+
     // Send message handler
     const handleSendMessage = async () => {
         const text = inputText.trim();
-        if (!text || isLoading) return;
+        const hasContent = text || imagePreview;
+        if (!hasContent || isLoading) return;
 
-        // Add user message
-        const userMsg = createUserMessage(text);
+        // Add user message with image if present
+        const userMsg = createUserMessage(
+            text || (imagePreview ? '📷 Gambar' : ''),
+            imagePreview || undefined,
+            imageBase64 || undefined
+        );
         setMessages(prev => [...prev, userMsg]);
         setInputText('');
+
+        // Store image base64 before clearing
+        const currentImageBase64 = imageBase64;
+
+        // Clear selected image
+        clearSelectedImage();
+
         setIsLoading(true);
 
         // Add loading indicator
@@ -276,7 +517,7 @@ export const NgobrolAIModule: React.FC = () => {
             // Get conversation history (excluding loading message)
             const history = [...messages, userMsg];
 
-            const response = await sendChatMessage(history, persona);
+            const response = await sendChatMessage(history, persona, currentImageBase64 || undefined);
 
             // Remove loading and add AI response
             setMessages(prev => {
@@ -325,69 +566,84 @@ export const NgobrolAIModule: React.FC = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-120px)] flex flex-col animate-fade-in max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="flex-shrink-0 bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-2xl p-4 shadow-lg">
+        <div className="h-[calc(100vh-120px)] flex flex-col animate-fade-in max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700">
+            {/* WhatsApp-style Header */}
+            <div className="flex-shrink-0 bg-[#008069] dark:bg-[#1f2c34] px-4 py-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-2xl">
-                            {persona.gender === 'male' ? '👨' : '👩'}
+                        {/* Avatar with Online Indicator */}
+                        <div className="relative">
+                            {persona.customAvatarUrl ? (
+                                <img
+                                    src={persona.customAvatarUrl}
+                                    alt={persona.name}
+                                    className="w-10 h-10 rounded-full object-cover shadow-md"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-xl shadow-md">
+                                    {persona.gender === 'male' ? '👨' : '👩'}
+                                </div>
+                            )}
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-[#008069] dark:border-[#1f2c34] rounded-full"></div>
                         </div>
                         <div>
-                            <h2 className="text-white font-bold text-lg flex items-center gap-2">
+                            <h2 className="text-white font-semibold text-base flex items-center gap-2">
                                 {persona.name}
-                                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                                    {STYLE_OPTIONS.find(s => s.value === persona.writingStyle)?.label}
-                                </span>
                             </h2>
-                            <p className="text-white/70 text-sm">
-                                Teman Ngobrol AI
+                            <p className="text-emerald-100 dark:text-slate-400 text-xs">
+                                online
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {/* Settings Button */}
+                    <div className="flex items-center gap-4">
+                        <button className="text-white/80 hover:text-white transition-colors">
+                            <Video size={20} />
+                        </button>
+                        <button className="text-white/80 hover:text-white transition-colors">
+                            <Phone size={20} />
+                        </button>
                         <button
                             onClick={() => setShowPersonaSettings(!showPersonaSettings)}
-                            className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-all"
-                            title="Pengaturan Persona"
+                            className="text-white/80 hover:text-white transition-colors"
+                            title="Pengaturan"
                         >
-                            <Settings2 size={20} />
-                        </button>
-
-                        {/* Clear Chat */}
-                        <button
-                            onClick={handleClearChat}
-                            className="p-2 rounded-full bg-white/20 text-white hover:bg-red-500 transition-all"
-                            title="Hapus Semua Chat"
-                        >
-                            <Trash2 size={20} />
+                            <MoreVertical size={20} />
                         </button>
                     </div>
                 </div>
 
                 {/* Persona Settings Panel */}
                 {showPersonaSettings && (
-                    <div className="mt-4 p-4 bg-white/10 backdrop-blur rounded-xl animate-fade-in">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="mt-3 p-3 bg-white/10 backdrop-blur rounded-xl animate-fade-in">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-white/90 text-sm font-medium">Pengaturan AI</span>
+                            <button
+                                onClick={handleClearChat}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 text-red-200 text-xs hover:bg-red-500/30 transition-colors"
+                            >
+                                <Trash2 size={12} />
+                                Hapus Chat
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
                             {/* Gender Selection */}
                             <div>
-                                <label className="text-white/70 text-xs font-bold uppercase tracking-wider mb-2 block">
-                                    Jenis Kelamin
+                                <label className="text-white/60 text-xs font-medium mb-1.5 block">
+                                    Gender
                                 </label>
-                                <div className="flex gap-2">
+                                <div className="flex gap-1.5">
                                     {GENDER_OPTIONS.map((opt) => (
                                         <button
                                             key={opt.value}
                                             onClick={() => handlePersonaChange(opt.value, persona.writingStyle)}
-                                            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${persona.gender === opt.value
-                                                ? 'bg-white text-violet-600'
+                                            className={`flex-1 py-1.5 px-2 rounded-lg text-sm transition-all flex items-center justify-center gap-1 ${persona.gender === opt.value
+                                                ? 'bg-white text-emerald-600 font-medium'
                                                 : 'bg-white/20 text-white hover:bg-white/30'
                                                 }`}
                                         >
                                             <span>{opt.emoji}</span>
-                                            <span>{opt.label}</span>
+                                            <span className="hidden sm:inline">{opt.label}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -395,16 +651,16 @@ export const NgobrolAIModule: React.FC = () => {
 
                             {/* Style Selection */}
                             <div>
-                                <label className="text-white/70 text-xs font-bold uppercase tracking-wider mb-2 block">
-                                    Gaya Bicara
+                                <label className="text-white/60 text-xs font-medium mb-1.5 block">
+                                    Gaya
                                 </label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-1.5">
                                     {STYLE_OPTIONS.map((opt) => (
                                         <button
                                             key={opt.value}
                                             onClick={() => handlePersonaChange(persona.gender, opt.value)}
-                                            className={`py-2 px-3 rounded-lg font-medium transition-all text-sm ${persona.writingStyle === opt.value
-                                                ? 'bg-white text-violet-600'
+                                            className={`py-1.5 px-2 rounded-lg text-xs transition-all ${persona.writingStyle === opt.value
+                                                ? 'bg-white text-emerald-600 font-medium'
                                                 : 'bg-white/20 text-white hover:bg-white/30'
                                                 }`}
                                         >
@@ -414,204 +670,294 @@ export const NgobrolAIModule: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
 
-            {/* Chat Messages Area */}
-            <div
-                ref={chatContainerRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900 dark:bg-dark-card"
-                style={{ scrollBehavior: 'smooth' }}
-            >
-                {messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-4">
-                            <MessageCircle size={40} className="text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-2">
-                            Hai! Aku {persona.name} 👋
-                        </h3>
-                        <p className="text-gray-400 max-w-md">
-                            Mau ngobrol apa hari ini? Aku siap dengerin curhatmu, jawab pertanyaanmu,
-                            atau bahkan buatin gambar buat kamu!
-                        </p>
-                        <div className="mt-6 flex flex-wrap gap-2 justify-center">
-                            {['Hai, apa kabar?', 'Ceritain jokes dong!', 'Buatkan gambar kucing lucu'].map(
-                                (suggestion) => (
-                                    <button
-                                        key={suggestion}
-                                        onClick={() => {
-                                            setInputText(suggestion);
-                                            inputRef.current?.focus();
-                                        }}
-                                        className="px-4 py-2 rounded-full bg-violet-500/20 text-violet-300 text-sm hover:bg-violet-500/30 transition-colors"
+                        {/* Custom Profile Section */}
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                            <label className="text-white/60 text-xs font-medium mb-2 block">
+                                Kustomisasi Profil
+                            </label>
+                            <div className="flex items-center gap-3">
+                                {/* Custom Avatar */}
+                                <div className="relative">
+                                    <div
+                                        className="w-14 h-14 rounded-full overflow-hidden cursor-pointer group"
+                                        onClick={() => avatarInputRef.current?.click()}
                                     >
-                                        {suggestion}
-                                    </button>
-                                )
-                            )}
-                        </div>
-                    </div>
-                ) : (
-                    messages.map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
-                        >
-                            <div
-                                className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user'
-                                    ? 'bg-violet-600 text-white rounded-br-sm'
-                                    : 'bg-slate-800 text-white rounded-bl-sm'
-                                    }`}
-                            >
-                                {msg.isLoading ? (
-                                    <div className="flex items-center gap-2 text-gray-400">
-                                        <Loader2 size={16} className="animate-spin" />
-                                        <span>Mengetik...</span>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Text Content */}
-                                        {msg.content && (
-                                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                                        )}
-
-                                        {/* Image Content */}
-                                        {msg.imageUrl && (
-                                            <div className="mt-2">
-                                                <img
-                                                    src={msg.imageUrl}
-                                                    alt="AI Generated"
-                                                    className="rounded-lg max-w-full"
-                                                    style={{ maxHeight: '300px' }}
-                                                />
-                                                <button
-                                                    onClick={() => handleDownloadImage(msg.imageUrl!)}
-                                                    className="mt-2 flex items-center gap-1 text-xs text-violet-300 hover:text-violet-200"
-                                                >
-                                                    <Download size={14} />
-                                                    Download Gambar
-                                                </button>
+                                        {persona.customAvatarUrl ? (
+                                            <img
+                                                src={persona.customAvatarUrl}
+                                                alt="Avatar"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-2xl">
+                                                {persona.gender === 'male' ? '👨' : '👩'}
                                             </div>
                                         )}
-
-                                        {/* Timestamp */}
-                                        <div
-                                            className={`text-[10px] mt-1 ${msg.role === 'user' ? 'text-violet-200' : 'text-gray-500'
-                                                }`}
-                                        >
-                                            {new Date(msg.timestamp).toLocaleTimeString('id-ID', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                                            <Camera size={18} className="text-white" />
                                         </div>
-                                    </>
+                                    </div>
+                                    {persona.customAvatarUrl && (
+                                        <button
+                                            onClick={handleResetAvatar}
+                                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors"
+                                            title="Reset avatar"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    )}
+                                    <input
+                                        ref={avatarInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleAvatarSelect}
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                {/* Custom Name */}
+                                <div className="flex-1">
+                                    {isEditingName ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={customName}
+                                                onChange={(e) => setCustomName(e.target.value)}
+                                                placeholder="Nama AI"
+                                                className="flex-1 bg-white/20 text-white placeholder-white/50 px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-white/30"
+                                                autoFocus
+                                                onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomName()}
+                                            />
+                                            <button
+                                                onClick={handleSaveCustomName}
+                                                className="p-1.5 bg-emerald-500 rounded-lg text-white hover:bg-emerald-600 transition-colors"
+                                            >
+                                                <Check size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setCustomName(persona.name);
+                                                    setIsEditingName(false);
+                                                }}
+                                                className="p-1.5 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsEditingName(true)}
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-white text-sm hover:bg-white/30 transition-colors w-full"
+                                        >
+                                            <span className="truncate">{persona.name}</span>
+                                            <Edit3 size={12} className="flex-shrink-0" />
+                                        </button>
+                                    )}
+                                    <p className="text-white/40 text-[10px] mt-1">Klik untuk edit nama AI</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Voice Settings */}
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <button
+                                    onClick={() => setVoiceEnabled(!voiceEnabled)}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${voiceEnabled
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-white/20 text-white/70 hover:text-white'
+                                        }`}
+                                >
+                                    {voiceEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
+                                    Suara
+                                </button>
+
+                                {voiceEnabled && (
+                                    <select
+                                        value={selectedVoiceId}
+                                        onChange={(e) => handleVoiceChange(e.target.value)}
+                                        className="bg-white/20 text-white text-xs px-2 py-1 rounded-lg border-0 focus:outline-none focus:ring-1 focus:ring-white/30"
+                                    >
+                                        {ELEVENLABS_VOICES.map((voice) => (
+                                            <option key={voice.id} value={voice.id} className="text-slate-800">
+                                                {voice.gender === 'female' ? '👩' : '👨'} {voice.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+
+                                {isGeneratingVoice && (
+                                    <span className="flex items-center gap-1 text-xs text-emerald-200">
+                                        <Loader2 size={10} className="animate-spin" />
+                                        Loading...
+                                    </span>
+                                )}
+
+                                {isSpeaking && (
+                                    <button
+                                        onClick={stopSpeaking}
+                                        className="px-2 py-1 rounded-full bg-red-500 text-white text-xs font-medium animate-pulse"
+                                    >
+                                        Stop
+                                    </button>
                                 )}
                             </div>
                         </div>
-                    ))
+                    </div>
                 )}
             </div>
 
-            {/* Input Area */}
-            <div className="flex-shrink-0 p-4 bg-slate-800 dark:bg-dark-card border-t border-slate-700 rounded-b-2xl">
-                {/* Voice Mode Toggle & Voice Selector */}
-                <div className="flex items-center justify-between mb-3 gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                            onClick={() => setVoiceEnabled(!voiceEnabled)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${voiceEnabled
-                                ? 'bg-violet-600 text-white'
-                                : 'bg-slate-700 text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-                            {voiceEnabled ? 'Suara Aktif' : 'Suara Mati'}
-                        </button>
+            {/* Chat Messages Area with WhatsApp Pattern */}
+            <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto px-3 py-4 bg-[#efeae2] dark:bg-[#0b141a] relative"
+                style={{ scrollBehavior: 'smooth' }}
+            >
+                {/* Background Pattern */}
+                <WhatsAppPattern />
 
-                        {/* Voice Selector - ElevenLabs Voices */}
-                        {voiceEnabled && (
-                            <select
-                                value={selectedVoiceId}
-                                onChange={(e) => handleVoiceChange(e.target.value)}
-                                className="bg-slate-700 text-white text-xs px-2 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-violet-500"
-                            >
-                                {ELEVENLABS_VOICES.map((voice) => (
-                                    <option key={voice.id} value={voice.id}>
-                                        {voice.gender === 'female' ? '👩' : '👨'} {voice.name} - {voice.description}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-
-                        {/* Loading indicator for voice generation */}
-                        {isGeneratingVoice && (
-                            <span className="flex items-center gap-1 text-xs text-violet-400">
-                                <Loader2 size={12} className="animate-spin" />
-                                Generating...
-                            </span>
-                        )}
-
-                        {isSpeaking && (
-                            <button
-                                onClick={stopSpeaking}
-                                className="px-3 py-1.5 rounded-full bg-red-500 text-white text-xs font-medium animate-pulse"
-                            >
-                                Berhenti
-                            </button>
-                        )}
-                    </div>
-                    {isListening && (
-                        <span className="text-xs text-green-400 animate-pulse flex items-center gap-1">
-                            <span className="w-2 h-2 bg-green-400 rounded-full animate-ping"></span>
-                            Mendengarkan...
-                        </span>
+                {/* Messages */}
+                <div className="relative z-10">
+                    {messages.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-4 shadow-lg">
+                                <MessageCircle size={36} className="text-white" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-slate-700 dark:text-white mb-2">
+                                Hai! Aku {persona.name} 👋
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-400 max-w-sm text-sm mb-6">
+                                Mau ngobrol apa hari ini? Kirim pesan atau foto, aku siap bantu!
+                            </p>
+                            <div className="flex flex-wrap gap-2 justify-center max-w-md">
+                                {['Hai, apa kabar?', 'Ceritain jokes dong!', 'Buatkan gambar kucing lucu'].map(
+                                    (suggestion) => (
+                                        <button
+                                            key={suggestion}
+                                            onClick={() => {
+                                                setInputText(suggestion);
+                                                inputRef.current?.focus();
+                                            }}
+                                            className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm shadow-sm hover:shadow-md transition-all"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        messages.map((msg) => (
+                            <ChatBubble
+                                key={msg.id}
+                                message={msg}
+                                onDownloadImage={handleDownloadImage}
+                            />
+                        ))
                     )}
                 </div>
+            </div>
+
+            {/* Image Preview */}
+            {imagePreview && (
+                <div className="flex-shrink-0 px-3 py-2 bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="h-16 w-16 object-cover rounded-lg shadow-sm"
+                            />
+                            <button
+                                onClick={clearSelectedImage}
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
+                                {selectedImage?.name}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                                {selectedImage && (selectedImage.size / 1024).toFixed(1)} KB
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Input Area */}
+            <div className="flex-shrink-0 px-2 py-2 bg-[#f0f2f5] dark:bg-[#1f2c34] border-t border-slate-200 dark:border-slate-700">
+                {/* Listening Indicator */}
+                {isListening && (
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                        <span className="text-xs text-red-500 font-medium">Mendengarkan...</span>
+                    </div>
+                )}
 
                 <div className="flex items-end gap-2">
-                    {/* Voice Input Button */}
+                    {/* Attachment Button */}
                     <button
-                        onClick={toggleVoiceInput}
+                        onClick={() => fileInputRef.current?.click()}
                         disabled={isLoading}
-                        className={`p-3 rounded-full transition-all flex-shrink-0 ${isListening
-                            ? 'bg-red-500 text-white animate-pulse'
-                            : 'bg-slate-700 text-gray-400 hover:text-white hover:bg-slate-600'
-                            } disabled:opacity-50`}
-                        title={isListening ? 'Hentikan rekaman' : 'Bicara ke AI'}
+                        className="p-2.5 rounded-full bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+                        title="Lampirkan gambar"
                     >
-                        {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                        <Paperclip size={22} />
                     </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                    />
 
                     {/* Text Input */}
-                    <div className="flex-1 relative">
+                    <div className="flex-1">
                         <textarea
                             ref={inputRef}
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder={isListening ? 'Bicara sekarang...' : 'Ketik pesan...'}
+                            placeholder={isListening ? 'Bicara sekarang...' : 'Ketik pesan'}
                             disabled={isLoading}
                             rows={1}
-                            className="w-full bg-slate-700 border border-slate-600 rounded-2xl px-4 py-3 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 resize-none disabled:opacity-50"
-                            style={{ maxHeight: '120px' }}
+                            className="w-full bg-white dark:bg-[#2a3942] border-0 rounded-3xl px-4 py-2.5 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none disabled:opacity-50 text-[15px]"
+                            style={{ maxHeight: '100px' }}
                             autoFocus
                         />
                     </div>
 
-                    {/* Send Button */}
-                    <button
-                        onClick={handleSendMessage}
-                        disabled={!inputText.trim() || isLoading}
-                        className="p-3 rounded-full bg-violet-600 text-white hover:bg-violet-500 transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? (
-                            <Loader2 size={20} className="animate-spin" />
-                        ) : (
-                            <Send size={20} />
-                        )}
-                    </button>
+                    {/* Voice/Send Button */}
+                    {!inputText.trim() && !imagePreview ? (
+                        <button
+                            onClick={toggleVoiceInput}
+                            disabled={isLoading}
+                            className={`p-2.5 rounded-full transition-all ${isListening
+                                ? 'bg-red-500 text-white animate-pulse'
+                                : 'bg-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+                                } disabled:opacity-50`}
+                            title={isListening ? 'Hentikan rekaman' : 'Bicara ke AI'}
+                        >
+                            {isListening ? <MicOff size={22} /> : <Mic size={22} />}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleSendMessage}
+                            disabled={isLoading}
+                            className="p-2.5 rounded-full bg-[#00a884] text-white hover:bg-[#008f72] transition-all disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <Loader2 size={22} className="animate-spin" />
+                            ) : (
+                                <Send size={22} />
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
