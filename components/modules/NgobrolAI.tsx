@@ -345,14 +345,14 @@ export const NgobrolAIModule: React.FC = () => {
 
             setSelectedImage(file);
 
-            // Create preview URL
-            const previewUrl = URL.createObjectURL(file);
-            setImagePreview(previewUrl);
-
-            // Convert to base64 for API
+            // Convert to base64 data URL for both preview and storage
             const reader = new FileReader();
             reader.onload = () => {
-                const base64 = (reader.result as string).split(',')[1];
+                const dataUrl = reader.result as string;
+                // Store full data URL for preview (this persists in localStorage)
+                setImagePreview(dataUrl);
+                // Extract just the base64 part for API
+                const base64 = dataUrl.split(',')[1];
                 setImageBase64(base64);
             };
             reader.readAsDataURL(file);
@@ -362,9 +362,6 @@ export const NgobrolAIModule: React.FC = () => {
     // Clear selected image
     const clearSelectedImage = () => {
         setSelectedImage(null);
-        if (imagePreview) {
-            URL.revokeObjectURL(imagePreview);
-        }
         setImagePreview(null);
         setImageBase64(null);
         if (fileInputRef.current) {
