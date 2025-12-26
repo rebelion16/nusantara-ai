@@ -17,5 +17,57 @@
     "info": {
       "error": "the JSON object must be str, bytes or bytearray, not NoneType"
     }
+  },
+  "c95d448f": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\c95d448f_Gampang Banget! Cara Bikin Film AI Ultra Realistis.mp4",
+    "info": {
+      "duration": 666.226939,
+      "width": 854,
+      "height": 480,
+      "fps": 23.976023976023978,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 34579447,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
+  },
+  "68512231": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\68512231_BEDANYA NABI ISA & JESUS CHRIST PART 1.mp4",
+    "info": {
+      "duration": 1864.097959,
+      "width": 854,
+      "height": 356,
+      "fps": 23.976023976023978,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 76572964,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
+  },
+  "203cad46": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\203cad46_MISTERI MAKHLUK MITOLOGI AL-QUR'AN & HADIST.mp4",
+    "info": {
+      "duration": 1560.915011,
+      "width": 1280,
+      "height": 720,
+      "fps": 60.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 294869639,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
+  },
+  "29c5bfdc": {
+    "path": "C:\\Users\\Rebelion16\\Documents\\Workspace\\nusantara-ai\\social_backend\\uploads\\29c5bfdc_MISTERI MAKHLUK MITOLOGI AL-QUR'AN & HADIST.mp4",
+    "info": {
+      "duration": 1560.915011,
+      "width": 1280,
+      "height": 720,
+      "fps": 60.0,
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "size": 293976540,
+      "video_codec": "h264",
+      "audio_codec": "aac"
+    }
   }
 }

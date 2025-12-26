@@ -3,8 +3,14 @@
  * Frontend service untuk komunikasi dengan Python backend
  */
 
-// Backend URL - change this if running on different port or using tunnel
-const BACKEND_URL = import.meta.env.VITE_SOCIAL_BACKEND_URL || 'http://localhost:8001';
+// Backend URL configuration
+// In production/APK, use Cloudflare Tunnel URL
+// In development, use localhost
+const isLocalDev = typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+const BACKEND_URL = import.meta.env.VITE_SOCIAL_BACKEND_URL ||
+  (isLocalDev ? 'http://localhost:8001' : 'https://api.nusantara-ai.fun');
 
 // ===== Types =====
 

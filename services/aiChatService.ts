@@ -236,31 +236,22 @@ export const sendChatMessage = async (
                     console.log('Generating image with prompt:', parsed.prompt);
 
                     try {
-                        // Generate the image using Gemini Image Generation
-                        const imageResponse = await ai.models.generateContent({
-                            model: 'gemini-2.5-flash-image',
-                            contents: parsed.prompt,
-                            config: {
-                                responseModalities: ['IMAGE'],
-                            }
-                        });
+                        // Use centralized image generation service (Bard + Gemini fallback)
+                        const { generateImage } = await import('./imageGenerationService');
+                        const result = await generateImage(parsed.prompt);
 
-                        // Extract image from response
-                        for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-                            if (part.inlineData) {
-                                const imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-                                console.log('Image generated successfully!');
-                                return {
-                                    text: "Nih gambar yang kamu minta! 🎨",
-                                    imageUrl,
-                                    action: 'generate_image'
-                                };
-                            }
+                        if (result.success && result.imageUrl) {
+                            console.log(`Image generated successfully via ${result.provider}!`);
+                            return {
+                                text: `Nih gambar yang kamu minta! 🎨 (via ${result.provider === 'bard_internal' ? 'Bard' : 'Gemini'})`,
+                                imageUrl: result.imageUrl,
+                                action: 'generate_image'
+                            };
                         }
 
-                        return { text: "Gambar berhasil dibuat tapi tidak bisa ditampilkan. Coba lagi ya!" };
+                        return { text: result.error || "Gambar gagal dibuat. Coba lagi ya!" };
                     } catch (imageError: any) {
-                        console.error('Gemini Image Error:', imageError);
+                        console.error('Image Generation Error:', imageError);
                         if (imageError.message?.includes('safety') || imageError.message?.includes('blocked')) {
                             return { text: "Maaf, prompt gambar ditolak oleh sistem keamanan. Coba dengan deskripsi yang berbeda ya! 🙏" };
                         }
